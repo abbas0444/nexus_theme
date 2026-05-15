@@ -1,0 +1,914 @@
+.theme-switcher-btn .nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.theme-switcher-btn .nav-link svg {
+  transition: transform var(--theme-transition-duration, 150ms) ease;
+}
+.theme-switcher-btn .nav-link:hover svg {
+  transform: rotate(15deg);
+}
+
+/* ==================================================================
+   Live Preview pane
+   ------------------------------------------------------------------
+   The mockup uses `--mock-*` custom properties set inline on the
+   wrapper. CSS rules in this block reference those variables so :hover
+   states actually react with the candidate theme's accent — something
+   you can't do with inline styles alone.
+
+   The selectors are scoped under `.theme-preview-mockup` (specificity
+   0,2,X) which beats the studio isolation rule `.theme-studio-isolated *`
+   (0,1,1) even when both use !important.
+   ================================================================== */
+.theme-preview-section {
+  margin-bottom: 16px;
+}
+
+.theme-preview-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: #6b7280 !important;
+}
+
+.theme-preview-themename {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+  font-size: 13px;
+  color: #1f2937 !important;
+}
+
+.theme-preview-mockup {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  background: var(--mock-bg-primary) !important;
+  font-family: var(--mock-font-family) !important;
+  color: var(--mock-text-primary) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  transition: background 200ms ease, color 200ms ease, border-color 200ms ease;
+}
+
+/* Navbar */
+.theme-preview-mockup .tpm-navbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 10px 16px;
+  background: var(--mock-bg-surface) !important;
+  border-bottom: 1px solid var(--mock-border) !important;
+}
+
+.theme-preview-mockup .tpm-logo {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--mock-accent) !important;
+  flex-shrink: 0;
+}
+
+.theme-preview-mockup .tpm-navlinks {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+}
+
+.theme-preview-mockup .tpm-navlink {
+  color: var(--mock-text-muted) !important;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.theme-preview-mockup .tpm-navlink:hover {
+  background: color-mix(in srgb, var(--mock-accent) 12%, transparent) !important;
+  color: var(--mock-text-primary) !important;
+}
+
+.theme-preview-mockup .tpm-navlink.is-active {
+  color: var(--mock-accent) !important;
+  font-weight: 600;
+}
+
+/* Body split */
+.theme-preview-mockup .tpm-body {
+  display: flex;
+  min-height: 220px;
+}
+
+.theme-preview-mockup .tpm-sidebar {
+  width: 130px;
+  flex-shrink: 0;
+  padding: 10px 8px;
+  background: var(--mock-bg-surface) !important;
+  border-right: 1px solid var(--mock-border) !important;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.theme-preview-mockup .tpm-sideitem {
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--mock-text-muted) !important;
+  border-radius: var(--mock-radius, 6px) !important;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.theme-preview-mockup .tpm-sideitem:hover {
+  background: color-mix(in srgb, var(--mock-accent) 10%, transparent) !important;
+  color: var(--mock-text-primary) !important;
+}
+
+.theme-preview-mockup .tpm-sideitem.is-active {
+  background: color-mix(in srgb, var(--mock-accent) 18%, transparent) !important;
+  color: var(--mock-accent) !important;
+  font-weight: 600;
+}
+
+/* Content area */
+.theme-preview-mockup .tpm-content {
+  flex: 1;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--mock-bg-primary) !important;
+  min-width: 0;
+}
+
+.theme-preview-mockup .tpm-row-form {
+  display: flex;
+  gap: 8px;
+}
+
+.theme-preview-mockup .tpm-input {
+  flex: 1;
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+  background: var(--mock-bg-input) !important;
+  color: var(--mock-text-primary) !important;
+  border: 1px solid var(--mock-border) !important;
+  border-radius: var(--mock-radius, 6px) !important;
+  outline: none !important;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+  min-width: 0;
+}
+
+.theme-preview-mockup .tpm-input::placeholder {
+  color: var(--mock-text-muted) !important;
+  opacity: 0.85;
+}
+
+.theme-preview-mockup .tpm-input:focus,
+.theme-preview-mockup .tpm-input:hover {
+  border-color: var(--mock-accent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mock-accent) 22%, transparent) !important;
+}
+
+.theme-preview-mockup .tpm-button {
+  background: var(--mock-button-bg) !important;
+  color: var(--mock-button-text) !important;
+  border: none !important;
+  padding: 6px 14px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  border-radius: var(--mock-radius, 6px) !important;
+  cursor: pointer;
+  transition: background 150ms ease, transform 150ms ease;
+}
+
+.theme-preview-mockup .tpm-button:hover {
+  background: var(--mock-button-hover-bg) !important;
+  transform: translateY(-1px);
+}
+
+/* Table */
+.theme-preview-mockup .tpm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  border: 1px solid var(--mock-border) !important;
+  border-radius: var(--mock-radius, 6px) !important;
+  overflow: hidden;
+  background: var(--mock-bg-primary) !important;
+}
+
+.theme-preview-mockup .tpm-table thead th {
+  background: var(--mock-bg-surface) !important;
+  color: var(--mock-text-primary) !important;
+  text-align: left;
+  padding: 8px 10px !important;
+  font-weight: 600 !important;
+  border-bottom: 1px solid var(--mock-border) !important;
+}
+
+.theme-preview-mockup .tpm-table tbody td {
+  padding: 8px 10px !important;
+  color: var(--mock-text-primary) !important;
+  border-bottom: 1px solid var(--mock-border) !important;
+}
+
+.theme-preview-mockup .tpm-table tbody tr {
+  transition: background 150ms ease;
+}
+
+.theme-preview-mockup .tpm-table tbody tr:hover {
+  background: color-mix(in srgb, var(--mock-accent) 10%, transparent) !important;
+}
+
+.theme-preview-mockup .tpm-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* Status pill */
+.theme-preview-mockup .tpm-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mock-accent) 18%, transparent) !important;
+  color: var(--mock-accent) !important;
+  letter-spacing: 0.02em;
+}
+
+.theme-preview-mockup .tpm-pill-muted {
+  background: color-mix(in srgb, var(--mock-text-muted) 18%, transparent) !important;
+  color: var(--mock-text-muted) !important;
+}
+
+/* Hint line */
+.theme-preview-mockup .tpm-hint {
+  font-size: 11px;
+  color: var(--mock-text-muted) !important;
+  font-style: italic;
+}
+
+.theme-section + .theme-section {
+  margin-top: 18px;
+}
+
+.theme-section-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  opacity: 0.8;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.theme-card {
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 6px;
+  cursor: pointer;
+  outline: none;
+  transition:
+    border-color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.10);
+}
+
+.theme-card.is-selected {
+  border-color: var(--theme-accent, #4f46e5);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--theme-accent, #4f46e5) 22%, transparent),
+    0 8px 20px rgba(0, 0, 0, 0.10);
+}
+
+.theme-card:focus-visible {
+  border-color: var(--theme-accent, #4f46e5);
+}
+
+/* ---- Mini app mockup preview ---- */
+.theme-card-preview {
+  height: 100px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.theme-card-preview .tcp-navbar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 14px;
+  padding: 0 6px;
+  flex-shrink: 0;
+}
+
+.theme-card-preview .tcp-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.theme-card-preview .tcp-bar {
+  height: 4px;
+  width: 32px;
+  border-radius: 2px;
+  opacity: 0.5;
+}
+
+.theme-card-preview .tcp-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.theme-card-preview .tcp-sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 28px;
+  padding: 6px 5px;
+  flex-shrink: 0;
+}
+
+.theme-card-preview .tcp-line {
+  height: 3px;
+  width: 100%;
+  border-radius: 2px;
+  opacity: 0.45;
+}
+
+.theme-card-preview .tcp-line-short { width: 60%; }
+
+.theme-card-preview .tcp-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 8px 6px;
+  min-width: 0;
+}
+
+.theme-card-preview .tcp-heading {
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.theme-card-preview .tcp-line-text { opacity: 0.7; }
+
+.theme-card-preview .tcp-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  height: 16px;
+  min-width: 44px;
+  padding: 0 8px;
+  margin-top: 2px;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.theme-card-name {
+  text-align: center;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.theme-card-actions {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 4px;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+.theme-card:hover .theme-card-actions,
+.theme-card.is-selected .theme-card-actions {
+  opacity: 1;
+}
+.theme-card-actions button {
+  border: none;
+  background: transparent;
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--theme-text-muted, #6b7280);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.theme-card-actions button:hover {
+  background-color: color-mix(in srgb, var(--theme-accent, #4f46e5) 15%, transparent);
+  color: var(--theme-accent, #4f46e5);
+}
+
+/* ---- Editor tabs (Basic / Advanced / Palettes) ---- */
+.theme-editor-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 14px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.theme-editor-tab {
+  background: transparent !important;
+  border: none !important;
+  padding: 6px 14px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #6b7280 !important;
+  border-radius: 6px !important;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease !important;
+}
+
+.theme-editor-tab:hover {
+  color: #1f2937 !important;
+  background: #ffffff !important;
+}
+
+.theme-editor-tab.is-active {
+  background: #ffffff !important;
+  color: #1f2937 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+}
+
+.theme-editor-pane {
+  min-height: 180px;
+}
+
+.theme-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px 18px;
+}
+
+.theme-editor-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.theme-editor-row > span {
+  color: var(--theme-text-muted, #6b7280);
+}
+
+.theme-editor-row input[type="color"] {
+  width: 44px;
+  height: 28px;
+  border: 1px solid var(--theme-border, #e5e7eb);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.theme-editor-row select {
+  padding: 4px 6px;
+  border: 1px solid var(--theme-border, #e5e7eb);
+  border-radius: 4px;
+  background-color: var(--theme-bg-input, #ffffff);
+  color: var(--theme-text-primary, #1f2937);
+  font-size: 12px;
+  max-width: 60%;
+}
+
+.theme-editor-hint {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--theme-text-muted, #6b7280);
+}
+
+.theme-editor-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* ---- Palette gallery (Palettes tab) ---- */
+.theme-palette-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.theme-palette-card {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  padding: 6px !important;
+  background: #ffffff !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 10px !important;
+  cursor: pointer;
+  transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease !important;
+  text-align: left !important;
+  gap: 6px;
+}
+
+.theme-palette-card:hover {
+  transform: translateY(-2px) !important;
+  border-color: #c7c9d1 !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
+}
+
+.theme-palette-card.is-selected {
+  border-color: #4f46e5 !important;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18) !important;
+}
+
+.theme-palette-swatch {
+  height: 70px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 6px;
+  overflow: hidden;
+}
+
+.theme-palette-swatch .tps-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.theme-palette-swatch .tps-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.theme-palette-swatch .tps-text {
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.theme-palette-swatch .tps-btn {
+  align-self: flex-start;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+.theme-palette-label {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 0 2px;
+  gap: 6px;
+}
+
+.theme-palette-tag {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280 !important;
+  font-weight: 600;
+}
+
+.theme-palettes-loading {
+  padding: 24px;
+  text-align: center;
+  font-size: 13px;
+  color: #6b7280 !important;
+}
+
+/* ---- Live contrast badge ---- */
+.theme-editor-contrast {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.theme-contrast-badge {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  border: 1px solid;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.theme-contrast-badge.is-pass {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #065f46 !important;
+}
+.theme-contrast-badge.is-warn {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #92400e !important;
+}
+.theme-contrast-badge.is-fail {
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #991b1b !important;
+}
+.theme-contrast-badge.is-unknown {
+  background: #f9fafb !important;
+  border-color: #e5e7eb !important;
+  color: #6b7280 !important;
+}
+
+.theme-contrast-badge .tcb-icon {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.theme-contrast-badge .tcb-label {
+  font-weight: 600;
+}
+
+.theme-contrast-badge .tcb-detail {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.theme-contrast-badge .tcb-row {
+  display: flex;
+  gap: 6px;
+}
+
+.theme-contrast-badge .tcb-row span:first-child {
+  opacity: 0.85;
+}
+.theme-contrast-badge .tcb-row-pass span:last-child { color: #065f46 !important; font-weight: 600; }
+.theme-contrast-badge .tcb-row-warn span:last-child { color: #92400e !important; font-weight: 600; }
+.theme-contrast-badge .tcb-row-fail span:last-child { color: #991b1b !important; font-weight: 600; }
+
+.theme-contrast-badge .tcb-fix {
+  grid-row: 1;
+  grid-column: 3;
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  color: #1f2937 !important;
+  font-size: 12px !important;
+  padding: 4px 10px !important;
+  border-radius: 6px !important;
+  cursor: pointer;
+}
+
+.theme-contrast-badge .tcb-fix:hover {
+  background: #f3f4f6 !important;
+  border-color: #9ca3af !important;
+}
+
+/* ================================================================== */
+/* Theme Studio dialog — fully isolated from the active theme         */
+/* ================================================================== */
+/*
+ * The dialog must stay legible no matter which theme the user is
+ * previewing in the page behind it. Three layers of defense:
+ *
+ *  1. Re-pin every themed CSS variable inside the dialog subtree, so any
+ *     `var(--theme-*)` or remapped Frappe token (`--bg-color`,
+ *     `--navbar-bg`, `--card-bg`, `--control-bg`, `--text-color`,
+ *     `--primary`, …) resolves to the studio's own palette.
+ *
+ *  2. Force surface/text/border colors on every part of the modal
+ *     chrome (header, body, footer, content, buttons, inputs, labels)
+ *     with !important. Specificity is `.theme-studio-isolated .X` (2,0,0)
+ *     which already beats theme_variables.css's `html[data-app-theme] .X`
+ *     (1,1,1); !important removes any remaining doubt.
+ *
+ *  3. Buttons use literal colors — not variables — so even if a future
+ *     theme rule sets `background-color` directly on `.btn-primary`,
+ *     our literal value wins.
+ */
+
+.theme-studio-isolated,
+.theme-studio-isolated * {
+  /* Our tokens */
+  --theme-bg-primary: #ffffff;
+  --theme-bg-surface: #f7f8fa;
+  --theme-bg-input: #ffffff;
+  --theme-text-primary: #1f2937;
+  --theme-text-muted: #6b7280;
+  --theme-accent: #4f46e5;
+  --theme-accent-hover: #4338ca;
+  --theme-button-bg: #4f46e5;
+  --theme-button-text: #ffffff;
+  --theme-button-hover-bg: #4338ca;
+  --theme-border: #e5e7eb;
+  --theme-font-family: "Inter", system-ui, -apple-system, sans-serif;
+  --theme-font-size-base: 14px;
+  --theme-font-weight-base: 400;
+  --theme-transition-duration: 150ms;
+  --theme-border-radius: 8px;
+
+  /* Frappe tokens that theme_variables.css remaps when a theme is
+     active. Reset them inside the dialog so stock Frappe components
+     (form fields, selects, etc.) don't follow the active theme. */
+  --bg-color: #ffffff;
+  --fg-color: #ffffff;
+  --bg-light-gray: #f7f8fa;
+  --navbar-bg: #ffffff;
+  --subnavbar-bg-color: #ffffff;
+  --card-bg: #ffffff;
+  --control-bg: #ffffff;
+  --control-bg-on-gray: #ffffff;
+  --text-color: #1f2937;
+  --text-muted: #6b7280;
+  --text-light: #6b7280;
+  --heading-color: #1f2937;
+  --border-color: #e5e7eb;
+  --dark-border-color: #e5e7eb;
+  --primary: #4f46e5;
+  --primary-color: #4f46e5;
+  --btn-primary: #4f46e5;
+  --link-color: #4f46e5;
+}
+
+/* Base text + font for everything inside the dialog. */
+.theme-studio-isolated,
+.theme-studio-isolated * {
+  color: #1f2937 !important;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Arial, sans-serif !important;
+}
+
+/* Modal surfaces. */
+.theme-studio-isolated.modal,
+.theme-studio-isolated .modal-dialog,
+.theme-studio-isolated .modal-content,
+.theme-studio-isolated .modal-header,
+.theme-studio-isolated .modal-body,
+.theme-studio-isolated .modal-footer {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  border-color: #e5e7eb !important;
+}
+
+.theme-studio-isolated .modal-content {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18) !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+}
+
+/* Headings / labels / section titles. */
+.theme-studio-isolated .modal-title,
+.theme-studio-isolated .section-head,
+.theme-studio-isolated label,
+.theme-studio-isolated .control-label,
+.theme-studio-isolated .theme-section-title,
+.theme-studio-isolated .theme-card-name,
+.theme-studio-isolated h1,
+.theme-studio-isolated h2,
+.theme-studio-isolated h3,
+.theme-studio-isolated h4,
+.theme-studio-isolated h5,
+.theme-studio-isolated h6 {
+  color: #1f2937 !important;
+}
+
+.theme-studio-isolated .text-muted,
+.theme-studio-isolated .description,
+.theme-studio-isolated small,
+.theme-studio-isolated .theme-editor-hint {
+  color: #6b7280 !important;
+}
+
+/* Buttons — every button inside the dialog, not just the footer.
+   Literal colors so themed rules using `var(--theme-button-bg)` cannot
+   leak in even if specificity ties. */
+.theme-studio-isolated button,
+.theme-studio-isolated .btn,
+.theme-studio-isolated button.btn {
+  background-color: #f8fafc !important;
+  color: #111827 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease !important;
+}
+.theme-studio-isolated button:hover,
+.theme-studio-isolated .btn:hover,
+.theme-studio-isolated button.btn:hover {
+  background-color: #f3f4f6 !important;
+  border-color: #9ca3af !important;
+  color: #111827 !important;
+  transform: none !important;
+}
+
+/* Primary / secondary / default variants — fixed studio palette. */
+.theme-studio-isolated .btn-primary,
+.theme-studio-isolated button.btn-primary,
+.theme-studio-isolated .btn.btn-primary {
+  background-color: #16a34a !important;
+  color: #ffffff !important;
+  border-color: #16a34a !important;
+}
+.theme-studio-isolated .btn-primary:hover,
+.theme-studio-isolated .btn-primary:focus,
+.theme-studio-isolated .btn.btn-primary:hover {
+  background-color: #15803d !important;
+  border-color: #15803d !important;
+  color: #ffffff !important;
+}
+
+.theme-studio-isolated .btn-default,
+.theme-studio-isolated .btn-secondary {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  border-color: #d1d5db !important;
+}
+.theme-studio-isolated .btn-default:hover,
+.theme-studio-isolated .btn-secondary:hover {
+  background-color: #f3f4f6 !important;
+  border-color: #9ca3af !important;
+  color: #111827 !important;
+}
+
+/* Modal close icon. */
+.theme-studio-isolated .modal-header .btn-modal-close,
+.theme-studio-isolated .modal-header .close,
+.theme-studio-isolated .modal-header [data-dismiss="modal"] {
+  background: transparent !important;
+  border: none !important;
+  color: #6b7280 !important;
+  box-shadow: none !important;
+}
+
+/* Inputs / selects / textareas — neutral surface, ignore color pickers. */
+.theme-studio-isolated input:not([type="color"]),
+.theme-studio-isolated textarea,
+.theme-studio-isolated select,
+.theme-studio-isolated .form-control,
+.theme-studio-isolated .like-disabled-input,
+.theme-studio-isolated .awesomplete > input {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+.theme-studio-isolated input:not([type="color"]):focus,
+.theme-studio-isolated textarea:focus,
+.theme-studio-isolated select:focus,
+.theme-studio-isolated .form-control:focus {
+  border-color: #4f46e5 !important;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2) !important;
+}
+
+/* Preview cards — the colored swatch inside each card is per-theme
+   (set via inline `style="background:..."`) and stays untouched.
+   Only the card frame and selection ring use studio colors. */
+.theme-studio-isolated .theme-card {
+  background-color: transparent !important;
+  border: 2px solid transparent !important;
+}
+.theme-studio-isolated .theme-card.is-selected {
+  border-color: #4f46e5 !important;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2) !important;
+}
+.theme-studio-isolated .theme-card-name {
+  color: #1f2937 !important;
+  background: transparent !important;
+}

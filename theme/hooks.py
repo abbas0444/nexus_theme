@@ -1,9 +1,9 @@
 app_name = "theme"
-app_title = "THemes"
+app_title = "Theme Studio"
 app_publisher = "Abbas Raza"
-app_description = "theme for ui"
+app_description = "Premium theme & sound customization for Frappe — live preview, WCAG contrast guard, curated palettes, and per-user sound packs."
 app_email = "abbasraza0444@gmail.com"
-app_license = "mit"
+app_license = "MIT"
 
 # Apps
 # ------------------
@@ -15,7 +15,7 @@ app_license = "mit"
 # 	{
 # 		"name": "theme",
 # 		"logo": "/assets/theme/logo.png",
-# 		"title": "THemes",
+# 		"title": "Themes",
 # 		"route": "/theme",
 # 		"has_permission": "theme.api.permission.has_app_permission"
 # 	}
@@ -25,8 +25,28 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/theme/css/theme.css"
-# app_include_js = "/assets/theme/js/theme.js"
+app_include_css = [
+	"/assets/theme/css/theme_variables.css",
+	"/assets/theme/css/theme_switcher.css",
+	"/assets/theme/css/sound_studio.css",
+]
+app_include_js = [
+	"/assets/theme/js/theme_manager.js",
+	"/assets/theme/js/theme_switcher.js",
+	"/assets/theme/js/theme_editor.js",
+	"/assets/theme/js/sound_manager.js",
+	"/assets/theme/js/sound_studio.js",
+]
+
+# Register the new 'notification' sound with Frappe so the <audio id="sound-notification">
+# element is rendered at boot. Reuses Frappe's stock alert.mp3 as the default — users
+# can upload their own via Sound Studio to override it.
+sounds = [
+	{"name": "notification", "src": "/assets/frappe/sounds/alert.mp3", "volume": 0.3},
+	{"name": "login", "src": "/assets/frappe/sounds/chime.mp3", "volume": 0.3},
+	{"name": "logout", "src": "/assets/frappe/sounds/cancel.mp3", "volume": 0.3},
+	{"name": "missing_fields", "src": "/assets/frappe/sounds/error.mp3", "volume": 0.3},
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/theme/css/theme.css"
@@ -234,6 +254,18 @@ app_license = "mit"
 # auth_hooks = [
 # 	"theme.auth.validate"
 # ]
+
+# Boot session
+# ------------
+# Inject active theme into bootinfo so first paint is themed without a round-trip.
+boot_session = "theme.api.extend_boot_session"
+
+# Fixtures
+# --------
+# Ship 10 default themes with the app; exported/imported via bench migrate.
+fixtures = [
+	{"dt": "Theme Definition", "filters": [["is_default", "=", 1]]},
+]
 
 # Automatically update python controller files with type annotations for this app.
 # export_python_type_annotations = True

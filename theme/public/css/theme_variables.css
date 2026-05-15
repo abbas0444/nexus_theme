@@ -1,0 +1,442 @@
+/* ==================================================================
+   Theme tokens
+   ------------------------------------------------------------------
+   Tokens fall into two families:
+
+   * Palette tokens (--theme-bg-*, --theme-text-*, --theme-accent, …)
+     come from the active Theme Definition and are written onto <html>
+     by theme_manager.js.
+
+   * Depth & rhythm tokens (--theme-shadow-*, --theme-ring, …) are
+     defined here once and used everywhere. They give the UI elevation
+     instead of the flat-paper look you get when only colors change.
+   ================================================================== */
+
+:root {
+  /* ---- Palette defaults (Theme Definition overrides at runtime) ---- */
+  --theme-bg-primary: #ffffff;
+  --theme-bg-surface: #f7f8fa;
+  --theme-bg-input: #ffffff;
+  --theme-text-primary: #1f2937;
+  --theme-text-muted: #6b7280;
+  --theme-accent: #4f46e5;
+  --theme-accent-hover: #4338ca;
+  --theme-button-bg: #4f46e5;
+  --theme-button-text: #ffffff;
+  --theme-button-hover-bg: #4338ca;
+  --theme-border: #e5e7eb;
+  --theme-font-family: "Inter", system-ui, -apple-system, sans-serif;
+  --theme-font-size-base: 14px;
+  --theme-font-weight-base: 400;
+  --theme-transition-duration: 150ms;
+  --theme-border-radius: 8px;
+
+  /* ---- Depth: shadow ladder ----
+     Same baseline for light & dark themes — black shadows naturally
+     fade into dark surfaces, so they stay subtle without extra logic. */
+  --theme-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --theme-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --theme-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --theme-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.06);
+  --theme-shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.18), 0 8px 16px rgba(0, 0, 0, 0.08);
+
+  /* ---- Focus ring (3px halo, accent-tinted, color-mix to soften) ---- */
+  --theme-ring:
+    0 0 0 3px color-mix(in srgb, var(--theme-accent) 22%, transparent);
+  --theme-ring-strong:
+    0 0 0 3px color-mix(in srgb, var(--theme-accent) 40%, transparent);
+
+  /* Standard easing — same curve everywhere reads as a single design. */
+  --theme-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* When a theme is active, also remap Frappe's own design tokens so any
+   built-in component that reads them (navbar, page-head, sidebar, inputs,
+   etc.) follows the active theme instead of Frappe's stock palette. */
+html[data-app-theme] {
+  --bg-color: var(--theme-bg-primary);
+  --fg-color: var(--theme-bg-primary);
+  --bg-light-gray: var(--theme-bg-surface);
+  --navbar-bg: var(--theme-bg-surface);
+  --subnavbar-bg-color: var(--theme-bg-surface);
+  --card-bg: var(--theme-bg-surface);
+  --control-bg: var(--theme-bg-input);
+  --control-bg-on-gray: var(--theme-bg-input);
+  --text-color: var(--theme-text-primary);
+  --text-muted: var(--theme-text-muted);
+  --text-light: var(--theme-text-muted);
+  --heading-color: var(--theme-text-primary);
+  --border-color: var(--theme-border);
+  --dark-border-color: var(--theme-border);
+  --primary: var(--theme-accent);
+  --primary-color: var(--theme-accent);
+  --btn-primary: var(--theme-button-bg);
+  --link-color: var(--theme-accent);
+  /* Frappe shadow tokens → our ladder */
+  --shadow-sm: var(--theme-shadow-sm);
+  --shadow-md: var(--theme-shadow-md);
+  --shadow-lg: var(--theme-shadow-lg);
+}
+
+html[data-app-theme],
+html[data-app-theme] body,
+html[data-app-theme] .page-container,
+html[data-app-theme] .layout-main-section,
+html[data-app-theme] .layout-main,
+html[data-app-theme] .main-section,
+html[data-app-theme] .page-body,
+html[data-app-theme] .container,
+html[data-app-theme] .desk-page {
+  background-color: var(--theme-bg-primary) !important;
+  color: var(--theme-text-primary) !important;
+  font-family: var(--theme-font-family);
+  font-size: var(--theme-font-size-base);
+  font-weight: var(--theme-font-weight-base);
+  transition:
+    background-color var(--theme-transition-duration) var(--theme-ease),
+    color var(--theme-transition-duration) var(--theme-ease);
+}
+
+/* ---- Surfaces: navbar, sidebar, page-head, cards, list rows ---- */
+html[data-app-theme] .navbar,
+html[data-app-theme] header.navbar,
+html[data-app-theme] .navbar-expand,
+html[data-app-theme] .sticky-top,
+html[data-app-theme] .page-head,
+html[data-app-theme] .page-head-wrapper,
+html[data-app-theme] .sub-page-head,
+html[data-app-theme] .sidebar,
+html[data-app-theme] .layout-side-section,
+html[data-app-theme] .widget,
+html[data-app-theme] .card,
+html[data-app-theme] .list-row,
+html[data-app-theme] .ce-block {
+  background-color: var(--theme-bg-surface) !important;
+  color: var(--theme-text-primary) !important;
+  border-color: var(--theme-border) !important;
+}
+
+/* Navbar gets a low shadow so it visually separates from the page body —
+   the single most effective change for "looks polished". */
+html[data-app-theme] .navbar,
+html[data-app-theme] header.navbar {
+  box-shadow: var(--theme-shadow-sm);
+  border-bottom: 1px solid var(--theme-border) !important;
+}
+
+/* Cards/widgets float just enough to feel tangible. */
+html[data-app-theme] .widget,
+html[data-app-theme] .card {
+  box-shadow: var(--theme-shadow-xs);
+  border-radius: var(--theme-border-radius);
+  transition:
+    box-shadow var(--theme-transition-duration) var(--theme-ease),
+    transform var(--theme-transition-duration) var(--theme-ease),
+    border-color var(--theme-transition-duration) var(--theme-ease);
+}
+
+html[data-app-theme] .widget:hover,
+html[data-app-theme] .card:hover {
+  box-shadow: var(--theme-shadow-md);
+  border-color: color-mix(in srgb, var(--theme-accent) 30%, var(--theme-border)) !important;
+}
+
+/* Modals/dropdowns/popovers get the heavy shadow for clear stacking. */
+html[data-app-theme] .modal-content,
+html[data-app-theme] .dropdown-menu,
+html[data-app-theme] .popover,
+html[data-app-theme] .menu-popover {
+  background-color: var(--theme-bg-surface) !important;
+  border: 1px solid var(--theme-border) !important;
+  border-radius: var(--theme-border-radius) !important;
+  box-shadow: var(--theme-shadow-lg) !important;
+}
+
+html[data-app-theme] .text-muted,
+html[data-app-theme] .small-label,
+html[data-app-theme] .description {
+  color: var(--theme-text-muted) !important;
+}
+
+/* ---- Form inputs ---- */
+html[data-app-theme] input,
+html[data-app-theme] textarea,
+html[data-app-theme] select,
+html[data-app-theme] .form-control,
+html[data-app-theme] .like-disabled-input,
+html[data-app-theme] .awesomplete > input {
+  background-color: var(--theme-bg-input);
+  color: var(--theme-text-primary);
+  border-color: var(--theme-border);
+  border-radius: var(--theme-border-radius);
+  transition:
+    border-color var(--theme-transition-duration) var(--theme-ease),
+    box-shadow var(--theme-transition-duration) var(--theme-ease),
+    background-color var(--theme-transition-duration) var(--theme-ease);
+}
+
+html[data-app-theme] input:hover,
+html[data-app-theme] textarea:hover,
+html[data-app-theme] select:hover,
+html[data-app-theme] .form-control:hover {
+  border-color: color-mix(in srgb, var(--theme-accent) 35%, var(--theme-border));
+}
+
+html[data-app-theme] input:focus,
+html[data-app-theme] textarea:focus,
+html[data-app-theme] select:focus,
+html[data-app-theme] .form-control:focus {
+  border-color: var(--theme-accent);
+  box-shadow: var(--theme-ring);
+  outline: none;
+}
+
+/* ---- Buttons ---- */
+html[data-app-theme] .btn,
+html[data-app-theme] button.btn,
+html[data-app-theme] .btn-primary,
+html[data-app-theme] .btn-default,
+html[data-app-theme] .btn-secondary {
+  border-radius: var(--theme-border-radius);
+  font-weight: 500;
+  transition:
+    background-color var(--theme-transition-duration) var(--theme-ease),
+    color var(--theme-transition-duration) var(--theme-ease),
+    border-color var(--theme-transition-duration) var(--theme-ease),
+    transform var(--theme-transition-duration) var(--theme-ease),
+    box-shadow var(--theme-transition-duration) var(--theme-ease);
+}
+
+html[data-app-theme] .btn:focus-visible,
+html[data-app-theme] button.btn:focus-visible {
+  box-shadow: var(--theme-ring-strong);
+  outline: none;
+}
+
+html[data-app-theme] .btn-primary,
+html[data-app-theme] .btn.btn-primary {
+  background-color: var(--theme-button-bg);
+  color: var(--theme-button-text);
+  border-color: var(--theme-button-bg);
+  box-shadow: var(--theme-shadow-xs);
+}
+
+html[data-app-theme] .btn-primary:hover,
+html[data-app-theme] .btn.btn-primary:hover,
+html[data-app-theme] .btn-primary:focus {
+  background-color: var(--theme-button-hover-bg);
+  border-color: var(--theme-button-hover-bg);
+  color: var(--theme-button-text);
+  box-shadow: var(--theme-shadow-sm);
+}
+
+html[data-app-theme] .btn-primary:active,
+html[data-app-theme] .btn.btn-primary:active {
+  transform: translateY(1px);
+  box-shadow: var(--theme-shadow-xs);
+}
+
+html[data-app-theme] .btn-default,
+html[data-app-theme] .btn-secondary {
+  background-color: var(--theme-bg-surface);
+  color: var(--theme-text-primary);
+  border-color: var(--theme-border);
+}
+
+html[data-app-theme] .btn-default:hover,
+html[data-app-theme] .btn-secondary:hover {
+  background-color: var(--theme-bg-input);
+  border-color: var(--theme-accent);
+  color: var(--theme-accent);
+}
+
+/* ---- Links ---- */
+html[data-app-theme] a,
+html[data-app-theme] .text-primary,
+html[data-app-theme] .link-primary {
+  color: var(--theme-accent);
+  transition: color var(--theme-transition-duration) var(--theme-ease);
+}
+
+html[data-app-theme] a:hover,
+html[data-app-theme] .link-primary:hover {
+  color: var(--theme-accent-hover);
+}
+
+/* ---- Hover lift (opt-in per theme) ---- */
+html[data-app-theme][data-hover-lift="1"] .btn:hover,
+html[data-app-theme][data-hover-lift="1"] a.nav-link:hover,
+html[data-app-theme][data-hover-lift="1"] .widget:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--theme-shadow-md);
+}
+
+/* ---- Placeholders (input, textarea) ---- */
+html[data-app-theme] input::placeholder,
+html[data-app-theme] textarea::placeholder,
+html[data-app-theme] .form-control::placeholder,
+html[data-app-theme] .awesomplete > input::placeholder {
+  color: var(--theme-text-muted) !important;
+  opacity: 0.85;
+}
+
+/* ==================================================================
+   Tables — bootstrap .table, raw <table>, Frappe DataTables, child grids
+   ================================================================== */
+
+/* Base table surface */
+html[data-app-theme] table,
+html[data-app-theme] .table,
+html[data-app-theme] table.table {
+  background-color: var(--theme-bg-primary) !important;
+  color: var(--theme-text-primary) !important;
+  border-color: var(--theme-border) !important;
+}
+
+/* Header row — slightly raised surface for clear separation */
+html[data-app-theme] table thead,
+html[data-app-theme] .table thead,
+html[data-app-theme] table thead th,
+html[data-app-theme] .table thead th,
+html[data-app-theme] .dt-header,
+html[data-app-theme] .dt-header-cell,
+html[data-app-theme] .grid-heading-row,
+html[data-app-theme] .grid-heading-row .static-area {
+  background-color: var(--theme-bg-surface) !important;
+  color: var(--theme-text-primary) !important;
+  border-color: var(--theme-border) !important;
+  font-weight: 600;
+}
+
+/* Cells */
+html[data-app-theme] table td,
+html[data-app-theme] table th,
+html[data-app-theme] .table td,
+html[data-app-theme] .table th,
+html[data-app-theme] .dt-cell,
+html[data-app-theme] .dt-cell__content,
+html[data-app-theme] .grid-static-col,
+html[data-app-theme] .grid-row .data-row .static-area {
+  color: var(--theme-text-primary) !important;
+  border-color: var(--theme-border) !important;
+}
+
+/* Row separators */
+html[data-app-theme] table tr,
+html[data-app-theme] .table tr,
+html[data-app-theme] .dt-row,
+html[data-app-theme] .grid-row {
+  border-color: var(--theme-border) !important;
+}
+
+/* Row hover — accent-tinted, follows the active theme */
+html[data-app-theme] table tbody tr:hover,
+html[data-app-theme] .table tbody tr:hover,
+html[data-app-theme] .dt-row:hover,
+html[data-app-theme] .grid-row:hover {
+  background-color: color-mix(in srgb, var(--theme-accent) 10%, transparent) !important;
+}
+
+/* Striped tables: keep zebra effect but tint with theme */
+html[data-app-theme] .table-striped tbody tr:nth-of-type(odd),
+html[data-app-theme] .dt-row-striped {
+  background-color: color-mix(in srgb, var(--theme-bg-surface) 50%, var(--theme-bg-primary)) !important;
+}
+
+/* DataTable scrollbar/filter/footer pieces */
+html[data-app-theme] .dt-instance-1,
+html[data-app-theme] .dt-scrollable,
+html[data-app-theme] .dt-row-filter,
+html[data-app-theme] .datatable {
+  background-color: var(--theme-bg-primary) !important;
+  color: var(--theme-text-primary) !important;
+  border-color: var(--theme-border) !important;
+}
+
+/* Frappe list view rows (used in document list pages) */
+html[data-app-theme] .list-row,
+html[data-app-theme] .list-row-container,
+html[data-app-theme] .list-subject {
+  color: var(--theme-text-primary) !important;
+  border-color: var(--theme-border) !important;
+}
+
+/* ---- Unified hover affordance (rows, dropdowns, menus, nav, sidebar) ---- */
+html[data-app-theme] .list-row:hover,
+html[data-app-theme] .list-row-container:hover,
+html[data-app-theme] .dropdown-item:hover,
+html[data-app-theme] .menu-item:hover,
+html[data-app-theme] .nav-link:hover,
+html[data-app-theme] .sidebar-item:hover,
+html[data-app-theme] .standard-sidebar-item:hover,
+html[data-app-theme] .desk-sidebar-item:hover {
+  background-color: color-mix(in srgb, var(--theme-accent) 10%, transparent) !important;
+  color: var(--theme-text-primary) !important;
+}
+
+/* Active/selected sidebar items use a stronger tint so they stand out */
+html[data-app-theme] .sidebar-item.selected,
+html[data-app-theme] .standard-sidebar-item.selected,
+html[data-app-theme] .desk-sidebar-item.selected {
+  background-color: color-mix(in srgb, var(--theme-accent) 18%, transparent) !important;
+  color: var(--theme-accent) !important;
+  font-weight: 600;
+}
+
+/* ---- Selection (text highlight) — uses accent for cohesion ---- */
+html[data-app-theme] ::selection {
+  background-color: color-mix(in srgb, var(--theme-accent) 30%, transparent);
+  color: var(--theme-text-primary);
+}
+
+/* ---- Scrollbar ---- */
+html[data-app-theme] ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+html[data-app-theme] ::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--theme-accent) 35%, transparent);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color var(--theme-transition-duration) var(--theme-ease);
+}
+html[data-app-theme] ::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--theme-accent) 55%, transparent);
+}
+html[data-app-theme] ::-webkit-scrollbar-track {
+  background-color: var(--theme-bg-surface);
+}
+html[data-app-theme] {
+  scrollbar-color: color-mix(in srgb, var(--theme-accent) 35%, transparent)
+    var(--theme-bg-surface);
+}
+
+/* ---- Theme switch crossfade ----
+   Brief opacity dip on the page body when the user commits a new theme,
+   so the swap reads as a deliberate transition instead of a paint flash.
+   Triggered by ThemeManager.setActive() and resetToFrappeDefault() only —
+   live preview from the gallery does NOT trigger this, otherwise every
+   gallery click would strobe.
+   Theme Studio dialog is excluded so the modal chrome stays steady. */
+body.theme-switching {
+  transition: opacity 220ms var(--theme-ease, cubic-bezier(0.4, 0, 0.2, 1));
+}
+body.theme-switching > :not(.modal-backdrop):not(.modal):not(.theme-studio-isolated) {
+  opacity: 0.65;
+  transition: opacity 220ms var(--theme-ease, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+/* ---- Reduced motion: kill all transitions/animations ---- */
+@media (prefers-reduced-motion: reduce) {
+  html[data-app-theme] *,
+  html[data-app-theme] *::before,
+  html[data-app-theme] *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  body.theme-switching > * {
+    opacity: 1 !important;
+  }
+}
