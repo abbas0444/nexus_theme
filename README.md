@@ -1,34 +1,7 @@
-<table width="100%" cellpadding="0" cellspacing="0" border="0"
-       style="width:100%; border-collapse:collapse; border:none;">
-
-<tr style="border:none;">
-
-    <!-- Left Logo -->
-    <td align="left" valign="middle"
-        style="padding:0; border:none !important; background:transparent;">
-        <img src="logos/logo.svg"
-             alt="Nexus Theme"
-             height="56"
-             style="display:block; border:none;">
-    </td>
-
-    <!-- Spacer -->
-    <td width="100%"
-        style="border:none !important; background:transparent;">
-    </td>
-
-    <!-- Right Logo -->
-    <td align="right" valign="middle"
-        style="padding:0; border:none !important; background:transparent;">
-        <img src="logos/frappe_logo.png"
-             alt="Frappe"
-             height="56"
-             style="display:block; border:none;">
-    </td>
-
-</tr>
-
-</table>
+<div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+    <img src="logos/logo.svg" alt="Nexus Theme" height="45">
+    <img src="logos/frappe_logo.png" alt="Frappe" height="52" align="right" >
+</div>
 <div align="center" markdown="1">
 
 # Nexus Theme
@@ -258,8 +231,10 @@ MIT — see [license.txt](license.txt). This covers the application code, the bu
 
 ---
 
-<div align="center">
+<p align="center"><strong>Built with Frappe&nbsp; · &nbsp;by Abbas Raza</strong></p>
 
-Built with <img src="logos/frappe_logo.png" alt="Frappe" height="50"> &nbsp;·&nbsp; by <img src="logos/logo.svg" alt="Nexus Theme" height="50">
-
-</div>
+<p align="center">
+  <img src="logos/frappe_logo.png" alt="Frappe" height="32">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="logos/logo.svg" alt="Nexus Theme" height="32">
+</p>
