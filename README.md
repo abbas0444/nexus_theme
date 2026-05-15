@@ -31,7 +31,7 @@
 </table>
 <div align="center" markdown="1">
 
-# Theme Studio
+# Nexus Theme
 
 Per-user theme and sound personalization for Frappe & ERPNext Desk — live color editor, curated WCAG-validated palettes, 17 bundled themes, and a Sound Studio that lets every user pick their own audio for save / submit / login / notifications and more.
 

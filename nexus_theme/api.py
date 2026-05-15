@@ -97,7 +97,11 @@ def set_active_theme(theme_name: str, overrides=None):
 			overrides = json.loads(overrides or "{}")
 		except Exception:
 			overrides = {}
-	overrides = overrides or {}
+	# Drop any override whose value isn't a real color / CSS token before it
+	# is persisted — overrides_json is injected into the DOM as CSS on boot.
+	from nexus_theme.utils.css_safety import sanitize_overrides
+
+	overrides = sanitize_overrides(overrides or {})
 
 	user = frappe.session.user
 	pref_name = frappe.db.exists("User Theme Preference", {"user": user})

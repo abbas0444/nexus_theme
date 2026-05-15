@@ -8,9 +8,8 @@
  "engine": "InnoDB",
  "field_order": [
   "user",
-  "enabled",
-  "sounds_section",
-  "sounds"
+  "active_theme",
+  "overrides_json"
  ],
  "fields": [
   {
@@ -23,30 +22,26 @@
    "unique": 1
   },
   {
-   "default": "1",
-   "description": "Master on/off switch. When off, no customized or default sounds play.",
-   "fieldname": "enabled",
-   "fieldtype": "Check",
-   "label": "Enabled"
+   "fieldname": "active_theme",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Active Theme",
+   "options": "Theme Definition",
+   "reqd": 1
   },
   {
-   "fieldname": "sounds_section",
-   "fieldtype": "Section Break",
-   "label": "Per-Event Sounds"
-  },
-  {
-   "fieldname": "sounds",
-   "fieldtype": "Table",
-   "label": "Sounds",
-   "options": "User Sound Mapping"
+   "description": "Sparse CSS variable overrides layered on top of the active theme.",
+   "fieldname": "overrides_json",
+   "fieldtype": "Long Text",
+   "label": "Overrides (JSON)"
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
  "modified": "2026-04-22 00:00:00",
  "modified_by": "Administrator",
- "module": "Themes",
- "name": "User Sound Preference",
+ "module": "Nexus Theme",
+ "name": "User Theme Preference",
  "owner": "Administrator",
  "permissions": [
   {
