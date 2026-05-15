@@ -15,6 +15,12 @@ dependencies = [
 requires = ["flit_core >=3.4,<4"]
 build-backend = "flit_core.buildapi"
 
+# Frappe Cloud uses this to validate the app against the bench's Frappe
+# version. Constraints are comma-separated NPM/pip-style ranges and must be
+# bounded (both a lower and an upper limit).
+[tool.bench.frappe-dependencies]
+frappe = ">=15.0.0,<16.0.0"
+
 # These dependencies are only installed when developer mode is enabled
 [tool.bench.dev-dependencies]
 # package_name = "~=1.1.0"
