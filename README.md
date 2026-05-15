@@ -82,8 +82,8 @@ Per-user theme and sound personalization for Frappe & ERPNext Desk — live colo
 
 ```bash
 cd ~/frappe-bench
-bench get-app https://github.com/<owner>/theme
-bench --site <your-site> install-app theme
+bench get-app https://github.com/abbas0444/nexus_theme.git
+bench --site <your-site> install-app nexus_theme
 bench --site <your-site> migrate
 bench build
 bench restart
@@ -92,7 +92,7 @@ bench restart
 Upgrade later:
 
 ```bash
-cd ~/frappe-bench/apps/theme
+cd ~/frappe-bench/apps/nexus_theme
 git pull
 cd ~/frappe-bench
 bench --site <your-site> migrate
@@ -184,20 +184,20 @@ Whitelisted Python entry points — callable from JS or REST.
 
 ```python
 # Theme — read + write
-theme.api.get_available_themes()                          # → {defaults, owned, public}
-theme.api.get_active_theme()                              # → {theme, overrides}
-theme.api.set_active_theme(theme_name, overrides=None)    # apply a theme
-theme.api.save_custom_theme(payload, share_public=0)      # create/update a theme
-theme.api.delete_custom_theme(theme_name)
-theme.api.clear_active_theme()                            # back to Frappe stock
-theme.api.get_recommended_palettes()                      # the 8 curated palettes
+nexus_theme.api.get_available_themes()                       # → {defaults, owned, public}
+nexus_theme.api.get_active_theme()                           # → {theme, overrides}
+nexus_theme.api.set_active_theme(theme_name, overrides=None) # apply a theme
+nexus_theme.api.save_custom_theme(payload, share_public=0)   # create/update a theme
+nexus_theme.api.delete_custom_theme(theme_name)
+nexus_theme.api.clear_active_theme()                         # back to Frappe stock
+nexus_theme.api.get_recommended_palettes()                   # the 8 curated palettes
 
 # Sounds — read + write
-theme.api.get_user_sounds()                               # → {enabled, mapping}
-theme.api.set_user_sound(event_key, file_url, volume=0.5)
-theme.api.clear_user_sound(event_key)
-theme.api.toggle_user_sounds(enabled)                     # 0/1 master switch
-theme.api.clear_all_user_sounds()
+nexus_theme.api.get_user_sounds()                            # → {enabled, mapping}
+nexus_theme.api.set_user_sound(event_key, file_url, volume=0.5)
+nexus_theme.api.clear_user_sound(event_key)
+nexus_theme.api.toggle_user_sounds(enabled)                  # 0/1 master switch
+nexus_theme.api.clear_all_user_sounds()
 ```
 
 All endpoints respect Frappe's permission system and invalidate the per-user `bootinfo` cache on write, so the **next page load** picks up the change without a `bench restart`.
@@ -215,7 +215,7 @@ SoundManager.applyMapping({ login: { url: "/files/my.mp3", volume: 0.6 } });
 SoundManager.setEnabled(true);
 ```
 
-The full sound playback pipeline (event → audio element → 3-second cap → volume) is wired in [`sound_manager.js`](theme/public/js/sound_manager.js); the editor UI is in [`sound_studio.js`](theme/public/js/sound_studio.js).
+The full sound playback pipeline (event → audio element → 3-second cap → volume) is wired in [`sound_manager.js`](nexus_theme/public/js/sound_manager.js); the editor UI is in [`sound_studio.js`](nexus_theme/public/js/sound_studio.js).
 
 ---
 
@@ -238,9 +238,23 @@ The full sound playback pipeline (event → audio element → 3-second cap → v
 
 ---
 
+## Sounds
+
+Every bundled sound in [`nexus_theme/public/sounds/`](nexus_theme/public/sounds/) is an **original tone synthesised from scratch** by [`tools/generate_sounds.py`](tools/generate_sounds.py) using only the Python standard library — no recordings, no samples, no third-party audio. There are 36 files: 12 Desk events × 3 presets each, with preset 1 of every event registered as the default.
+
+To retune or regenerate them, edit the recipes in `tools/generate_sounds.py` and run:
+
+```bash
+python3 tools/generate_sounds.py
+```
+
+Because the audio is generated, it carries **no external license or attribution requirement** — it is covered by the same MIT license as the rest of the app.
+
+---
+
 ## License
 
-MIT — see [license.txt](license.txt).
+MIT — see [license.txt](license.txt). This covers the application code, the bundled themes and palettes, and the synthesised sound files alike.
 
 ---
 

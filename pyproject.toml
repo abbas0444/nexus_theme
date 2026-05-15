@@ -1,9 +1,9 @@
 [project]
-name = "theme"
+name = "nexus_theme"
 authors = [
     { name = "Abbas Raza", email = "abbasraza0444@gmail.com"}
 ]
-description = "theme for ui"
+description = "Per-user theme and sound personalization for the Frappe & ERPNext Desk — live color editor, WCAG-validated palettes, and a per-user Sound Studio."
 requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]
