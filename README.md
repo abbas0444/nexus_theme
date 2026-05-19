@@ -6,7 +6,7 @@
 </table>
 <div align="center" markdown="1">
 
-# Nexus Theme
+# theme and Sounds
 
 Per-user theme and sound personalization for Frappe & ERPNext Desk — live color editor, curated WCAG-validated palettes, 17 bundled themes, and a Sound Studio that lets every user pick their own audio for save / submit / login / notifications and more.
 
@@ -48,7 +48,7 @@ Per-user theme and sound personalization for Frappe & ERPNext Desk — live colo
 
 **Operations:**
 - Whitelisted Python + JS APIs to drive theme/sound changes from your own buttons / hooks / scripts.
-- 17 default themes shipped as fixtures — `bench migrate` is idempotent and safe to re-run.
+- 17 default themes shipped as fixtures — re-syncing them is idempotent and safe.
 - Migration patches (`v1_0` / `v1_1` / `v1_2`) handle upgrades cleanly between releases.
 
 ---
@@ -172,7 +172,7 @@ The full sound playback pipeline (event → audio element → 3-second cap → v
 - **Theme scope** — themes recolor the Desk via CSS variables. Pages that hard-code colors in their own CSS (third-party app dialogs, charts with baked-in palettes) may not pick up every token.
 - **Public themes are global** — sharing a custom theme publicly makes it visible to all users on the site. There's no per-role visibility.
 - **Sound autoplay** — browsers block audio on the very first page load before any user gesture. The login sound is played 250ms after Desk ready; if your browser's autoplay policy is strict, it may silently skip the first one and play normally from the next event onwards.
-- **`bench migrate`** is required after upgrades that ship new default themes — fixtures only re-sync on migrate.
+- **Default theme updates** — new default themes added in an upgrade re-sync as fixtures; existing custom themes are never overwritten.
 - **Sound files** are stored as standard Frappe File records under `Home/Attachments`. Very large uploads count against the user's file quota.
 
 ---
