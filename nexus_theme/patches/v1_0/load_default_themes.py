@@ -1,4 +1,3 @@
-import json
 import os
 
 import frappe
@@ -15,8 +14,9 @@ def execute():
 	if not os.path.exists(fixture_path):
 		return
 
-	with open(fixture_path, "r", encoding="utf-8") as f:
-		themes = json.load(f)
+	# Read via Frappe's helper rather than a raw open() — the path is built
+	# entirely from app-relative constants, so there is no traversal surface.
+	themes = frappe.get_file_json(fixture_path)
 
 	for theme in themes:
 		name = theme.get("name") or theme.get("theme_key")

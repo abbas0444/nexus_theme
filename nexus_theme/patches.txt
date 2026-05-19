@@ -9,3 +9,4 @@ nexus_theme.patches.v1_1.sync_default_themes
 nexus_theme.patches.v1_2.drop_light_default_theme
 nexus_theme.patches.v1_3.rename_themes_module
 nexus_theme.patches.v1_4.rename_module_to_app
+nexus_theme.patches.v1_5.assign_theme_user_role
