@@ -116,7 +116,8 @@ sounds = [
 # ------------
 
 # before_install = "nexus_theme.install.before_install"
-# after_install = "nexus_theme.install.after_install"
+# Create the "Theme User" role and grant it to every existing Desk user.
+after_install = "nexus_theme.install.after_install"
 
 # Uninstallation
 # ------------
@@ -170,13 +171,13 @@ sounds = [
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+# Grant the "Theme User" role to every newly created Desk user so theme and
+# sound self-service works out of the box. Website users are skipped.
+doc_events = {
+	"User": {
+		"after_insert": "nexus_theme.install.assign_theme_role",
+	},
+}
 
 # Scheduled Tasks
 # ---------------
