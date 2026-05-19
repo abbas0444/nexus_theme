@@ -52,33 +52,6 @@ Per-user theme and sound personalization for Frappe & ERPNext Desk — live colo
 - Migration patches (`v1_0` / `v1_1` / `v1_2`) handle upgrades cleanly between releases.
 
 ---
-
-## How to Install
-
-```bash
-cd ~/frappe-bench
-bench get-app https://github.com/abbas0444/nexus_theme.git
-bench --site <your-site> install-app nexus_theme
-bench --site <your-site> migrate
-bench build
-bench restart
-```
-
-Upgrade later:
-
-```bash
-cd ~/frappe-bench/apps/nexus_theme
-git pull
-cd ~/frappe-bench
-bench --site <your-site> migrate
-bench build
-bench restart
-```
-
-Migrations are idempotent — `bench migrate` is safe to run any number of times.
-
----
-
 ## Setup and Use
 
 Nothing to configure on install. The app injects a **theme switcher icon** into the navbar and a **Sound Settings** link into the user dropdown the first time the Desk loads.
