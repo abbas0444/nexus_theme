@@ -114,7 +114,6 @@ def set_active_theme(theme_name: str, overrides=None):
 	pref.active_theme = theme_name
 	pref.overrides_json = json.dumps(overrides)
 	pref.save(ignore_permissions=False)
-	frappe.db.commit()
 	_invalidate_bootinfo(user)
 	return {"ok": True}
 
@@ -154,7 +153,6 @@ def save_custom_theme(payload, share_public=0):
 	doc.theme_name = payload["theme_name"]
 	doc.is_public = 1 if int(share_public or 0) else 0
 	doc.save(ignore_permissions=False)
-	frappe.db.commit()
 	_invalidate_bootinfo(user)
 	return {"name": doc.name}
 
@@ -166,7 +164,6 @@ def clear_active_theme():
 	pref_name = frappe.db.exists("User Theme Preference", {"user": user})
 	if pref_name:
 		frappe.delete_doc("User Theme Preference", pref_name, ignore_permissions=False)
-		frappe.db.commit()
 	_invalidate_bootinfo(user)
 	return {"ok": True}
 
@@ -193,7 +190,6 @@ def delete_custom_theme(theme_name: str):
 	if doc.owner_user != frappe.session.user:
 		frappe.throw(_("You can only delete your own themes"))
 	frappe.delete_doc("Theme Definition", theme_name)
-	frappe.db.commit()
 	return {"ok": True}
 
 
@@ -285,7 +281,6 @@ def set_user_sound(event_key: str, file_url: str, volume: float | str | None = 0
 	else:
 		pref.append("sounds", {"event_key": event_key, "file": file_url, "volume": vol})
 	pref.save(ignore_permissions=False)
-	frappe.db.commit()
 	_invalidate_bootinfo()
 	return {"ok": True, "event_key": event_key}
 
@@ -301,7 +296,6 @@ def clear_user_sound(event_key: str):
 	pref = frappe.get_doc("User Sound Preference", name)
 	pref.sounds = [r for r in (pref.sounds or []) if r.event_key != event_key]
 	pref.save(ignore_permissions=False)
-	frappe.db.commit()
 	_invalidate_bootinfo()
 	return {"ok": True, "event_key": event_key}
 
@@ -311,7 +305,6 @@ def toggle_user_sounds(enabled):
 	pref = _get_or_create_sound_pref()
 	pref.enabled = 1 if int(enabled or 0) else 0
 	pref.save(ignore_permissions=False)
-	frappe.db.commit()
 	_invalidate_bootinfo()
 	return {"ok": True, "enabled": pref.enabled}
 
@@ -326,6 +319,5 @@ def clear_all_user_sounds():
 	pref = frappe.get_doc("User Sound Preference", name)
 	pref.sounds = []
 	pref.save(ignore_permissions=False)
-	frappe.db.commit()
 	_invalidate_bootinfo()
 	return {"ok": True}

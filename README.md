@@ -1,7 +1,9 @@
-<div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-    <img src="logos/logo.svg" alt="Nexus Theme" height="45">
-    <img src="logos/frappe_logo.png" alt="Frappe" height="52" align="right" >
-</div>
+<table width="100%" border="0">
+<tr>
+<td align="left"><img src="logos/logo.svg" alt="Nexus Theme" height="45"></td>
+<td align="right"><img src="logos/frappe_logo.png" alt="Frappe" height="52"></td>
+</tr>
+</table>
 <div align="center" markdown="1">
 
 # Nexus Theme
