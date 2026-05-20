@@ -120,7 +120,7 @@ Each row is one event. From left to right:
 
 Click a preset chip to assign it (saves automatically). Drop an audio file with **Upload** to use your own. **Default** restores Frappe's stock sound for that event. **Reset All to Default** in the footer wipes every customization in one click.
 
-### Reset to Frappe defaults
+### Reset to Frappe defaults..
 
 From the theme switcher dialog, click **Reset to Frappe Default**. Your `User Theme Preference` row is deleted and the next page load renders stock Frappe. Sound customizations are unaffected — use **Reset All to Default** in Sound Studio for those.
 
