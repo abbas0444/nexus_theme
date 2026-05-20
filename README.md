@@ -21,7 +21,7 @@ Per-user theme and sound personalization for Frappe & ERPNext Desk — live colo
 **Theme Switcher (gallery):**
 - 17 ready-made themes bundled on install — Midnight Indigo, Dracula, Tokyo Night, GitHub Light/Dark, Solarized, Nord Frost, Cyberpunk Neon, High Contrast, and more.
 - One-click apply with instant preview. Switch between Default / Custom / Public tabs to browse.
-- "Reset to Frappe Default" reverts the UI without uninstalling the app.
+- "Reset to Frappe Default" reverts the UI without uninstalling the app..
 
 **Theme Editor (live, side-by-side):**
 - Basic tier — background, text, accent, font family, font size, corner radius, hover lift.
