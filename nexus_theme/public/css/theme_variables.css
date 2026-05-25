@@ -60,6 +60,7 @@ html[data-app-theme] {
   --navbar-bg: var(--theme-bg-surface);
   --subnavbar-bg-color: var(--theme-bg-surface);
   --card-bg: var(--theme-bg-surface);
+  --modal-bg: var(--theme-bg-primary);
   --control-bg: var(--theme-bg-input);
   --control-bg-on-gray: var(--theme-bg-input);
   --text-color: var(--theme-text-primary);
@@ -72,10 +73,75 @@ html[data-app-theme] {
   --primary-color: var(--theme-accent);
   --btn-primary: var(--theme-button-bg);
   --link-color: var(--theme-accent);
+  /* Frappe paints all SVG icons with `stroke: var(--icon-stroke)` and
+     defaults that token to `var(--gray-800)` — a fixed dark gray that
+     ignores the active theme, so navbar/grid/menu icons disappear on
+     themes whose text isn't dark gray. Remap it (and the fill variant)
+     to the theme's text color so every icon follows the theme. */
+  --icon-stroke: var(--theme-text-primary);
+  --icon-fill-bg: var(--theme-bg-primary);
+  /* Frappe styles display-mode fields (.like-disabled-input) from these
+     tokens. They default to var(--gray-50) / var(--gray-600), which we
+     never remap — so on dark themes the fields end up invisible (or on
+     themes where bg_input equals bg_primary like GitHub Dark, the field
+     blends into the page). Point them at our elevated surface so the
+     field box is always visible against the page background. */
+  --disabled-control-bg: var(--theme-bg-surface);
+  --disabled-text-color: var(--theme-text-primary);
+  --input-disabled-bg: var(--theme-bg-surface);
   /* Frappe shadow tokens → our ladder */
   --shadow-sm: var(--theme-shadow-sm);
   --shadow-md: var(--theme-shadow-md);
   --shadow-lg: var(--theme-shadow-lg);
+}
+
+/* Targeted icon/text overrides for places Frappe hardcodes a gray that
+   wins over our html-level --icon-stroke remap. */
+
+/* Navbar "Help" text — Bootstrap's .nav-link default is a muted color
+   that doesn't follow the active theme. Force it to the theme text. */
+html[data-app-theme] .navbar .nav-link,
+html[data-app-theme] .navbar .nav-link span,
+html[data-app-theme] .navbar .dropdown-help .nav-link {
+  color: var(--theme-text-primary) !important;
+}
+
+/* Sidebar toggle (hamburger) — page.scss locally sets
+   `--icon-stroke: var(--gray-700)` which overrides our html-level value.
+   Re-pin it on the element so the icon follows the theme. */
+html[data-app-theme] .page-title .sidebar-toggle-btn,
+html[data-app-theme] .sidebar-toggle-btn {
+  --icon-stroke: var(--theme-text-primary) !important;
+}
+
+/* Child-table column-configure gear — grid_row.js renders it with an
+   inline `style="filter: opacity(0.5)"` to dim it. That inline style
+   wins over any class-based color rule, so we cancel the filter at the
+   SVG level to restore full contrast. */
+html[data-app-theme] .grid-static-col svg.icon,
+html[data-app-theme] .grid-static-col a svg {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+/* Toast notifications (frappe.show_alert / "Theme applied" pill).
+   Frappe's toast keeps the light pastel background (--alert-bg-*) on
+   every theme because we don't trigger its dark-mode CSS, but the
+   toast text color falls back to our themed --text-color, which is
+   light on dark themes. Light text on light pastel = invisible.
+   Force a dark text + subtle icon stroke so the toast stays readable
+   on every theme. */
+html[data-app-theme] .desk-alert .alert-message,
+html[data-app-theme] .desk-alert .alert-title-container,
+html[data-app-theme] .desk-alert .alert-subtitle,
+html[data-app-theme] .desk-alert .next-action {
+  color: #1f2937 !important;
+}
+
+html[data-app-theme] .desk-alert .alert-message-container .icon,
+html[data-app-theme] .desk-alert .close .icon {
+  --icon-stroke: #1f2937 !important;
+  fill: #1f2937 !important;
 }
 
 html[data-app-theme],
@@ -141,8 +207,7 @@ html[data-app-theme] .card:hover {
   border-color: color-mix(in srgb, var(--theme-accent) 30%, var(--theme-border)) !important;
 }
 
-/* Modals/dropdowns/popovers get the heavy shadow for clear stacking. */
-html[data-app-theme] .modal-content,
+/* Dropdowns/popovers get the heavy shadow for clear stacking. */
 html[data-app-theme] .dropdown-menu,
 html[data-app-theme] .popover,
 html[data-app-theme] .menu-popover {
@@ -152,27 +217,125 @@ html[data-app-theme] .menu-popover {
   box-shadow: var(--theme-shadow-lg) !important;
 }
 
+/* Modal surfaces match the page background so the dialog interior reads
+   as a continuation of the page (most visible on the grid-row "Editing
+   Row" dialog, which is large enough that any color drift is jarring).
+   Form sections inside the modal stay transparent so they inherit. */
+html[data-app-theme] .modal-content,
+html[data-app-theme] .modal-header,
+html[data-app-theme] .modal-body,
+html[data-app-theme] .modal-footer {
+  background-color: var(--theme-bg-primary) !important;
+  border-color: var(--theme-border) !important;
+}
+
+html[data-app-theme] .modal-content {
+  border: 1px solid var(--theme-border) !important;
+  border-radius: var(--theme-border-radius) !important;
+  box-shadow: var(--theme-shadow-lg) !important;
+}
+
+html[data-app-theme] .modal .form-section,
+html[data-app-theme] .modal .form-column,
+html[data-app-theme] .modal .section-body,
+html[data-app-theme] .modal .form-layout,
+html[data-app-theme] .modal .form-page,
+html[data-app-theme] .modal .form-tabs-list,
+html[data-app-theme] .modal .form-tabs,
+html[data-app-theme] .modal .grid-row-edit-form,
+html[data-app-theme] .modal .frappe-control,
+html[data-app-theme] .modal .section-head,
+html[data-app-theme] .modal .form-dashboard,
+html[data-app-theme] .modal .std-form-layout {
+  background-color: transparent !important;
+}
+
+/* Inputs inside the modal: same surface as the outside fields. */
+html[data-app-theme] .modal input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]),
+html[data-app-theme] .modal textarea,
+html[data-app-theme] .modal select,
+html[data-app-theme] .modal .form-control,
+html[data-app-theme] .modal .awesomplete > input {
+  background-color: var(--theme-bg-input) !important;
+  color: var(--theme-text-primary) !important;
+  border: 1px solid var(--theme-border) !important;
+}
+
+html[data-app-theme] .modal .like-disabled-input {
+  background-color: var(--theme-bg-surface) !important;
+  color: var(--theme-text-primary) !important;
+  border: 1px solid var(--theme-border) !important;
+}
+
+/* ---- Grid row inline edit form (.form-in-grid) ----
+   The "Editing Row #N" panel that opens when you click the edit icon on
+   a child table row is NOT a Bootstrap modal — it's an inline panel that
+   Frappe renders inside the grid row wrapper. Frappe styles it from
+   `var(--modal-bg)`, so we remap that token above AND set the surface
+   directly here to match the page (so the panel reads as a continuation
+   of the page across every theme). */
+html[data-app-theme] .form-in-grid,
+html[data-app-theme] .grid-row-open .form-in-grid,
+html[data-app-theme] .form-in-grid .grid-form-body,
+html[data-app-theme] .form-in-grid .grid-form-heading,
+html[data-app-theme] .form-in-grid .form-area,
+html[data-app-theme] .form-in-grid .form-section,
+html[data-app-theme] .form-in-grid .form-column,
+html[data-app-theme] .form-in-grid .section-body {
+  background-color: var(--theme-bg-primary) !important;
+  color: var(--theme-text-primary) !important;
+}
+
+html[data-app-theme] .form-in-grid input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]),
+html[data-app-theme] .form-in-grid textarea,
+html[data-app-theme] .form-in-grid select,
+html[data-app-theme] .form-in-grid .form-control,
+html[data-app-theme] .form-in-grid .awesomplete > input {
+  background-color: var(--theme-bg-input) !important;
+  color: var(--theme-text-primary) !important;
+  border: 1px solid var(--theme-border) !important;
+}
+
+html[data-app-theme] .form-in-grid .like-disabled-input {
+  background-color: var(--theme-bg-surface) !important;
+  color: var(--theme-text-primary) !important;
+  border: 1px solid var(--theme-border) !important;
+}
+
 html[data-app-theme] .text-muted,
 html[data-app-theme] .small-label,
 html[data-app-theme] .description {
   color: var(--theme-text-muted) !important;
 }
 
-/* ---- Form inputs ---- */
-html[data-app-theme] input,
+/* ---- Form inputs ----
+   Frappe's `.form-control` sets `border: none`, so a plain `border-color`
+   here paints nothing. We force `1px solid` width/style so the theme-
+   colored border is always drawn — without it, fields disappear on dark
+   themes where bg_input is close to (or equal to) bg_primary. */
+html[data-app-theme] input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]),
 html[data-app-theme] textarea,
 html[data-app-theme] select,
 html[data-app-theme] .form-control,
-html[data-app-theme] .like-disabled-input,
 html[data-app-theme] .awesomplete > input {
   background-color: var(--theme-bg-input);
   color: var(--theme-text-primary);
-  border-color: var(--theme-border);
+  border: 1px solid var(--theme-border);
   border-radius: var(--theme-border-radius);
   transition:
     border-color var(--theme-transition-duration) var(--theme-ease),
     box-shadow var(--theme-transition-duration) var(--theme-ease),
     background-color var(--theme-transition-duration) var(--theme-ease);
+}
+
+/* Display-mode field wrapper. Uses bg-surface (always distinct from
+   bg-primary in every theme) so the read-only field area is visible
+   even when the theme's bg_input equals bg_primary (e.g. GitHub Dark). */
+html[data-app-theme] .like-disabled-input {
+  background-color: var(--theme-bg-surface);
+  color: var(--theme-text-primary);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--theme-border-radius);
 }
 
 html[data-app-theme] input:hover,
