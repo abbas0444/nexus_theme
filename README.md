@@ -4,448 +4,547 @@
 
 # Nexus Theme
 
-**Make your workspace yours!** Personalize your ERPNext/Frappe colors and sounds in seconds. Pick from 17 pre-designed themes, or create your own from scratch. Every change updates instantly, and everything is built to be easy on the eyes.
+**Make your workspace yours.** Colours, sounds and a clear view of who can do what, all inside your ERPNext / Frappe Desk. Pick one of 17 ready-made themes or build your own, choose the sounds the Desk plays, and let administrators see and change permissions in plain language.
 
-![ERPNext 16](https://img.shields.io/badge/ERPNext-16-blue) ![Frappe 16](https://img.shields.io/badge/Frappe-16-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey)
+![ERPNext 16](https://img.shields.io/badge/ERPNext-16-blue) ![Frappe 16](https://img.shields.io/badge/Frappe-16-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey) ![Version 1.0.0](https://img.shields.io/badge/version-1.0.0-green)
 
 </div>
 
 ---
 
-## ✨ What Can You Do?
+## Table of Contents
 
-### 🎨 Pick a Theme (17 ready-made designs)
-Click the avatar in the top-right corner → **Theme Studio**. You'll see three tabs:
-- **Default** — 17 pre-designed themes: Midnight Indigo, Dracula, Tokyo Night, GitHub Light/Dark, Solarized, Nord Frost, Cyberpunk Neon, High Contrast, and more.
-- **Custom** — Themes you created and saved privately (only you see them).
-- **Public** — Themes other team members shared with everyone.
-
-**How it works:** Click any theme card → it applies instantly. You can see a live preview of how it looks. Don't like it? Pick another one — changes happen immediately.
-
----
-
-### 🛠️ Customize Colors (Easy Mode & Power Mode)
-Click **Customize** on any theme to open the editor. It has two levels:
-
-#### Basic Mode (most people need this)
-Change these core colors:
-- **Background** — The main backdrop of your workspace
-- **Text** — How text looks on that background
-- **Accent** — Links and highlights
-- **Buttons** — Color, hover effect, and text on buttons
-- **Fonts** — Family, size, and weight
-- **Corners & Animation** — Border radius and how fast things fade in/out
-- **Hover Effect** — Cards lift slightly when you hover over them (optional)
-
-**Live Preview:** As you adjust, your workspace behind the dialog updates instantly. See exactly how it looks before saving.
-
-#### Advanced Mode (for fine-tuning)
-Everything in Basic, plus:
-- **Surface colors** — Card backgrounds and sidebars
-- **Input fields** — Search boxes and form fields
-- **Muted text** — Secondary labels and hints
-- **Borders** — Line colors and thickness
-- **Font weight** — Make text bolder or lighter
-- **Transition speed** — How fast hover effects animate
-
-**Save your work:** When done, click **Save as Custom Theme** → give it a name → optionally check "Share with team" to let others use it.
+1. [What Nexus Theme Gives You](#1-what-nexus-theme-gives-you)
+2. [Install It](#2-install-it)
+3. [Where to Find Everything on the Desk](#3-where-to-find-everything-on-the-desk)
+4. [Theme Studio: Pick and Build Themes](#4-theme-studio-pick-and-build-themes)
+5. [Sound Studio: Choose Your Sounds](#5-sound-studio-choose-your-sounds)
+6. [Permission Inspector: Who Can Do What](#6-permission-inspector-who-can-do-what)
+7. [Administrator Guide: Theme Settings](#7-administrator-guide-theme-settings)
+8. [Who Can Use What (Roles)](#8-who-can-use-what-roles)
+9. [Everyday Recipes](#9-everyday-recipes)
+10. [How It Works Under the Hood](#10-how-it-works-under-the-hood)
+11. [For Developers](#11-for-developers)
+12. [Things to Know](#12-things-to-know)
+13. [Troubleshooting and FAQ](#13-troubleshooting-and-faq)
+14. [Requirements and License](#14-requirements-and-license)
 
 ---
 
-### 🎯 Use Ready-Made Color Palettes (Instant 11-color themes)
-Click the **Palettes** tab to fill all 11 colors at once from curated, professionally-designed sets:
-- Indigo Mist
-- Forest Paper
-- Rose Quartz
-- Graphite Amber
-- Midnight Violet
-- Carbon Teal
-- Obsidian Rose
-- Nordic Frost
+## 1. What Nexus Theme Gives You
 
-Each palette is tested to make sure text is readable on every background (WCAG AA certified). One click fills the editor → customize from there if you want → save.
+Nexus Theme is one Frappe app with three tools inside it. Install it once and every feature is ready; nothing needs to be switched on.
 
----
-
-### ⚡ Generate a Theme from Your Brand Color (NEW!)
-Have a single brand color? Let the app build an entire 11-color theme for you.
-
-**How it works:**
-1. Click the **Generate** tab
-2. Enter your brand color (or pick from the color picker)
-3. Toggle **Light** or **Dark** mode
-4. Click one of three variants:
-   - **Neutral Canvas** — Greyscale background, your color only on accents. Best for focus.
-   - **Tinted Canvas** — Background carries your brand hue. Feels more branded.
-   - **High Contrast** — Super readable text, stronger borders. Best for accessibility.
-5. See the **Passes WCAG AA** badge with exact contrast numbers
-6. Click the variant → colors fill the editor → customize by hand if needed → save
-
-**Why this works:** Most color apps just pick lightness numbers (50%, 30%, etc.), which breaks across the color wheel. This one solves for *readability contrast* instead, so your theme works whether your brand is yellow, blue, or anything in between.
-
----
-
-### 🔊 Sound Studio (Personalize Your Audio Feedback)
-Open the user dropdown (avatar, top-right) → **Sound Settings**.
-
-**What you can customize:**
-- **Login** — When you enter the Desk
-- **Logout** — When you leave
-- **Save** — When you save a form
-- **Submit** — When you submit a document
-- **Cancel** — When you cancel
-- **Delete** — When you delete something
-- **Error** — When something goes wrong
-- **Email** — When an email is sent
-- **Alert** — When you get a notification banner
-- **Notification (bell)** — When you get a real-time message
-- **Missing Fields** — When you try to save but forgot required fields
-
-**For each sound:**
-- **Preview** — Hear what it sounds like right now
-- **Upload** — Drop your own `.mp3` or `.wav` file
-- **Use a preset** — Pick from Glitch, Buzz, Chirp, Beam, and more (varies by event)
-- **Volume slider** — 0–100%
-- **Reset** — Go back to the built-in sound
-
-**Master controls at the bottom:**
-- **Reset All to Default** — Wipe all your customizations in one click
-- **Enable/Disable** — Mute all sounds without deleting them
-
----
-
-### 🌙 Auto Light/Dark Mode
-Pair a light theme with a dark one → the app follows your OS setting. When you change your system theme, your workspace switches automatically.
-
----
-
-### 👥 Share Themes with Your Team
-When you save a theme, tick **Share with team** to publish it. Everyone sees it in the Public tab. Admins can restrict who can share or turn off custom themes entirely.
-
----
-
-### 🏢 Admin Control (Theme Settings)
-**If you're an admin:**
-- Set a **site default theme** for everyone
-- Restrict themes to an approved list
-- Turn off custom themes or public sharing
-- Add your **company logo** to the navbar, favicon, and login page
-- Apply themes to the **login page and public website** (not just the Desk)
-- Master on/off for all sounds
-
-All settings are off by default — turn on what you need, and the app doesn't interfere with anything else.
-
----
-
-### 🔐 Permission Inspector (for System Managers)
-Open **Nexus Theme → Permission Inspector** (`/app/permission-inspector`) and pick either a **User** or a **Role**:
-
-- **User:** every DocType with the permissions that user *really* gets through all of their roles, and a "Granted by" column naming the role(s) responsible for each flag. Hover any cell for the full list.
-- **Role:** exactly what that one role grants, DocType by DocType.
-- All the standard flags — Read, Write, Create, Submit, Cancel, Amend, Delete, Print, Email, Report, Import, Export, Share, Select — plus Frappe v16's Mask and any custom Permission Types.
-- Search, filter by module or by one permission, show only enabled / disabled / customised / unsaved rows, and optionally include child tables.
-- Click a DocType name for the rule-by-rule breakdown, the standard rules it shipped with, the User Permissions that narrow it, and Frappe's own live answer from `has_permission`.
-- A separate **User Permissions** panel shows the row-level layer (Company, Customer, Territory…) so the two layers are never confused.
-
-**Editing:** click *Edit permissions*, tick or untick cells, then *Save Changes*. For a Role the change goes straight to that role's rule. For a User the inspector never invents anything: clicking a cell lists the user's roles and you choose which role's rule to change. Dependencies follow Frappe's own rules (Cancel needs Submit, Submit needs Write, Import needs Create…), the whole batch is saved in one transaction and rolled back on any error, the permission cache is cleared, and the rows are re-read from the database.
-
-Under the hood this writes the same `Custom DocPerm` records as Frappe's Role Permission Manager, so the two tools always agree, and every API method requires the System Manager role server-side.
-
----
-
-### 📊 Move Themes Between Sites
-- **Export** your custom theme as a `.json` file
-- **Import** it on another site (staging, production, different company)
-- Themes can live in your version control system
-- When you import, the app validates everything to make sure it's safe
-
----
-
-### 🔐 Safety Built In
-Before you save any theme, the app checks:
-- Text on background is readable (≥4.5:1 contrast ratio)
-- Text on cards is readable (≥4.5:1 contrast ratio)
-- Button text on buttons is readable (≥3.0:1 contrast ratio)
-
-If something fails, you get a clear message showing what to fix. **You can't accidentally ship an unreadable theme.**
-
----
-
-## 🚀 Getting Started (5 Minutes)
-
-**Nothing to set up.** The app is ready the moment you log in.
-
-### Step 1: Open Theme Studio
-Click the **green avatar** in the top-right corner → click **Theme Studio**.
-
-### Step 2: Pick a Theme
-You'll see theme cards. Click any one → it applies instantly to your workspace.
-
-### Step 3: (Optional) Customize It
-Click **Customize** to tweak colors, or skip this if you like the theme as-is.
-
-### Step 4: (Optional) Customize Sounds
-Back at the avatar → click **Sound Settings**. For each event (Save, Submit, etc.), you can pick a preset sound or upload your own.
-
-**That's it!** Your changes save automatically.
-
----
-
-## ⚙️ Quick Reference: What Each Editor Tab Does
-
-| Tab | Use When | What You Get |
+| Tool | Who it is for | What it does |
 |---|---|---|
-| **Basic** | You want to change main colors | Background, text, accent, buttons, fonts |
-| **Advanced** | You want fine control | Cards, inputs, borders, animation speed |
-| **Palettes** | You want a complete 11-color theme instantly | 8 professionally-designed color sets |
-| **Generate** | You have one brand color and want a full theme | AI-generated theme from your color (Light or Dark) |
+| **Theme Studio** | Everyone who uses the Desk | Pick a theme, adjust colours and fonts with a live preview, generate a whole theme from one brand colour, pair a light and a dark theme, share themes with the team, export and import themes as files. |
+| **Sound Studio** | Everyone who uses the Desk | Choose the sound the Desk plays on login, save, submit, cancel, delete, errors, email, alerts and notifications. Use a bundled preset or upload your own, set the volume, or mute everything. |
+| **Permission Inspector** | System Managers | Pick a person or a role and see, record type by record type, what they may View, Edit, Create, Delete, Submit and Cancel, which role gives them that, and change it safely from the same screen. |
+| **Theme Settings** | System Managers | Site-wide controls: a default theme for everyone, an allowed list, whether people may build or share themes, the company logo and favicon, and a master switch for sounds. |
+
+Everything is per user. Your theme and sounds are yours; nobody else sees them unless you share a theme on purpose.
 
 ---
 
-## 🎵 Sound Events at a Glance
+## 2. Install It
 
-| Event | Fires When | Presets Available |
-|---|---|---|
-| **Login** | You first enter the Desk | Yes |
-| **Logout** | You leave | Yes |
-| **Save** | You save a form | Yes |
-| **Submit** | You submit a document | Yes |
-| **Cancel** | You cancel a document | Yes |
-| **Delete** | You delete something | Yes |
-| **Error** | Something goes wrong | Yes |
-| **Email** | An email is sent | Yes |
-| **Alert** | You get a notification banner | Yes |
-| **Notification** | You get a real-time message | Yes |
-| **Missing Fields** | You forget required fields | Yes |
+Run these on your bench. Replace `yoursite.com` with your site name.
 
-For each, you can adjust volume, use a preset sound, or upload your own.
-
----
-
-## 🔄 Reset Your Choices
-
-- **Reset one theme:** In Theme Studio, click **Reset to Frappe Default** → you go back to the vanilla Frappe look
-- **Reset all sounds:** In Sound Settings, click **Reset All to Default** at the bottom → all sounds go back to built-in presets
-
-Both actions are reversible — you can change your mind anytime.
-
----
-
-## 💻 For Developers & Admins
-
-### Python API (Backend)
-
-Use these endpoints from scripts, REST calls, or other apps:
-
-**Theme Management:**
-```python
-# Get all available themes
-get_available_themes()  # Returns: defaults, custom, public
-
-# Get your current theme
-get_active_theme()  # Returns: theme name + color overrides
-
-# Apply a theme
-set_active_theme("theme_name", overrides={"bg_primary": "#ffffff"})
-
-# Save your edits as a new theme
-save_custom_theme({
-  "theme_name": "My Theme",
-  "bg_primary": "#ffffff",
-  ...11 colors total...
-}, share_public=0)  # 0=private, 1=shared
-
-# Delete a custom theme
-delete_custom_theme("My Theme")
-
-# Go back to vanilla Frappe
-clear_active_theme()
-
-# Get the 8 curated palettes
-get_recommended_palettes()
-
-# Generate a theme from a brand color
-generate_palette(seed="#8c6f3f", is_dark=0)  # Returns 3 variants
-
-# Set automatic light/dark switching
-set_theme_mode("Automatic", dark_theme="Dark Theme Name")
-
-# Export/import themes as JSON
-export_theme("theme_name")  # Get JSON
-import_theme(json_data, share_public=0)  # Load JSON
+```bash
+cd /path/to/your/bench
+bench get-app https://github.com/abbas0444/nexus_theme.git
+bench --site yoursite.com install-app nexus_theme
+bench --site yoursite.com migrate
+bench restart          # or restart `bench start` in development
 ```
 
-**Sound Management:**
+Installation does all of this for you:
+
+- Creates the **Theme User** role and gives it to every Desk user, so Theme Studio and Sound Studio work at once. New Desk users get the role automatically when they are created or promoted.
+- Loads the **17 bundled themes**.
+- Creates the **Theme Settings** record with every option switched off, so the app changes nothing about your site until you decide.
+- Adds **Theme Studio** and **Sound Settings** to the avatar menu, the **Nexus Theme** tile to the apps screen, and the **Nexus Theme** workspace with all its shortcuts.
+- Registers the **Permission Inspector** page for System Managers.
+
+Updating later is the usual `bench update` or `git pull` followed by `bench --site yoursite.com migrate`. Your custom themes and sound choices survive updates.
+
+Uninstalling (`bench --site yoursite.com uninstall-app nexus_theme`) removes the role, the menu items, the tile and the app's own tables. It never touches Frappe's own permission records.
+
+---
+
+## 3. Where to Find Everything on the Desk
+
+| Place | What you will see |
+|---|---|
+| **Avatar menu** (top-right) | Theme Studio, Sound Settings |
+| **Apps screen** (the grid icon or `/apps`) | A **Nexus Theme** tile that opens the workspace |
+| **Nexus Theme workspace** (`/app/nexus-theme`) | Shortcuts to Theme Studio, Sound Studio, Themes, Theme Settings and Permission Inspector, plus cards for every record type the app owns |
+| **Search bar** (Ctrl+K / Cmd+K) | Type `Theme Studio`, `Sound Studio`, `Permission Inspector` or `Theme Settings` |
+| **Frappe's own Switch Theme dialog** (avatar menu, Toggle Theme) | Every Nexus theme is listed there too, next to Frappe Light and Timeless Night |
+| Direct links | `/app/theme-studio`, `/app/sound-studio`, `/app/permission-inspector`, `/app/theme-settings` |
+
+---
+
+## 4. Theme Studio: Pick and Build Themes
+
+### 4.1 The five-minute flow
+
+1. Click your **avatar** (top-right) and choose **Theme Studio**.
+2. Click any theme card. The **Live Preview** inside the dialog, a small mock-up of the Desk, shows how it looks.
+3. Happy? Click **Apply** and the whole Desk changes at once. Not sure? Click another card. Nothing is stored until you press Apply.
+4. Want to tweak it? Click **Customize** and adjust colours; the preview follows every change.
+5. Want to keep your tweaks? Click **Save as Custom…**, give it a name and, if you like, tick **Share with other users**.
+
+Your choice is remembered on every device you log in from.
+
+### 4.2 The three theme lists
+
+| List | What is in it |
+|---|---|
+| **Default Themes** | The 17 themes that ship with the app |
+| **My Custom Themes** | Themes you saved. Only you see them, and you can delete them here. |
+| **Public Themes** | Themes your colleagues chose to share with everyone |
+
+The 17 bundled themes are:
+
+- **Dark:** Midnight Indigo, Graphite Dark, Nord Frost, Dracula, Tokyo Night, GitHub Dark, Material Ocean, Cyberpunk Neon
+- **Light:** GitHub Light, Solarized Light, Ocean Breeze, Forest Green, Rose Quartz, Mint Fresh, Solar Warmth, Sepia Reader, High Contrast
+
+### 4.3 The editor: Basic and Advanced
+
+Click **Customize** on any theme. The editor shows a **Live Preview** card and a set of controls. Every change is applied to the Desk behind the dialog as you make it.
+
+**Basic** shows the controls most people need:
+
+| Control | What it changes |
+|---|---|
+| Background | The main backdrop of the Desk |
+| Text Color | Text on that backdrop |
+| Accent | Links, highlights, the active item |
+| Font Family | Inter, system fonts, monospace and more |
+| Font Size | The base size everything scales from |
+| Corner Radius | How rounded cards, buttons and inputs are |
+| Hover Lift | Cards rise slightly when you hover over them |
+
+**Advanced** adds the rest of the 11 colours and the finer settings:
+
+| Control | What it changes |
+|---|---|
+| Surface / Cards | Cards, sidebars and panels |
+| Input Background | Search boxes and form fields |
+| Muted Text | Secondary labels and hints |
+| Accent Hover | The accent colour when you hover |
+| Button Color, Button Text, Button Hover | The primary buttons |
+| Border | Lines between sections |
+| Font Weight | Lighter or bolder text overall |
+| Animation Speed | How fast hover and fade effects run |
+
+### 4.4 Palettes: fill all 11 colours at once
+
+Open the **Palettes** tab and click a set. Every colour in the editor is filled together, and each set is checked for readability before it ships:
+
+Indigo Mist · Forest Paper · Rose Quartz · Graphite Amber · Midnight Violet · Carbon Teal · Obsidian Rose · Nordic Frost
+
+Use a palette as a starting point, adjust anything you like, then save.
+
+### 4.5 Generate: a theme from one brand colour
+
+Open the **Generate** tab, enter your brand colour, choose **Light** or **Dark**, and pick one of three readings of that colour:
+
+| Variant | Best for |
+|---|---|
+| **Neutral Canvas** | A grey backdrop with your colour only on accents. Calm and focused. |
+| **Tinted Canvas** | The backdrop carries a hint of your colour. Feels branded. |
+| **High Contrast** | Stronger text and borders. Best for accessibility. |
+
+Each card shows its contrast numbers and a **Passes WCAG AA** badge. The generator solves for readability rather than fixed lightness steps, so it works whether your brand is yellow, navy or anything in between. Click a variant to fill the editor, then fine-tune and save.
+
+### 4.6 Readability is checked before you save
+
+Every theme you save is tested first:
+
+- text on the background must reach a **4.5 : 1** contrast ratio
+- text on cards must reach **4.5 : 1**
+- button text on buttons must reach **3.0 : 1**
+
+If a check fails you get a clear message naming the pair of colours to fix. You cannot save a theme nobody can read.
+
+### 4.7 Automatic light and dark
+
+Click **Auto Light/Dark** in Theme Studio, choose a light theme and a dark theme, set the mode to **Automatic** and save. The Desk now follows your operating system: switch your computer to dark mode and the dark theme appears by itself.
+
+### 4.8 Share, export, import, delete
+
+- **Share:** tick **Share with other users** when saving. The theme appears in everyone's Public Themes list. Untick it by saving again without the tick.
+- **Export:** select a theme and click **Export** to download it as a `.json` file.
+- **Import:** click **Import** and choose a `.json` file from another site. The file is validated before anything is saved, so a bad or edited file cannot harm your site.
+- **Delete:** open **My Custom Themes** and click **Delete** on the card. You can delete a theme even while you or a colleague are using it; whoever was using it drops back to the site default, or to Frappe's own look if there is none.
+
+### 4.9 Going back to plain Frappe
+
+Click **Reset to Default** at the bottom of Theme Studio, or choose Frappe Light, Timeless Night or Automatic in Frappe's own Switch Theme dialog. Both record that you want Frappe's built-in look, so an administrator's site default will not come back on your next reload. Pick any Nexus theme again to opt back in.
+
+---
+
+## 5. Sound Studio: Choose Your Sounds
+
+### 5.1 The flow
+
+1. Click your **avatar** and choose **Sound Settings** (or open the **Sound Studio** shortcut in the workspace).
+2. Each row is one event. Press **Preview** to hear its current sound.
+3. Choose one of the three **preset chips**, or press **Upload** to use your own `.mp3` or `.wav`.
+4. Drag the **volume** slider for that event.
+5. Everything saves as you go. Close the dialog when you are done.
+
+### 5.2 The events
+
+| Event | Plays when | Presets |
+|---|---|---|
+| Login | You arrive on the Desk | Welcome, Unlock, Bright |
+| Logout | You sign out | Sign Off, Soft, Power Down |
+| Save | You save a form | Pop, Ding, Chirp |
+| Submit | You submit a document | Success, Confirm, Bell |
+| Cancel | You cancel a document | Soft, Tick, Down |
+| Delete | You delete something | Drop, Thud, Swipe |
+| Error | Something goes wrong | Buzz, Alert, Low |
+| Email | An email is sent | Ding, Whoosh, Pop |
+| Alert | A notification banner appears | Chirp, Pulse, Ring |
+| Notification | A real-time message arrives (the bell) | Bell, Ping, Pop |
+| Missing Fields | You save with a required field empty | Warn, Nudge, Buzz |
+
+### 5.3 The buttons
+
+On each row: **Preview** plays the current sound, **Upload** takes your own file, **Default** switches that event back to Frappe's own sound, and **Clear** removes your custom file. The three chips under **Defaults:** are the bundled presets; a **Custom uploaded** tag shows when your own file is in use.
+
+At the bottom of the dialog:
+
+- **Enable sounds** switch: mute every sound without losing your choices.
+- **Reset All to Default**: asks for confirmation, then removes every custom sound so the defaults play again.
+- **Done** closes the dialog. Every change was already saved as you made it.
+
+Every sound is cut at three seconds, so a long file never becomes a nuisance. Uploaded files are ordinary Frappe files and are included in your normal backups.
+
+All 36 bundled sounds are synthesised from scratch by `tools/generate_sounds.py`, so there are no licensing worries.
+
+---
+
+## 6. Permission Inspector: Who Can Do What
+
+For **System Managers**. Open **Nexus Theme → Permission Inspector** or go to `/app/permission-inspector`.
+
+### 6.1 The idea in three sentences
+
+- **Roles decide what someone can do.** Every person has roles such as Accounts User or Sales User, and each role allows actions like View, Edit or Create on each type of record. A person can do something if any of their roles allows it.
+- **User Permissions decide which records they can see.** They narrow a person down to, say, one Company or one Customer. They never add abilities.
+- **Changing a permission changes a role.** So a change made here applies to everyone who has that role, not only the person you picked.
+
+The **How does this work?** button on the page shows the same three points.
+
+### 6.2 Step 1: pick a person or a role
+
+Choose **A person** or **A role** and type a name. The page shows a summary in plain words, for example:
+
+> *Ali Khan can view **120** types of records, edit **80**, create **62** and delete **12**.*
+
+Under it you see the person's roles, warnings that matter (the account is disabled, a role is switched off, the Administrator cannot be limited), six counters, and three buttons: **Which records can they see?**, **Open this user**, and **Open Frappe's Role Permission Manager**.
+
+### 6.3 Step 2: read the table
+
+Each row is one **record type** (Frappe calls it a DocType), grouped under its module. Each cell shows one of four pills:
+
+| Pill | Meaning |
+|---|---|
+| **Yes** | Allowed |
+| **No** | Not allowed |
+| **Own only** | Allowed only on records they created themselves |
+| – | Does not apply to this record type (for example Submit on a record type that never uses submission) |
+
+By default the six **main actions** are shown: View, Edit, Create, Delete, Submit, Cancel. Switch the **Main actions** drop-down to **All actions** to add Amend, Print, Email, Reports, Import, Export, Share, Pick in lists, See masked values and any custom permission types on your site. Hover a column heading for a one-line explanation of that action.
+
+The last column, **Because of**, names the role that gives the permission. Hover a cell to see every role behind it.
+
+Filters above the table:
+
+- **Search** a record type, e.g. *Sales Invoice*
+- **All modules** narrows to one module
+- **Show everything / Only what they can access / Only what they cannot access / Only record types with customised rules / Only my unsaved changes**
+- **Include child tables** adds the rows inside other records (such as the items on an invoice); they follow their parent and cannot be changed on their own
+
+### 6.4 Click a record type for the reasons
+
+A panel opens on the right with:
+
+- **What can Ali do here?** Every applicable action with a Yes or No, checked live with Frappe so it is exactly what the system enforces right now.
+- **Why?** Each role's rule in words: *Role Accounts User allows: View, Edit, Create, Submit…*
+- **Which records?** Any User Permission that narrows this record type, such as *Only where Company is Acme Ltd*.
+- The **standard rules before they were customised**, if someone changed them.
+- Buttons to open the same record type in Frappe's Role Permission Manager or to manage User Permissions.
+
+### 6.5 Changing a permission
+
+1. Press **Change permissions**. An orange banner confirms you are in editing mode and reminds you that nothing is saved until you press Save.
+2. **Looking at a role:** click any Yes or No to switch it.
+   **Looking at a person:** click a Yes or No and a small dialog lists that person's roles. Tick the role that should allow the action, or untick the roles that currently allow it. The dialog reminds you that the change applies to everyone with that role.
+3. Related actions follow Frappe's own rules automatically, and the page tells you when they do: turning **Edit** off also turns off Submit, Cancel and Amend; turning **Cancel** on also turns on Submit and Edit; **Import** needs Create.
+4. Changed cells get an orange outline and a bar at the bottom counts your unsaved changes. Use **Only my unsaved changes** in the Show drop-down to review them.
+5. Press **Save changes**. A confirmation spells out every change in a sentence, for example *Everyone with the role Accounts User will no longer be able to Edit on Sales Invoice.* Confirm, and Frappe enforces it immediately. **Discard** throws the edits away.
+
+What you cannot change here, and why:
+
+- The **Administrator** account is above the permission system.
+- Roles Frappe manages itself (Administrator, and for managers who are not Administrator also All, Guest, Desk User and custom user-type roles).
+- Child tables, and the DocType, Module Def and Patch Log record types that Frappe's own manager also refuses.
+- A record type must keep at least one rule; the page refuses to remove the last one.
+
+### 6.6 Which records can they see?
+
+Press **Which records can they see?** in the summary to open the User Permissions panel. It lists every restriction on the person, such as *Company = Acme Ltd, applies to every record type*, with buttons to **Add a restriction** or **Manage all** in Frappe's own User Permission list. This layer is shown separately on purpose, so that abilities (roles) and visibility (User Permissions) are never confused.
+
+### 6.7 Safety
+
+- Every request is checked on the server: without the System Manager role, every read and write is refused, whether or not the page is visible.
+- Writes go to the same **Custom DocPerm** records that Frappe's Role Permission Manager writes, so the two tools always agree.
+- A batch of changes is saved as one transaction. If any rule is invalid, nothing is saved and the message names the role and record type at fault.
+- After every save the permission cache is cleared and the rows are re-read from the database, so the table shows what Frappe now enforces rather than what was requested.
+
+---
+
+## 7. Administrator Guide: Theme Settings
+
+Open **Nexus Theme → Theme Settings** or `/app/theme-settings`. Every option is off by default.
+
+| Setting | What it does |
+|---|---|
+| **Site Default Theme** | Applied to everyone who has not chosen a theme. Leave blank to keep Frappe's stock look. People who chose Frappe's own look on purpose are left alone. |
+| **Apply to Login & Website** | Also applies the site default theme to the login page and the public website, not only the Desk. |
+| **Allow Custom Themes** | Lets people build and save their own themes in Theme Studio. |
+| **Allow Public Sharing** | Lets people share a custom theme with everyone on the site. |
+| **Restrict Theme Choice** + **Allowed Themes** | Shows only the listed themes in Theme Studio. Anyone already using another theme keeps it; they are not reset. |
+| **Allow User Sounds** | Turn off to switch Sound Studio off for everyone. Their choices are kept for when it is switched on again. |
+| **Navbar Logo** | Replaces the Frappe logo in the navbar. |
+| **Favicon** | The browser-tab icon on the Desk and the website. |
+| **Login Background** | A background image for the login page. |
+
+A theme can also be limited to certain roles: open the theme record (Themes list) and fill **Restrict to Roles**. People without one of those roles will not see it.
+
+**Typical setups**
+
+- *Company look for everyone, still free to personalise:* set a Site Default Theme, tick Allow Custom Themes, leave Restrict Theme Choice off.
+- *Locked-down branding:* set a Site Default Theme, tick Restrict Theme Choice and list the approved themes, untick Allow Public Sharing.
+- *Quiet office:* untick Allow User Sounds.
+
+---
+
+## 8. Who Can Use What (Roles)
+
+| Feature | Needs |
+|---|---|
+| Theme Studio, Sound Studio, personal preferences | **Theme User** (granted automatically to every Desk user) |
+| Theme Settings, Themes list edits, deleting other people's themes | **System Manager** |
+| Permission Inspector | **System Manager**, checked on the server for every request |
+| Website users (portal logins) | Nothing. They never see the Desk tools and never receive the Theme User role. |
+
+---
+
+## 9. Everyday Recipes
+
+**I want dark mode at night and light in the day.** Theme Studio → Auto Light/Dark → pick one of each → Mode: Automatic → Save.
+
+**I want the whole team on our brand colour.** Theme Studio → Customize → Generate → enter the brand colour → choose a variant → Save as Custom with *Share with other users* ticked. Then, as an administrator, set it as the Site Default Theme.
+
+**I made a theme on staging and want it in production.** Export on staging, Import on production, then set it as default or share it.
+
+**Everything went silent.** Sound Settings → check the Enable sounds switch. If it is on, ask an administrator whether Allow User Sounds is off in Theme Settings.
+
+**Why can Ali delete invoices?** Permission Inspector → A person → Ali → search *Sales Invoice* → the Delete cell says Yes and the Because of column names the role. Click the row for the full reasons.
+
+**Stop the Sales User role from cancelling invoices.** Permission Inspector → A role → Sales User → Change permissions → search *Sales Invoice* → click Cancel to make it No → Save changes → confirm.
+
+**Give a new role access to one record type.** Permission Inspector → A role → the role → Change permissions → find the record type → click View to make it Yes (add Edit, Create and so on as needed) → Save changes.
+
+---
+
+## 10. How It Works Under the Hood
+
+**Record types the app owns**
+
+| Record type | Purpose |
+|---|---|
+| Theme Definition | One theme: 11 colours, font, size, weight, corner radius, animation speed, hover lift, owner, public flag, role restrictions. The 17 bundled ones are marked *Is Default* and ship as fixtures. |
+| User Theme Preference | One row per person: the active theme, the mode (Single or Automatic), the dark theme for Automatic, per-user colour overrides, and the *Use Frappe's Built-in Theme* opt-out. |
+| User Sound Preference + User Sound Mapping | One row per person with the master switch and a child row per event (file and volume). |
+| Theme Settings | The single site-wide settings record described above. |
+| Allowed Theme, Theme Role | Child tables behind Allowed Themes and Restrict to Roles. |
+
+**How a theme reaches the screen.** The active theme is placed in the page's boot data, so the first paint is already themed. `theme_manager.js` writes the theme's values into CSS variables on the page and marks the page light or dark; Frappe's own components pick the variables up. Frappe's built-in Switch Theme dialog is extended so Nexus themes appear there, and choosing one of Frappe's own themes hands control back cleanly.
+
+**How a sound plays.** `sound_manager.js` wraps Frappe's sound player: it swaps in your chosen file per event, applies the volume, honours the master switch and cuts every sound at three seconds.
+
+**How the Permission Inspector reads and writes.** It reads through Frappe's own helpers (`get_valid_perms`, `get_all_perms`, `get_roles`, `has_permission`) and writes through `Custom DocPerm`, the same mechanism the stock Role Permission Manager uses. It has no tables and no permission logic of its own; if it were removed, nothing about your permissions would change.
+
+**Safety checks on saved data.** Colour and style values are validated before they are stored (no CSS can be injected through a theme), sound URLs must point at files this site serves, and imported theme files are validated field by field.
+
+---
+
+## 11. For Developers
+
+### 11.1 Layout of the app
+
+```
+nexus_theme/
+├── api.py                      # whitelisted theme and sound API
+├── hooks.py                    # includes, apps-screen tile, doc events, boot session
+├── install.py / uninstall.py   # Theme User role, menu items, desktop icon, assets
+├── website.py                  # login page and website theming
+├── permission_inspector/api.py # Permission Inspector API (System Manager only)
+├── nexus_theme/doctype/…       # Theme Definition, preferences, Theme Settings
+├── nexus_theme/page/           # theme_studio, sound_studio, permission_inspector
+├── nexus_theme/workspace/      # the Nexus Theme workspace
+├── public/js, public/css       # theme_manager, theme_switcher, theme_editor,
+│                               # sound_manager, sound_studio, brand_kit, …
+├── public/sounds               # 36 synthesised presets
+├── utils/                      # contrast, css_safety, palettes, palette_generator, web_css
+├── fixtures/theme_definition.json
+├── tests/                      # pure unit tests (no site needed)
+└── tests_site/                 # site-backed tests
+tools/generate_sounds.py        # regenerates every preset sound
+tools/generate_logo.py          # regenerates the logo set in logos/
+```
+
+### 11.2 Python API
+
+All methods live in `nexus_theme.api` and are whitelisted, so they work from `frappe.call`, REST (`/api/method/nexus_theme.api.<name>`) and server scripts. They act for the logged-in user and need the Theme User role.
+
 ```python
-# Get all sound settings
-get_user_sounds()  # Returns: enabled flag + event→sound mapping
+# Themes
+get_available_themes()                       # defaults, owned, public
+get_active_theme()                           # theme, mode, dark theme, overrides, source
+set_active_theme(theme_name, overrides=None) # apply a theme (+ optional colour overrides)
+set_theme_mode("Automatic", dark_theme="dracula")
+clear_active_theme()                         # back to Frappe's own look
+save_custom_theme(payload, share_public=0)   # payload = the 11 colours + style fields
+delete_custom_theme(theme_name)
+export_theme(theme_name)                     # portable JSON
+import_theme(payload, share_public=0)
+get_recommended_palettes()                   # the 8 curated palettes
+generate_palette(seed="#8c6f3f", is_dark=0)  # 3 accessible variants from one colour
 
-# Set a sound for an event
-set_user_sound("save", file_url="/files/mysound.mp3", volume=0.6)
-
-# Clear a sound (back to default)
+# Sounds
+get_user_sounds()                            # enabled flag + event -> {url, volume}
+set_user_sound("save", file_url="/files/pop.wav", volume=0.6)
 clear_user_sound("save")
-
-# Master on/off for all sounds
-toggle_user_sounds(enabled=1)  # 1=on, 0=off
-
-# Reset all sounds to default
+toggle_user_sounds(enabled=0)
 clear_all_user_sounds()
 ```
 
-**Key Points:**
-- All endpoints respect Frappe permissions (Theme User role required)
-- Changes invalidate the user's cache — they see the update on the next page load
-- No `bench restart` needed
-- All data is stored in app-owned database tables
+Permission Inspector methods live in `nexus_theme.permission_inspector.api` and require System Manager:
 
-### JavaScript API (Frontend)
-
-Open dialogs programmatically:
-```javascript
-// Open Theme Studio
-window.openThemeSwitcher();
-
-// Open Sound Settings
-window.openSoundStudio();
+```python
+get_options()
+get_matrix(target_type="user", target="ali@example.com", include_child=0)
+get_matrix(target_type="role", target="Accounts User")
+get_doctype_detail("user", "ali@example.com", "Sales Invoice")   # rules, live check, user permissions
+get_user_permissions("ali@example.com")
+save_changes([{"doctype": "Sales Invoice", "role": "Accounts User", "ptype": "write", "value": 0}])
+refresh_cache(target_type="user", target="ali@example.com")
 ```
 
-Apply themes at runtime:
+`save_changes` validates every rule, cascades dependencies the way Frappe requires, saves the batch under a savepoint, clears the permission cache and returns the fresh matrix rows for the affected record types.
+
+### 11.3 JavaScript API
+
 ```javascript
-// Change theme + colors immediately
-ThemeManager.applyTheme("theme_name", {
-  bg_primary: "#ffffff",
-  text_primary: "#000000"
-  // ...other colors
-});
+window.openThemeSwitcher();     // open Theme Studio
+window.openSoundStudio();       // open Sound Studio
 
-// Set sounds for events
-SoundManager.applyMapping({
-  login: { url: "/files/login.mp3", volume: 0.5 },
-  save: { url: "/files/save.wav", volume: 0.7 }
-});
+ThemeManager.applyTheme("theme_key", { bg_primary: "#ffffff" }); // apply now
+ThemeManager.handOffToFrappe();                                  // back to Frappe's look
 
-// Mute all sounds
+SoundManager.applyMapping({ save: { url: "/files/pop.wav", volume: 0.7 } });
 SoundManager.setEnabled(false);
-
-// Unmute all sounds
-SoundManager.setEnabled(true);
 ```
 
-### Under the Hood
+### 11.4 Tests
 
-- **Themes:** Stored in `Theme Definition` DocType, synced as fixtures
-- **User Preferences:** Stored in `User Theme Preference` and `User Sound Preference` DocTypes
-- **Sound Files:** Stored as standard Frappe `File` records
-- **CSS Variables:** Themes inject CSS variables into the page, so all components that use them auto-update
-- **Sound Playback:** Managed by `sound_manager.js` — handles event detection, 3-second audio cap, volume control
-- **Permission Inspector:** Page under `nexus_theme/page/permission_inspector/`, API in `nexus_theme/permission_inspector/api.py`. Reads via `frappe.permissions` (`get_valid_perms`, `get_all_perms`, `get_roles`, `has_permission`) and writes via `Custom DocPerm` — no tables or permission logic of its own. Site tests: `bench --site <site> run-tests --app nexus_theme --module nexus_theme.tests_site.test_permission_inspector`
-
----
-
-## ⚠️ Things to Know
-
-**Themes only style the Desk itself**  
-Some third-party apps or custom code might hard-code their own colors. Nexus Theme can't override those — but it handles 99% of the built-in Frappe UI.
-
-**If an admin restricts themes, your current theme stays**  
-If your admin narrows the allowed theme list and your current theme is removed from it, you keep using it. You just can't switch to other restricted themes. It's not a forced reset.
-
-**First login sound might not play (browser autoplay rules)**  
-Browsers block audio before you interact with the page. The login sound plays 250ms after the Desk loads, so very strict browser policies might skip it. Other sounds play normally after you interact with the page once.
-
-**Custom themes stay even after app updates**  
-When you create a theme, it's yours. New default themes in app updates won't overwrite it.
-
-**Choosing Frappe's own theme opts you out of the site default**  
-If your admin set a site default theme, it applies to anyone who hasn't picked one. Choosing Frappe Light, Timeless Night, or Automatic in Frappe's own Switch Theme dialog — or clicking **Reset to Frappe Default** in Theme Studio — records that you want Frappe's built-in look, so the site default won't come back on your next reload. Pick any Nexus theme again to opt back in.
-
-**Deleting a theme that's in use**  
-You can delete your own custom theme even while it's applied — for you, or for anyone you shared it with. Whoever was using it goes back to the site default (or Frappe's own look if there isn't one). A theme an admin set as the site default or put on the allowed list has to be taken out of Theme Settings first.
-
-**Sound file storage**  
-When you upload a sound file (`.mp3` or `.wav`), it's stored as a normal Frappe file. If your Frappe instance has file size or quota limits, very large audio files count against those limits.
-
----
-
-## 🔧 System Requirements
-
-- **ERPNext/Frappe:** v16+
-- **Python:** 3.10+
-- **Database:** MariaDB 10.6+ with InnoDB
-- **Browser:** Any modern browser (Chrome, Firefox, Edge, Safari 14+) with audio support
-
----
-
-## 🎵 About the Built-in Sounds
-
-All 36 bundled sounds (12 events × 3 presets per event) are **synthesized from scratch** — not recordings or samples. They're created by code in [`tools/generate_sounds.py`](tools/generate_sounds.py) using only the Python standard library.
-
-This means:
-- No copyright concerns
-- No external audio samples needed
-- Covered by the same MIT license as the app
-
-To customize sounds, edit `tools/generate_sounds.py` and run:
 ```bash
-python3 tools/generate_sounds.py
+# Pure unit tests, no site needed
+python -m unittest discover -s apps/nexus_theme/nexus_theme/tests
+
+# Site-backed tests (set allow_tests on the site first)
+bench --site yoursite.com set-config allow_tests true
+bench --site yoursite.com run-tests --app nexus_theme
+bench --site yoursite.com run-tests --app nexus_theme --module nexus_theme.tests_site.test_permission_inspector
+bench --site yoursite.com set-config allow_tests false
+```
+
+### 11.5 Regenerating assets
+
+```bash
+python3 tools/generate_sounds.py   # rewrites public/sounds from the recipes in the script
+python3 tools/generate_logo.py     # rewrites logos/ (needs Pillow and fontTools)
+bench build --app nexus_theme      # rebuild the JS/CSS bundles after editing public/
 ```
 
 ---
 
-## 📄 License
+## 12. Things to Know
 
-MIT — covers the application code, all bundled themes and palettes, and all synthesized sound files.  
-See [license.txt](license.txt) for details.
-
----
-
-## ❓ FAQ
-
-**Q: Can I use my company logo in the theme?**  
-A: Yes! If you're an admin, go to Theme Settings → Brand Kit, and upload your logo, favicon, and login background.
-
-**Q: I saved a theme but don't see it in the list.**  
-A: Check the **Custom** tab — private themes show there. If you checked "Share with team," look in the **Public** tab.
-
-**Q: Can I export my theme and use it on another site?**  
-A: Yes. Click **Export** in Theme Studio → save the JSON file. On another site, click **Import** and upload the file. The app validates everything for safety.
-
-**Q: My sounds aren't playing. What's wrong?**  
-A: A few possibilities:
-- Your browser might block autoplay audio. Refresh the page and interact with it once.
-- Sounds might be disabled. Go to Sound Settings and check the master switch.
-- Your browser might have sound disabled for this site (check browser permissions).
-- The sound file might be corrupt. Try uploading a different one.
-
-**Q: If I leave a theme as-is and don't save it, does it stay?**  
-A: No. If you make changes in the editor but close without saving, you lose them. The live preview shows how it would look, but it doesn't actually apply until you click **Apply** or **Save as Custom**.
-
-**Q: Can I delete a theme I created?**  
-A: Yes. In Theme Studio, find the theme in the **Custom** tab, and look for a delete or trash icon. Deleted themes can't be recovered, so be sure.
-
-**Q: What's the difference between "Apply" and "Save as Custom"?**  
-A: **Apply** uses the theme right now (but doesn't save it as a named theme, so if someone else configures a theme after you, yours goes away). **Save as Custom** stores it with a name you choose, so you can always find it again in the Custom tab.
-
-**Q: Can an admin force everyone to use one theme?**  
-A: Yes. Go to Theme Settings → set a "Site Default Theme" → turn on "Restrict Theme Choice." Users can still see other themes, but yours becomes the default. (Users can still override it if you allow custom themes.)
-
-**Q: Will changing my theme break anything?**  
-A: No. Themes only change colors and sounds. They don't touch data, forms, or functionality.
-
-**Q: I have a lot of custom sounds. Can I back them up?**  
-A: Sound settings are stored in Frappe's database, so they back up with your regular backups. Audio files you upload are stored as Frappe Files, also in your backups. You can manually download them from Sound Settings using the **Preview** button (depends on browser download permissions).
+- **Themes style the Desk, not hard-coded colours.** A third-party app that paints its own fixed colours is not restyled. The built-in Frappe and ERPNext interface is.
+- **Restricting themes never resets anyone.** If an administrator narrows the allowed list, people keep the theme they already have; they just cannot pick others outside the list.
+- **The login sound may be skipped.** Browsers block audio until you interact with a page. Every other sound plays after your first click.
+- **Custom themes survive updates.** New bundled themes never overwrite your own.
+- **Choosing Frappe's own look opts you out of the site default** until you pick a Nexus theme again.
+- **Deleting a theme in use is allowed** for your own themes; users of it fall back to the site default. A theme that is the site default or on the allowed list must be taken out of Theme Settings first.
+- **Permission changes are site-wide.** The Permission Inspector edits roles, and a role is shared by everyone who holds it. The confirmation dialog states this before every save.
+- **"Set User Permissions" is not a flag in Frappe v16.** It was removed in an earlier version. The inspector shows the flags v16 actually has, including Mask and custom permission types.
 
 ---
 
-## 🆘 Still Have Questions?
+## 13. Troubleshooting and FAQ
 
-Check your Frappe console (Ctrl+K / Cmd+K) and search for:
-- **Theme Studio** — opens the theme editor
-- **Sound Settings** — opens the sound customizer
-- **Theme Settings** (admin only) — controls site-wide defaults
+**I do not see Theme Studio in the avatar menu.**
+You may be a Website User rather than a Desk user, or the app was installed before your account and the role has not been granted yet. Ask an administrator to run `bench --site yoursite.com migrate`; it grants the Theme User role to every Desk user.
 
-Or ask your Frappe administrator for help.
+**I picked a theme but nothing changed, or it went back after reload.**
+Press **Apply** in Theme Studio; clicking a card only shows it in the Live Preview. If you chose a Nexus theme inside Frappe's own Switch Theme dialog, it is applied at once.
+
+**I saved a theme and cannot find it.**
+Private themes are under **My Custom Themes**; shared ones under **Public Themes**.
+
+**A colleague cannot see the theme I shared.**
+An administrator may have turned off Allow Public Sharing, or the theme has Restrict to Roles set and your colleague lacks those roles.
+
+**Sounds do not play.**
+Check the Enable sounds switch in Sound Settings, then the browser's site permissions, then ask an administrator whether Allow User Sounds is off in Theme Settings. Refresh once and click anywhere on the page; browsers block audio before the first interaction.
+
+**The Permission Inspector page is missing or shows "not permitted".**
+Only System Managers can open it. Ask one to open `/app/permission-inspector`.
+
+**I changed a permission and the person still cannot do it.**
+Open the record type in the inspector and read **What can they do here?**; it is checked live. If it says Yes, ask the person to reload the page. If it says No, another rule or a User Permission is limiting them; the **Why?** and **Which records?** sections show which.
+
+**I want to undo a permission change.**
+Change it back in the inspector, or open the record type in Frappe's Role Permission Manager and press Restore Original Permissions to return to the standard rules.
+
+**Can I use my company logo?**
+Yes. Theme Settings → Navbar Logo, Favicon and Login Background.
+
+**Can an administrator force one theme for everyone?**
+Set a Site Default Theme and tick Restrict Theme Choice with that single theme in the allowed list. People who chose Frappe's own look keep it; everyone else sees the default.
+
+**Does any of this change my data?**
+Themes and sounds change only colours and audio. The Permission Inspector changes permission rules only when you press Save and confirm, using the same records as Frappe's own manager.
+
+---
+
+## 14. Requirements and License
+
+- **Frappe / ERPNext:** version 16
+- **Python:** as required by your Frappe 16 bench
+- **Database:** MariaDB with InnoDB
+- **Browser:** any modern browser with audio support
+
+MIT licence for the code, every bundled theme and palette, the logo set and all synthesised sounds. See [license.txt](license.txt).
 
 ---
 
