@@ -244,6 +244,31 @@
       });
     }
 
+    /**
+     * Frappe's own theme is taking over — the user picked Light / Dark /
+     * Automatic in its Switch Theme dialog. Drop our theme locally right
+     * away and record the choice on the server so it survives a reload.
+     *
+     * Recording it is the important part. An admin's site default theme
+     * applies to every user without a preference of their own, so merely
+     * deleting the preference would bring that default straight back on
+     * the next load — which is what used to happen. clear_active_theme
+     * now stores an explicit opt-out instead.
+     *
+     * Returns the server call so a caller can await it; local state is
+     * already released by the time it returns. Safe to call repeatedly.
+     */
+    handOffToFrappe() {
+      if (!this.active) return Promise.resolve();
+      this._clearAppTheme();
+      this._clearCache();
+      this._notify();
+      if (!(window.frappe && frappe.call)) return Promise.resolve();
+      return frappe
+        .call({ method: "nexus_theme.api.clear_active_theme" })
+        .catch(() => {});
+    }
+
     // Brief opacity dip on the body while we swap CSS variables. Only used
     // for committed changes (setActive, reset) — live preview is silent.
     // Honors prefers-reduced-motion via the CSS guard in theme_variables.css.
@@ -380,36 +405,57 @@
     }
 
     /**
-     * When the user picks a theme from Frappe's built-in toggle, Frappe
-     * mutates `data-theme-mode` on <html>. We watch that and drop our
-     * custom theme so Frappe's native palette is what renders — anything
-     * else would have two systems fighting on the same surfaces.
+     * Watch the two attributes Frappe itself writes on <html>.
+     *
+     * `data-theme-mode` is written by its Switch Theme dialog. While one
+     * of our themes is showing that is the user asking for Frappe's, so
+     * we step aside — anything else has two systems fighting over the
+     * same surfaces.
+     *
+     * `data-theme` is written by Frappe's own resolver (desk.js on boot,
+     * and its OS listener when the mode is "automatic"). Our themes are
+     * single-polarity and _apply() pins this attribute to match; if
+     * Frappe flips it underneath us the ~50 tokens we don't remap swing
+     * to the wrong side, so it is put back.
      */
     _watchFrappeToggle() {
       if (this._frappeObserver || typeof MutationObserver === "undefined") return;
-      this._frappeObserver = new MutationObserver(() => {
-        const next = ROOT.getAttribute("data-theme-mode") || "light";
-        if (next === this.frappeMode) return;
-        this.frappeMode = next;
-        if (!this.active) {
-          this._notify();
-          return;
+      this._frappeObserver = new MutationObserver((records) => {
+        for (const rec of records) {
+          if (rec.attributeName === "data-theme-mode") this._onFrappeModeWrite();
+          else if (rec.attributeName === "data-theme") this._onFrappeThemeWrite();
         }
-        // Frappe took over → step aside. Clear local state and let the
-        // server forget our preference too (best effort, non-blocking).
-        this._clearAppTheme();
-        this._clearCache();
-        if (window.frappe && frappe.call) {
-          frappe
-            .call({ method: "nexus_theme.api.clear_active_theme" })
-            .catch(() => {});
-        }
-        this._notify();
       });
       this._frappeObserver.observe(ROOT, {
         attributes: true,
-        attributeFilter: ["data-theme-mode"],
+        attributeFilter: ["data-theme-mode", "data-theme"],
       });
+    }
+
+    _onFrappeModeWrite() {
+      const next = ROOT.getAttribute("data-theme-mode") || "light";
+      const changed = next !== this.frappeMode;
+      this.frappeMode = next;
+      if (!this.active) {
+        if (changed) this._notify();
+        return;
+      }
+      // Step aside whether or not the value moved. Frappe's dialog writes
+      // the attribute even when it is unchanged — and "Frappe Light" while
+      // the mode is already light is the common case when one of our dark
+      // themes is sitting on top of it. Bailing out on an unchanged value
+      // is exactly what used to leave that dark theme in place.
+      this.handOffToFrappe();
+    }
+
+    _onFrappeThemeWrite() {
+      if (!this.active) return;
+      const want = ROOT.getAttribute(DARK_ATTR) === "1" ? "dark" : "light";
+      if (ROOT.getAttribute("data-theme") !== want) {
+        ROOT.setAttribute("data-theme", want);
+      }
+      // No loop: the write above lands here again, matches, and stops.
+      // Frappe's observer in desk.js filters on `data-theme-mode` only.
     }
   }
 

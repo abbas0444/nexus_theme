@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "user",
+  "use_frappe_theme",
   "active_theme",
   "theme_mode",
   "dark_theme",
@@ -24,15 +25,24 @@
    "unique": 1
   },
   {
+   "default": "0",
+   "description": "The user chose Frappe's own Light / Dark / Automatic theme. This is an explicit opt-out: it also overrides the site default theme, which would otherwise apply to anyone without a preference of their own.",
+   "fieldname": "use_frappe_theme",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Use Frappe's Built-in Theme"
+  },
+  {
+   "depends_on": "eval:!doc.use_frappe_theme",
    "fieldname": "active_theme",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Active Theme",
-   "options": "Theme Definition",
-   "reqd": 1
+   "options": "Theme Definition"
   },
   {
    "default": "Single",
+   "depends_on": "eval:!doc.use_frappe_theme",
    "description": "Single uses one theme always. Automatic pairs the active theme (light) with the dark theme below and follows the operating system.",
    "fieldname": "theme_mode",
    "fieldtype": "Select",
@@ -40,7 +50,7 @@
    "options": "Single\nAutomatic"
   },
   {
-   "depends_on": "eval:doc.theme_mode=='Automatic'",
+   "depends_on": "eval:!doc.use_frappe_theme && doc.theme_mode=='Automatic'",
    "description": "Used when the operating system is in dark mode.",
    "fieldname": "dark_theme",
    "fieldtype": "Link",
@@ -48,6 +58,7 @@
    "options": "Theme Definition"
   },
   {
+   "depends_on": "eval:!doc.use_frappe_theme",
    "description": "Sparse CSS variable overrides layered on top of the active theme.",
    "fieldname": "overrides_json",
    "fieldtype": "Long Text",
@@ -56,7 +67,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-04-22 00:00:00",
+ "modified": "2026-09-03 19:30:00",
  "modified_by": "Administrator",
  "module": "Nexus Theme",
  "name": "User Theme Preference",

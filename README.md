@@ -340,6 +340,9 @@ Browsers block audio before you interact with the page. The login sound plays 25
 **Custom themes stay even after app updates**  
 When you create a theme, it's yours. New default themes in app updates won't overwrite it.
 
+**Choosing Frappe's own theme opts you out of the site default**  
+If your admin set a site default theme, it applies to anyone who hasn't picked one. Choosing Frappe Light, Timeless Night, or Automatic in Frappe's own Switch Theme dialog — or clicking **Reset to Frappe Default** in Theme Studio — records that you want Frappe's built-in look, so the site default won't come back on your next reload. Pick any Nexus theme again to opt back in.
+
 **Sound file storage**  
 When you upload a sound file (`.mp3` or `.wav`), it's stored as a normal Frappe file. If your Frappe instance has file size or quota limits, very large audio files count against those limits.
 

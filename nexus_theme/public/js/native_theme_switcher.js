@@ -16,11 +16,13 @@
   //   toggle_theme()     — native themes fall through to super(); ours
   //                        route through ThemeManager instead
   //
-  // Interaction with theme_manager.js: picking a native theme changes
-  // `data-theme-mode`, which its MutationObserver watches — it then
-  // clears our custom theme and steps aside. That is exactly what we
-  // want, so we deliberately do NOT touch `data-theme-mode` when
-  // applying one of our own themes.
+  // Interaction with theme_manager.js: picking a native theme hands the
+  // Desk back to Frappe explicitly (ThemeManager.handOffToFrappe) before
+  // core's own handler runs. The manager's observer on `data-theme-mode`
+  // is a backstop for other entry points, not the mechanism — core writes
+  // that attribute even when the value is unchanged, and the user picking
+  // the native mode that is already set is the common case. We never
+  // touch `data-theme-mode` when applying one of our own themes.
   // ------------------------------------------------------------------
 
   const HEX_RE = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
@@ -217,8 +219,14 @@
       toggle_theme(name) {
         const theme = (this.themes || []).find((t) => t.name === name);
         if (!theme || !theme.is_custom) {
-          // Light / Dark / Automatic — core sets `data-theme-mode`, which
-          // makes theme_manager.js drop our theme and hand the Desk back.
+          // Light / Dark / Automatic. Release our theme first so the
+          // manager's observer sees nothing active when core writes
+          // `data-theme-mode` a moment later, and only one clear reaches
+          // the server. Core then persists desk_theme and Frappe's own
+          // resolver derives `data-theme` from the new mode.
+          if (window.ThemeManager && ThemeManager.active) {
+            ThemeManager.handOffToFrappe();
+          }
           return super.toggle_theme(name);
         }
 

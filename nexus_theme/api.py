@@ -84,6 +84,35 @@ def _apply_visibility(themes: list[dict], user: str | None = None) -> list[dict]
 	return [t for t in themes if t["name"] in allowed]
 
 
+def _assert_theme_applicable(theme_name: str, user: str | None = None) -> None:
+	"""Refuse a theme the caller is not offered.
+
+	get_available_themes() filters the gallery, but set_active_theme() and
+	set_theme_mode() take a bare name and only checked that it existed — so a
+	call from the console could apply another user's private theme, one
+	hidden from the caller's roles, or one an admin had struck off the
+	allow-list. Same rules as the gallery, enforced at the point of use.
+	"""
+	user = user or frappe.session.user
+	row = frappe.db.get_value(
+		"Theme Definition",
+		theme_name,
+		["is_default", "is_public", "owner_user"],
+		as_dict=True,
+	)
+	if not row:
+		frappe.throw(_("Theme {0} does not exist").format(theme_name))
+	if not (row.is_default or row.is_public or row.owner_user == user):
+		frappe.throw(_("You do not have access to theme {0}").format(theme_name))
+	if theme_name not in _visible_to_user([theme_name], user):
+		frappe.throw(_("Theme {0} is not available to your roles").format(theme_name))
+	settings = _settings()
+	if settings["restrict_theme_choice"] and theme_name not in set(
+		settings["allowed_themes"] or []
+	):
+		frappe.throw(_("Theme {0} is not on this site's allowed list").format(theme_name))
+
+
 @frappe.whitelist()
 def get_available_themes():
 	user = frappe.session.user
@@ -143,6 +172,11 @@ def get_available_themes():
 def get_active_theme():
 	"""Return the user's active theme, or a null theme if they have none.
 
+	Three states, and the middle one is the easy one to lose: no row means
+	"never chose" and gets the site default; a row with `use_frappe_theme`
+	means "chose Frappe's own theme" and gets nothing of ours, site default
+	included; a row with a theme gets that theme.
+
 	A user with no `User Theme Preference` row has not opted in to Theme
 	Studio — the client clears our CSS variables and Frappe's native palette
 	renders. We must NOT create a preference here: this runs on every
@@ -172,6 +206,18 @@ def get_active_theme():
 		return {"theme": None, "overrides": {}, "dark_theme": None, "mode": "Single"}
 
 	pref = frappe.get_doc("User Theme Preference", pref_name)
+	if pref.use_frappe_theme:
+		# A recorded opt-out, not an absence. It must NOT fall through to the
+		# site default above, or picking "Frappe Light" would bring that
+		# default straight back on the next reload.
+		return {
+			"theme": None,
+			"overrides": {},
+			"dark_theme": None,
+			"mode": "Single",
+			"source": "frappe",
+		}
+
 	theme = frappe.db.get_value(
 		"Theme Definition", pref.active_theme, THEME_FIELDS, as_dict=True
 	)
@@ -210,15 +256,15 @@ def set_theme_mode(mode: str, dark_theme: str | None = None):
 	if mode == "Automatic":
 		if not dark_theme:
 			frappe.throw(_("Pick a dark theme to pair with"))
-		if not frappe.db.exists("Theme Definition", dark_theme):
-			frappe.throw(_("Theme {0} does not exist").format(dark_theme))
+		_assert_theme_applicable(dark_theme)
 
 	user = frappe.session.user
 	pref_name = frappe.db.exists("User Theme Preference", {"user": user})
-	if not pref_name:
+	pref = frappe.get_doc("User Theme Preference", pref_name) if pref_name else None
+	if not pref or not pref.active_theme:
+		# No row, or an opt-out row — either way there is no theme to pair.
 		frappe.throw(_("Pick a theme before enabling automatic switching"))
 
-	pref = frappe.get_doc("User Theme Preference", pref_name)
 	pref.theme_mode = mode
 	pref.dark_theme = dark_theme if mode == "Automatic" else None
 	pref.save(ignore_permissions=False)
@@ -230,8 +276,7 @@ def set_theme_mode(mode: str, dark_theme: str | None = None):
 def set_active_theme(theme_name: str, overrides=None):
 	if not theme_name:
 		frappe.throw(_("theme_name is required"))
-	if not frappe.db.exists("Theme Definition", theme_name):
-		frappe.throw(_("Theme {0} does not exist").format(theme_name))
+	_assert_theme_applicable(theme_name)
 
 	if isinstance(overrides, str):
 		try:
@@ -252,6 +297,8 @@ def set_active_theme(theme_name: str, overrides=None):
 		pref = frappe.new_doc("User Theme Preference")
 		pref.user = user
 
+	# Applying a theme ends any opt-out to Frappe's own theme.
+	pref.use_frappe_theme = 0
 	pref.active_theme = theme_name
 	pref.overrides_json = json.dumps(overrides)
 	pref.save(ignore_permissions=False)
@@ -306,11 +353,23 @@ def save_custom_theme(payload, share_public=0):
 
 @frappe.whitelist()
 def clear_active_theme():
-	"""Remove the current user's theme preference so Frappe's native UI is restored."""
+	"""Hand the Desk back to Frappe's own theme — and remember that.
+
+	This used to delete the preference row. That is wrong whenever an admin
+	has set a site default theme: no row means "never chose", so the default
+	came straight back on the next page load and the user could never get
+	Frappe's own theme to stick. The choice is stored as an explicit opt-out
+	instead; validate() strips every other theme field off the row.
+	"""
 	user = frappe.session.user
 	pref_name = frappe.db.exists("User Theme Preference", {"user": user})
 	if pref_name:
-		frappe.delete_doc("User Theme Preference", pref_name, ignore_permissions=False)
+		pref = frappe.get_doc("User Theme Preference", pref_name)
+	else:
+		pref = frappe.new_doc("User Theme Preference")
+		pref.user = user
+	pref.use_frappe_theme = 1
+	pref.save(ignore_permissions=False)
 	_invalidate_bootinfo(user)
 	return {"ok": True}
 
