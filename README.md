@@ -1,6 +1,6 @@
 <div align="center" markdown="1">
 
-<img src="logos/frappe_logo.png" alt="Frappe" height="48">
+<img src="logos/logo.svg" alt="Nexus Theme" height="96">
 
 # Nexus Theme
 

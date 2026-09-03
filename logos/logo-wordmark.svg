@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 426 128" width="426" height="128" role="img" aria-label="Nexus Theme">
+  <title>Nexus Theme</title>
+  <g transform="translate(0 16.00) scale(0.18750)">
+    <polygon points="223.00,198.84 256.00,56.00 289.00,198.84" fill="#8f7edf"/>
+    <polygon points="256.00,56.00 82.79,156.00 223.00,198.84" fill="#6124bf"/>
+    <polygon points="190.00,256.00 82.79,156.00 223.00,198.84" fill="#ba7edf"/>
+    <polygon points="82.79,156.00 82.79,356.00 190.00,256.00" fill="#a724bf"/>
+    <polygon points="223.00,313.16 82.79,356.00 190.00,256.00" fill="#df7ed7"/>
+    <polygon points="82.79,356.00 256.00,456.00 223.00,313.16" fill="#bf248f"/>
+    <polygon points="289.00,313.16 256.00,456.00 223.00,313.16" fill="#df7eab"/>
+    <polygon points="256.00,456.00 429.21,356.00 289.00,313.16" fill="#bf248f"/>
+    <polygon points="322.00,256.00 429.21,356.00 289.00,313.16" fill="#df7ed7"/>
+    <polygon points="429.21,356.00 429.21,156.00 322.00,256.00" fill="#a724bf"/>
+    <polygon points="289.00,198.84 429.21,156.00 322.00,256.00" fill="#ba7edf"/>
+    <polygon points="429.21,156.00 256.00,56.00 289.00,198.84" fill="#6124bf"/>
+  </g>
+  <text x="126.0" y="67.0" dominant-baseline="middle" font-family="Archivo, Avenir Next, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="44" font-weight="700" letter-spacing="-1.2" fill="#12101A">Nexus</text>
+  <text x="263.0" y="67.0" dominant-baseline="middle" font-family="Archivo, Avenir Next, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="44" font-weight="400" letter-spacing="-1.2" fill="#12101A">Theme</text>
+</svg>
