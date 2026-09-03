@@ -51,7 +51,12 @@
   ];
 
   const TAB_STORAGE_KEY = "theme:editor_tab";
-  const VALID_TABS = ["basic", "advanced", "palettes"];
+  const VALID_TABS = ["basic", "advanced", "palettes", "generate"];
+
+  // Debounce for the generator's server round-trip. Long enough that
+  // dragging a color picker doesn't fire a request per pixel, short enough
+  // that letting go feels immediate.
+  const GENERATE_DEBOUNCE_MS = 260;
 
   // ------------------------------------------------------------------
   // Helpers
@@ -163,6 +168,20 @@
     let activeTab = readStoredTab();
     let palettesCache = null; // lazy-loaded from server
 
+    // ---- Generator state ----
+    // Held in the closure rather than the DOM so switching tabs and coming
+    // back restores the seed, polarity and results the user was looking at.
+    // `genToken` discards responses from superseded requests: with a
+    // debounced picker the replies can arrive out of order.
+    let genSeed = null;
+    let genDark = null;
+    let genResults = null;
+    let genSelected = null;
+    let genBusy = false;
+    let genError = null;
+    let genToken = 0;
+    let genTimer = null;
+
     const getBase = () => getSelectedTheme() || {};
     const valueFor = (key) => {
       const base = getBase();
@@ -179,6 +198,7 @@
             ${tabBtnHTML("basic", "Basic")}
             ${tabBtnHTML("advanced", "Advanced")}
             ${tabBtnHTML("palettes", "Palettes")}
+            ${tabBtnHTML("generate", "Generate")}
           </div>
           <div class="theme-editor-pane" data-pane></div>
           <div class="theme-editor-contrast" data-contrast></div>
@@ -211,6 +231,10 @@
       const $pane = $mount.find("[data-pane]");
       if (activeTab === "palettes") {
         renderPalettes($pane);
+        return;
+      }
+      if (activeTab === "generate") {
+        renderGenerate($pane);
         return;
       }
       const tier = activeTab; // "basic" or "advanced"
@@ -257,11 +281,9 @@
           const key = this.dataset.key;
           const p = palettes.find((x) => x.key === key);
           if (!p) return;
-          Object.assign(overrides, p.colors);
-          emitPreview();
+          applyPaletteColors(p);
           $pane.find(".theme-palette-card").removeClass("is-selected");
           this.classList.add("is-selected");
-          renderContrast();
         });
       };
 
@@ -282,10 +304,189 @@
         .catch(() => apply([]));
     };
 
-    const paletteCardHTML = (p) => {
+    // ---- Pane: Generate from one brand color ----
+    // Derivation lives server-side in utils/palette_generator.py so the
+    // contrast maths has a single implementation. Applying a result writes
+    // into the same `overrides` object the color pickers use, which is why
+    // the Basic and Advanced tabs show the generated values immediately and
+    // "Save as Custom Theme" needs no special case for it.
+    const renderGenerate = ($pane) => {
+      const base = getBase();
+      if (genSeed == null) {
+        genSeed = toHexColor(valueFor("accent") || "#4f46e5");
+      }
+      if (genDark == null) {
+        const d = overrides.is_dark != null ? overrides.is_dark : base.is_dark;
+        genDark = !!(d && d !== "0");
+      }
+
+      $pane.html(`
+        <div class="theme-gen">
+          <div class="theme-gen-controls">
+            <label class="theme-gen-seed">
+              <span>${escapeAttr(__("Brand color"))}</span>
+              <span class="theme-gen-seed-inputs">
+                <input type="color" data-gen-seed value="${escapeAttr(genSeed)}">
+                <input type="text" data-gen-hex value="${escapeAttr(genSeed)}"
+                       maxlength="7" spellcheck="false" autocomplete="off"
+                       aria-label="${escapeAttr(__("Brand color hex value"))}">
+              </span>
+            </label>
+            <div class="theme-gen-polarity" role="group"
+                 aria-label="${escapeAttr(__("Polarity"))}">
+              ${polarityBtnHTML("light", __("Light"), !genDark)}
+              ${polarityBtnHTML("dark", __("Dark"), genDark)}
+            </div>
+          </div>
+          <div data-gen-results></div>
+          <div class="theme-editor-hint">
+            ${escapeAttr(__("Every color is derived from your brand color and checked against WCAG AA. Pick a variant to load it into the editor — you can still adjust anything by hand afterwards."))}
+          </div>
+        </div>
+      `);
+
+      $pane.find("[data-gen-seed]").on("input", function () {
+        genSeed = toHexColor(this.value);
+        $pane.find("[data-gen-hex]").val(genSeed);
+        scheduleGenerate();
+      });
+
+      $pane.find("[data-gen-hex]").on("input change", function () {
+        const raw = String(this.value || "").trim();
+        if (!/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.test(raw)) return; // wait for a complete value
+        genSeed = toHexColor(raw.startsWith("#") ? raw : "#" + raw);
+        $pane.find("[data-gen-seed]").val(genSeed);
+        scheduleGenerate();
+      });
+
+      $pane.find("[data-gen-polarity]").on("click", function () {
+        const next = this.dataset.genPolarity === "dark";
+        if (next === genDark) return;
+        genDark = next;
+        renderPane(); // repaint the segmented control, then refetch
+        runGenerate();
+      });
+
+      // Opening the tab with nothing to show would read as broken, so the
+      // first paint fetches immediately rather than waiting for input.
+      if (genResults == null && !genBusy) runGenerate();
+      else paintGenResults();
+    };
+
+    const polarityBtnHTML = (value, label, isOn) => `
+      <button type="button" class="theme-gen-polarity-btn ${isOn ? "is-active" : ""}"
+              data-gen-polarity="${value}" aria-pressed="${isOn}">${escapeAttr(label)}</button>`;
+
+    const scheduleGenerate = () => {
+      if (genTimer) clearTimeout(genTimer);
+      genTimer = setTimeout(runGenerate, GENERATE_DEBOUNCE_MS);
+    };
+
+    // Drop the seed, polarity and cached results, and invalidate any request
+    // still in flight so its reply cannot repaint a stale palette.
+    const clearGeneratorState = () => {
+      if (genTimer) clearTimeout(genTimer);
+      genTimer = null;
+      genToken++;
+      genSeed = null;
+      genDark = null;
+      genResults = null;
+      genSelected = null;
+      genBusy = false;
+      genError = null;
+    };
+
+    const runGenerate = () => {
+      if (!window.frappe || !frappe.call) {
+        genBusy = false;
+        genResults = null;
+        genError = __("Palette generation needs a server connection.");
+        paintGenResults();
+        return;
+      }
+      // Replies can land out of order once the picker is being dragged, so
+      // only the newest request is allowed to write state.
+      const token = ++genToken;
+      genBusy = true;
+      genError = null;
+      paintGenResults();
+      frappe
+        .call({
+          method: "nexus_theme.api.generate_palette",
+          args: { seed: genSeed, is_dark: genDark ? 1 : 0 },
+        })
+        .then((r) => {
+          if (token !== genToken) return;
+          genBusy = false;
+          genResults = (r && r.message) || [];
+          genSelected = null;
+          paintGenResults();
+        })
+        .catch(() => {
+          if (token !== genToken) return;
+          genBusy = false;
+          genResults = null;
+          genError = __("Could not generate a palette from that color.");
+          paintGenResults();
+        });
+    };
+
+    const paintGenResults = () => {
+      const $r = $mount.find("[data-gen-results]");
+      if (!$r.length) return;
+      if (genBusy) {
+        $r.html(`<div class="theme-palettes-loading">${escapeAttr(__("Generating…"))}</div>`);
+        return;
+      }
+      if (genError) {
+        $r.html(`<div class="theme-editor-hint">${escapeAttr(genError)}</div>`);
+        return;
+      }
+      if (!genResults) {
+        $r.html("");
+        return;
+      }
+      if (!genResults.length) {
+        $r.html(
+          `<div class="theme-editor-hint">${escapeAttr(__("No accessible palette could be derived from that color."))}</div>`
+        );
+        return;
+      }
+      $r.html(`
+        <div class="theme-palette-grid">
+          ${genResults.map((p) => paletteCardHTML(p, p.key === genSelected)).join("")}
+        </div>
+      `);
+      $r.find(".theme-palette-card").on("click", function () {
+        const p = genResults.find((x) => x.key === this.dataset.key);
+        if (!p) return;
+        applyPaletteColors(p);
+        genSelected = p.key;
+        $r.find(".theme-palette-card").removeClass("is-selected");
+        this.classList.add("is-selected");
+      });
+    };
+
+    // Shared by the curated Palettes tab and the generator.
+    //
+    // `is_dark` travels with the colors on purpose. It is not a color, but
+    // it drives the polarity attributes on <html>, and the Desk paints a lot
+    // of chrome — sidebar, dropdowns, modals — from those. Applying a dark
+    // color set while polarity still says "light" is what produced the black
+    // sidebar over a light theme previously.
+    const applyPaletteColors = (p) => {
+      Object.assign(overrides, p.colors || {});
+      if (p.is_dark != null) overrides.is_dark = p.is_dark ? 1 : 0;
+      emitPreview();
+      renderContrast();
+    };
+
+    const paletteCardHTML = (p, selected) => {
       const c = p.colors || {};
       return `
-        <button type="button" class="theme-palette-card" data-key="${escapeAttr(p.key)}"
+        <button type="button" class="theme-palette-card ${selected ? "is-selected" : ""}"
+                data-key="${escapeAttr(p.key)}"
+                title="${escapeAttr(p.description || p.label)}"
                 aria-label="${escapeAttr(p.label)}">
           <div class="theme-palette-swatch"
                style="background:${escapeAttr(c.bg_primary)} !important;
@@ -445,19 +646,38 @@
       getOverrides: () => Object.assign({}, overrides),
       reset: () => {
         for (const k of Object.keys(overrides)) delete overrides[k];
+        clearGeneratorState();
         render();
       },
-      refresh: () => render(),
+      // Called by the host when a different theme is selected in the
+      // gallery. The generator re-seeds from that theme rather than keeping
+      // a seed the user chose for the previous one.
+      refresh: () => {
+        clearGeneratorState();
+        render();
+      },
       openSaveCustom: () => {
         const base = getBase();
         const suggested = base.theme_name ? base.theme_name + " (Custom)" : "My Theme";
 
+        // Public sharing can be turned off site-wide in Theme Settings. The
+        // server enforces it either way; hiding the checkbox just avoids
+        // offering a control that would silently do nothing.
+        const allowSharing = options.allowPublicSharing !== false;
+        const saveFields = [
+          { fieldtype: "Data", fieldname: "theme_name", label: __("Name"), reqd: 1, default: suggested },
+        ];
+        if (allowSharing) {
+          saveFields.push({
+            fieldtype: "Check",
+            fieldname: "share_public",
+            label: __("Share with other users"),
+          });
+        }
+
         const d = new frappe.ui.Dialog({
           title: __("Save as Custom Theme"),
-          fields: [
-            { fieldtype: "Data", fieldname: "theme_name", label: __("Name"), reqd: 1, default: suggested },
-            { fieldtype: "Check", fieldname: "share_public", label: __("Share with other users") },
-          ],
+          fields: saveFields,
           primary_action_label: __("Save"),
           primary_action: async (v) => {
             const name = (v.theme_name || "").trim();

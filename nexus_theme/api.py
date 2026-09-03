@@ -42,9 +42,53 @@ THEME_FIELDS = [
 ]
 
 
+def _settings():
+	from nexus_theme.nexus_theme.doctype.theme_settings.theme_settings import (
+		get_settings,
+	)
+
+	return get_settings()
+
+
+def _visible_to_user(theme_names: list[str], user: str | None = None) -> set[str]:
+	"""Of `theme_names`, the ones this user's roles allow.
+
+	A theme with no `restrict_to_roles` rows is visible to everyone; one with
+	rows is visible only to holders of at least one listed role. Resolved in
+	a single query rather than per-theme so the gallery stays one round-trip.
+	"""
+	if not theme_names:
+		return set()
+	rows = frappe.get_all(
+		"Theme Role",
+		filters={"parenttype": "Theme Definition", "parent": ["in", theme_names]},
+		fields=["parent", "role"],
+	)
+	if not rows:
+		return set(theme_names)
+
+	restricted: dict[str, set[str]] = {}
+	for row in rows:
+		restricted.setdefault(row.parent, set()).add(row.role)
+
+	user_roles = set(frappe.get_roles(user or frappe.session.user))
+	return {
+		name
+		for name in theme_names
+		if name not in restricted or (restricted[name] & user_roles)
+	}
+
+
+def _apply_visibility(themes: list[dict], user: str | None = None) -> list[dict]:
+	allowed = _visible_to_user([t["name"] for t in themes], user)
+	return [t for t in themes if t["name"] in allowed]
+
+
 @frappe.whitelist()
 def get_available_themes():
 	user = frappe.session.user
+	settings = _settings()
+
 	defaults = frappe.get_all(
 		"Theme Definition",
 		filters={"is_default": 1},
@@ -57,22 +101,75 @@ def get_available_themes():
 		fields=THEME_FIELDS,
 		order_by="modified desc",
 	)
-	public = frappe.get_all(
-		"Theme Definition",
-		filters={"is_public": 1, "is_default": 0, "owner_user": ["!=", user]},
-		fields=THEME_FIELDS,
-		order_by="modified desc",
-	)
-	return {"defaults": defaults, "owned": owned, "public": public}
+	# `owner_user != user` is evaluated in Python rather than SQL: in SQL
+	# `NULL != 'x'` is NULL, not TRUE, so a public theme with no owner would
+	# be silently dropped from the gallery.
+	public = [
+		t
+		for t in frappe.get_all(
+			"Theme Definition",
+			filters={"is_public": 1, "is_default": 0},
+			fields=THEME_FIELDS,
+			order_by="modified desc",
+		)
+		if t.get("owner_user") != user
+	]
+
+	defaults = _apply_visibility(defaults, user)
+	public = _apply_visibility(public, user)
+
+	# An admin restricting the theme list only narrows what is on offer. A
+	# theme a user already has stays applied — silently reverting someone's
+	# Desk because an allow-list changed would be worse than showing them a
+	# theme that is no longer offered.
+	if settings["restrict_theme_choice"]:
+		allowed = set(settings["allowed_themes"] or [])
+		defaults = [t for t in defaults if t["name"] in allowed]
+		public = [t for t in public if t["name"] in allowed]
+		owned = [t for t in owned if t["name"] in allowed]
+
+	return {
+		"defaults": defaults,
+		"owned": owned,
+		"public": public,
+		"settings": {
+			"allow_custom_themes": 1 if settings["allow_custom_themes"] else 0,
+			"allow_public_sharing": 1 if settings["allow_public_sharing"] else 0,
+		},
+	}
 
 
 @frappe.whitelist()
 def get_active_theme():
+	"""Return the user's active theme, or a null theme if they have none.
+
+	A user with no `User Theme Preference` row has not opted in to Theme
+	Studio — the client clears our CSS variables and Frappe's native palette
+	renders. We must NOT create a preference here: this runs on every
+	`boot_session`, so auto-assigning a theme would both force one on every
+	new user and silently undo `clear_active_theme()` on the next page load.
+	"""
 	user = frappe.session.user
 	pref_name = frappe.db.exists("User Theme Preference", {"user": user})
 	if not pref_name:
-		# No preference set — signal the client to render stock Frappe UI.
-		return {"theme": None, "overrides": {}}
+		# No preference of their own — fall back to the site default if an
+		# admin set one. Still no row is created: this runs on every boot,
+		# and writing here would both pin the user to today's default and
+		# undo clear_active_theme() on the next page load.
+		default_name = _settings()["site_default_theme"]
+		if default_name:
+			theme = frappe.db.get_value(
+				"Theme Definition", default_name, THEME_FIELDS, as_dict=True
+			)
+			if theme:
+				return {
+					"theme": theme,
+					"overrides": {},
+					"dark_theme": None,
+					"mode": "Single",
+					"source": "site_default",
+				}
+		return {"theme": None, "overrides": {}, "dark_theme": None, "mode": "Single"}
 
 	pref = frappe.get_doc("User Theme Preference", pref_name)
 	theme = frappe.db.get_value(
@@ -82,7 +179,51 @@ def get_active_theme():
 		overrides = json.loads(pref.overrides_json or "{}")
 	except Exception:
 		overrides = {}
-	return {"theme": theme, "overrides": overrides}
+
+	# `theme` and `overrides` keep their original meaning so existing callers
+	# are unaffected; automatic pairing is additive.
+	mode = pref.get("theme_mode") or "Single"
+	dark_theme = None
+	if mode == "Automatic" and pref.get("dark_theme"):
+		dark_theme = frappe.db.get_value(
+			"Theme Definition", pref.dark_theme, THEME_FIELDS, as_dict=True
+		)
+	if not dark_theme:
+		# A mode of Automatic with no usable dark theme behaves as Single
+		# rather than leaving the client to guess.
+		mode = "Single"
+
+	return {
+		"theme": theme,
+		"overrides": overrides,
+		"dark_theme": dark_theme,
+		"mode": mode,
+		"source": "user",
+	}
+
+
+@frappe.whitelist()
+def set_theme_mode(mode: str, dark_theme: str | None = None):
+	"""Switch between a single theme and an automatic light/dark pair."""
+	if mode not in ("Single", "Automatic"):
+		frappe.throw(_("mode must be Single or Automatic"))
+	if mode == "Automatic":
+		if not dark_theme:
+			frappe.throw(_("Pick a dark theme to pair with"))
+		if not frappe.db.exists("Theme Definition", dark_theme):
+			frappe.throw(_("Theme {0} does not exist").format(dark_theme))
+
+	user = frappe.session.user
+	pref_name = frappe.db.exists("User Theme Preference", {"user": user})
+	if not pref_name:
+		frappe.throw(_("Pick a theme before enabling automatic switching"))
+
+	pref = frappe.get_doc("User Theme Preference", pref_name)
+	pref.theme_mode = mode
+	pref.dark_theme = dark_theme if mode == "Automatic" else None
+	pref.save(ignore_permissions=False)
+	_invalidate_bootinfo(user)
+	return {"ok": True, "mode": mode}
 
 
 @frappe.whitelist()
@@ -128,6 +269,12 @@ def save_custom_theme(payload, share_public=0):
 	required = {"theme_name", "theme_key"}
 	if not required.issubset(payload):
 		frappe.throw(_("theme_name and theme_key are required"))
+
+	settings = _settings()
+	if not settings["allow_custom_themes"]:
+		frappe.throw(_("Custom themes are disabled on this site."))
+	if not settings["allow_public_sharing"]:
+		share_public = 0
 
 	user = frappe.session.user
 	existing = frappe.db.exists(
@@ -181,6 +328,28 @@ def get_recommended_palettes():
 
 
 @frappe.whitelist()
+def generate_palette(seed, is_dark=0):
+	"""Derive full palettes from one brand colour, for the "Generate" tab.
+
+	Returns the same shape as get_recommended_palettes() — one entry per
+	variant — so the editor draws generated and curated palettes with the
+	same card. Read-only: nothing is written until the user applies a result
+	and saves, which goes through save_custom_theme like any manual edit.
+
+	The seed is the only user-controlled input, and it never reaches CSS: it
+	is parsed to HLS and every emitted value is a freshly formatted #rrggbb.
+	It is still validated here so a typo returns a clear message instead of a
+	stack trace.
+	"""
+	from nexus_theme.utils.palette_generator import generate_variants
+
+	try:
+		return generate_variants(seed, bool(int(is_dark or 0)))
+	except ValueError:
+		frappe.throw(_("{0} is not a valid hex colour.").format(seed))
+
+
+@frappe.whitelist()
 def delete_custom_theme(theme_name: str):
 	if not theme_name:
 		frappe.throw(_("theme_name is required"))
@@ -193,6 +362,80 @@ def delete_custom_theme(theme_name: str):
 	return {"ok": True}
 
 
+# ---------------------------------------------------------------------------
+# Import / export
+# ---------------------------------------------------------------------------
+
+# The portable shape of a theme. Excludes identity and ownership: an imported
+# theme belongs to whoever imports it, on whatever site they import it to.
+PORTABLE_FIELDS = [f for f in THEME_FIELDS if f not in ("name", "owner_user")]
+
+EXPORT_FORMAT = "nexus_theme.theme/1"
+
+
+@frappe.whitelist()
+def export_theme(theme_name: str):
+	"""Return one theme as a portable dict, for saving to a .json file.
+
+	Lets a brand theme live in version control and be promoted between
+	sites instead of being rebuilt by hand in the color pickers.
+	"""
+	if not theme_name:
+		frappe.throw(_("theme_name is required"))
+	doc = frappe.get_doc("Theme Definition", theme_name)
+	if not (doc.is_default or doc.is_public or doc.owner_user == frappe.session.user):
+		frappe.throw(_("You can only export your own themes"))
+
+	return {
+		"format": EXPORT_FORMAT,
+		"exported_from": frappe.local.site,
+		"theme": {f: doc.get(f) for f in PORTABLE_FIELDS},
+	}
+
+
+@frappe.whitelist()
+def import_theme(payload, share_public=0):
+	"""Create a theme from an exported payload.
+
+	The values still go through Theme Definition's own validation, so an
+	imported file cannot introduce a color the CSS guard would reject or a
+	contrast pair below AA.
+	"""
+	if isinstance(payload, str):
+		try:
+			payload = json.loads(payload)
+		except Exception:
+			frappe.throw(_("That file is not valid JSON."))
+	if not isinstance(payload, dict):
+		frappe.throw(_("That file is not a theme export."))
+
+	# Accept either the wrapper or a bare theme dict.
+	theme = payload.get("theme") if "theme" in payload else payload
+	if not isinstance(theme, dict) or not theme.get("theme_key"):
+		frappe.throw(_("That file is not a theme export."))
+
+	fmt = payload.get("format")
+	if fmt and fmt != EXPORT_FORMAT:
+		frappe.throw(_("Unsupported export format: {0}").format(fmt))
+
+	clean = {f: theme[f] for f in PORTABLE_FIELDS if f in theme}
+	clean["theme_name"] = theme.get("theme_name") or theme["theme_key"]
+
+	# A key that already exists would silently overwrite the user's own
+	# theme of that name, so give the import its own.
+	base_key = str(clean["theme_key"])[:120]
+	key = base_key
+	suffix = 2
+	while frappe.db.exists("Theme Definition", key):
+		key = f"{base_key}-{suffix}"
+		suffix += 1
+	clean["theme_key"] = key
+	if key != base_key:
+		clean["theme_name"] = f"{clean['theme_name']} ({suffix - 1})"
+
+	return save_custom_theme(clean, share_public=share_public)
+
+
 def extend_boot_session(bootinfo):
 	"""Inject active theme and sound map into bootinfo so first paint is themed."""
 	try:
@@ -203,6 +446,17 @@ def extend_boot_session(bootinfo):
 		bootinfo["user_sounds"] = get_user_sounds()
 	except Exception:
 		frappe.log_error(title="theme: boot_session user_sounds failed")
+	try:
+		settings = _settings()
+		bootinfo["nexus_theme_settings"] = {
+			"allow_custom_themes": 1 if settings["allow_custom_themes"] else 0,
+			"allow_public_sharing": 1 if settings["allow_public_sharing"] else 0,
+			"allow_user_sounds": 1 if settings["allow_user_sounds"] else 0,
+			"navbar_logo": settings["navbar_logo"],
+			"favicon": settings["favicon"],
+		}
+	except Exception:
+		frappe.log_error(title="theme: boot_session settings failed")
 
 
 # ---------------------------------------------------------------------------
@@ -240,6 +494,10 @@ def _get_or_create_sound_pref(user: str | None = None):
 @frappe.whitelist()
 def get_user_sounds():
 	"""Return this user's sound configuration: {enabled, mapping: {event: {url, volume}}}."""
+	# A site-wide off switch wins over the per-user flag.
+	if not _settings()["allow_user_sounds"]:
+		return {"enabled": 0, "mapping": {}}
+
 	user = frappe.session.user
 	name = frappe.db.exists("User Sound Preference", {"user": user})
 	if not name:

@@ -1,0 +1,222 @@
+/* ==================================================================
+   Sound Studio — dialog layout
+   ------------------------------------------------------------------
+   Each row is a 3-column grid:
+     LEFT     : title + selected sound name + preset chips (stacked)
+     CENTER   : volume slider, vertically centered
+     RIGHT    : action buttons (Preview / Upload / Default / Clear)
+   The left column uses two grid rows so chips sit directly under the
+   filename; volume + actions span both rows and self-center.
+   ================================================================== */
+
+.sound-studio {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sound-studio-hint {
+  font-size: 12px;
+  color: var(--theme-text-muted, #6b7280);
+}
+
+.sound-studio-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sound-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px auto;
+  grid-template-areas:
+    "label   volume actions"
+    "presets volume actions";
+  column-gap: 14px;
+  row-gap: 8px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid var(--theme-border, #e5e7eb);
+  border-radius: var(--theme-border-radius, 8px);
+  background-color: var(--theme-bg-surface, #f7f8fa);
+  transition: border-color var(--theme-transition-duration, 150ms) ease;
+}
+
+.sound-row:hover {
+  border-color: var(--theme-accent, #4f46e5);
+}
+
+.sound-row > .sound-row-label   { grid-area: label;   min-width: 0; }
+.sound-row > .sound-row-presets { grid-area: presets; min-width: 0; }
+.sound-row > .sound-row-volume  { grid-area: volume;  align-self: center; }
+.sound-row > .sound-row-actions { grid-area: actions; align-self: center; }
+
+/* ---------- Left column: title + filename ---------- */
+.sound-row-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sound-row-title {
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--theme-text-primary, #1f2937);
+}
+
+.sound-row-file {
+  font-size: 11px;
+  color: var(--theme-text-muted, #6b7280);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* ---------- Center column: volume slider ---------- */
+.sound-row-volume {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.sound-row-volume input[type="range"] {
+  width: 100%;
+  margin: 0;
+  accent-color: var(--theme-accent, #4f46e5);
+}
+
+/* ---------- Right column: action buttons ---------- */
+.sound-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.sound-row-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  min-width: 60px;
+  padding: 0 10px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* ---------- Preset chip strip (left column, row 2) ---------- */
+.sound-row-presets {
+  display: flex;
+  flex-wrap: wrap;       /* wrap only when the row truly cannot fit */
+  align-items: center;
+  gap: 6px 8px;
+  min-width: 0;
+}
+
+.sound-row-presets .presets-label {
+  flex-shrink: 0;
+  margin-right: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--theme-text-muted, #6b7280);
+}
+
+.preset-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 24px;
+  padding: 0 10px 0 4px;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--theme-text-primary, #1f2937);
+  background-color: var(--theme-bg-input, #ffffff);
+  border: 1px solid var(--theme-border, #e5e7eb);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.preset-chip:hover {
+  border-color: var(--theme-accent, #4f46e5);
+  color: var(--theme-accent, #4f46e5);
+}
+
+.preset-chip.is-selected {
+  background-color: color-mix(in srgb, var(--theme-accent, #4f46e5) 15%, transparent);
+  border-color: var(--theme-accent, #4f46e5);
+  color: var(--theme-accent, #4f46e5);
+  font-weight: 600;
+}
+
+.preset-chip .preset-play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 9px;
+  color: var(--theme-accent, #4f46e5);
+  background-color: color-mix(in srgb, var(--theme-accent, #4f46e5) 18%, transparent);
+  cursor: pointer;
+  user-select: none;
+}
+
+.preset-chip .preset-play:hover {
+  background-color: var(--theme-accent, #4f46e5);
+  color: #ffffff;
+}
+
+.preset-chip .preset-name {
+  white-space: nowrap;
+}
+
+.preset-custom-tag {
+  flex-shrink: 0;
+  margin-left: 6px;
+  font-size: 10px;
+  font-style: italic;
+  white-space: nowrap;
+  color: var(--theme-text-muted, #6b7280);
+}
+
+/* ---------- Responsive: stack on narrow viewports ---------- */
+@media (max-width: 720px) {
+  .sound-row {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "label"
+      "volume"
+      "actions"
+      "presets";
+    row-gap: 10px;
+  }
+
+  .sound-row-volume,
+  .sound-row-actions {
+    align-self: stretch;
+  }
+
+  .sound-row-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .sound-row-presets {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+}

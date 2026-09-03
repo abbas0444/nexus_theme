@@ -53,6 +53,7 @@
         const frappeKey = frappeKeyFor(userKey);
         const el = document.getElementById("sound-" + frappeKey);
         if (el) {
+          this._rememberOriginal(el);
           el.src = def.url;
           el.load && el.load();
         }
@@ -60,10 +61,23 @@
       this._notify();
     }
 
+    /**
+     * Remember every <audio> element's shipped src the first time we touch
+     * it, so clearing a custom sound can put the default back immediately
+     * instead of requiring a page reload.
+     */
+    _rememberOriginal(el) {
+      if (!el || el.dataset.smOriginalSrc !== undefined) return;
+      el.dataset.smOriginalSrc = el.getAttribute("src") || "";
+    }
+
     resetMappingFor(name) {
       delete this.mapping[name];
-      // We can't restore the original Frappe src here (it's not tracked),
-      // but a page reload will re-render with defaults.
+      const el = document.getElementById("sound-" + frappeKeyFor(name));
+      if (el && el.dataset.smOriginalSrc !== undefined) {
+        el.src = el.dataset.smOriginalSrc;
+        el.load && el.load();
+      }
       this._notify();
     }
 
@@ -322,10 +336,12 @@
       );
 
       // Text-based fallback for menu items like "Log out" / "Sign out" that
-      // have no href — re-scan on each click.
+      // carry no href. Scoped to menu containers rather than every `a` and
+      // `button` on the page: the old selector ran a text comparison on
+      // literally every click in the Desk to catch one of them.
       $(document).off("click.soundmgr-logout-text").on(
         "click.soundmgr-logout-text",
-        ".dropdown-item, .menu-item, a, button",
+        ".dropdown-menu a, .dropdown-menu button, .menu-item, .dropdown-item",
         function () {
           const t = ($(this).text() || "").trim().toLowerCase();
           if (t === "log out" || t === "logout" || t === "sign out") {

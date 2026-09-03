@@ -1,0 +1,156 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-31 00:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "defaults_section",
+  "site_default_theme",
+  "column_break_defaults",
+  "apply_to_website",
+  "governance_section",
+  "allow_custom_themes",
+  "allow_public_sharing",
+  "column_break_governance",
+  "restrict_theme_choice",
+  "allowed_themes",
+  "sounds_section",
+  "allow_user_sounds",
+  "brand_section",
+  "navbar_logo",
+  "favicon",
+  "column_break_brand",
+  "login_background"
+ ],
+ "fields": [
+  {
+   "fieldname": "defaults_section",
+   "fieldtype": "Section Break",
+   "label": "Site Defaults"
+  },
+  {
+   "description": "Applied to users who have not chosen a theme. Leave blank to show Frappe's stock UI.",
+   "fieldname": "site_default_theme",
+   "fieldtype": "Link",
+   "label": "Site Default Theme",
+   "options": "Theme Definition"
+  },
+  {
+   "fieldname": "column_break_defaults",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Also apply the site default theme to the login page and public website.",
+   "fieldname": "apply_to_website",
+   "fieldtype": "Check",
+   "label": "Apply to Login & Website"
+  },
+  {
+   "fieldname": "governance_section",
+   "fieldtype": "Section Break",
+   "label": "Governance"
+  },
+  {
+   "default": "1",
+   "description": "Let users build and save their own themes in Theme Studio.",
+   "fieldname": "allow_custom_themes",
+   "fieldtype": "Check",
+   "label": "Allow Custom Themes"
+  },
+  {
+   "default": "1",
+   "description": "Let users share a custom theme with everyone on the site.",
+   "fieldname": "allow_public_sharing",
+   "fieldtype": "Check",
+   "label": "Allow Public Sharing"
+  },
+  {
+   "fieldname": "column_break_governance",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Show only the themes listed below. Users keep any theme they already have.",
+   "fieldname": "restrict_theme_choice",
+   "fieldtype": "Check",
+   "label": "Restrict Theme Choice"
+  },
+  {
+   "depends_on": "restrict_theme_choice",
+   "fieldname": "allowed_themes",
+   "fieldtype": "Table MultiSelect",
+   "label": "Allowed Themes",
+   "options": "Allowed Theme"
+  },
+  {
+   "fieldname": "sounds_section",
+   "fieldtype": "Section Break",
+   "label": "Sounds"
+  },
+  {
+   "default": "1",
+   "description": "Turn off to disable Sound Studio for everyone on this site.",
+   "fieldname": "allow_user_sounds",
+   "fieldtype": "Check",
+   "label": "Allow User Sounds"
+  },
+  {
+   "fieldname": "brand_section",
+   "fieldtype": "Section Break",
+   "label": "Brand Kit"
+  },
+  {
+   "description": "Replaces the Frappe logo in the navbar.",
+   "fieldname": "navbar_logo",
+   "fieldtype": "Attach Image",
+   "label": "Navbar Logo"
+  },
+  {
+   "description": "Browser tab icon. Applied on the Desk and the website.",
+   "fieldname": "favicon",
+   "fieldtype": "Attach Image",
+   "label": "Favicon"
+  },
+  {
+   "fieldname": "column_break_brand",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Background image for the login page.",
+   "fieldname": "login_background",
+   "fieldtype": "Attach Image",
+   "label": "Login Background"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-08-31 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Nexus Theme",
+ "name": "Theme Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Theme User"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

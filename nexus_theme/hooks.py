@@ -26,17 +26,36 @@ app_license = "MIT"
 
 # include js, css files in header of desk.html
 app_include_css = [
-	"/assets/nexus_theme/css/theme_variables.css",
-	"/assets/nexus_theme/css/theme_switcher.css",
-	"/assets/nexus_theme/css/sound_studio.css",
+	"theme_variables.bundle.css",
+	"theme_switcher.bundle.css",
+	"sound_studio.bundle.css",
 ]
 app_include_js = [
-	"/assets/nexus_theme/js/theme_manager.js",
-	"/assets/nexus_theme/js/theme_switcher.js",
-	"/assets/nexus_theme/js/theme_editor.js",
-	"/assets/nexus_theme/js/sound_manager.js",
-	"/assets/nexus_theme/js/sound_studio.js",
+	"theme_manager.bundle.js",
+	"theme_switcher.bundle.js",
+	"theme_editor.bundle.js",
+	# Adds every Theme Definition to Frappe's own "Switch Theme" dialog
+	# (sidebar → Display → Toggle Theme). Must load after theme_manager,
+	# which it delegates to when applying a theme.
+	"native_theme_switcher.bundle.js",
+	# Navbar logo / favicon from Theme Settings. No-op until one is set.
+	"brand_kit.bundle.js",
+	# Adds "Theme Studio" and "Sound Settings" to the avatar dropdown on
+	# Frappe v16's Desk. That Desk hides the classic navbar, so the Navbar
+	# Settings items registered by install.py never render there and the app
+	# would otherwise have no entry point in the UI.
+	"desktop_menu.bundle.js",
+	"sound_manager.bundle.js",
+	"sound_studio.bundle.js",
 ]
+
+# Login page and public website. The stylesheet is inert unless
+# website.update_website_context injects the theme's CSS variables, which it
+# only does when an admin ticks "Apply to Login & Website" in Theme Settings.
+web_include_css = ["web_theme.bundle.css"]
+# Mirrors the injected theme's polarity onto <html data-theme> so website
+# CSS keyed off [data-theme="dark"] matches the site theme.
+web_include_js = ["web_theme.bundle.js"]
 
 # Register an <audio id="sound-X"> element for every supported Desk event so
 # the app is fully self-contained — it never depends on Frappe's stock sounds
@@ -118,11 +137,13 @@ sounds = [
 # before_install = "nexus_theme.install.before_install"
 # Create the "Theme User" role and grant it to every existing Desk user.
 after_install = "nexus_theme.install.after_install"
+after_migrate = "nexus_theme.install.after_migrate"
 
 # Uninstallation
 # ------------
 
-# before_uninstall = "nexus_theme.uninstall.before_uninstall"
+# Remove the "Theme User" role and the synced asset tree on uninstall.
+before_uninstall = "nexus_theme.uninstall.before_uninstall"
 # after_uninstall = "nexus_theme.uninstall.after_uninstall"
 
 # Integration Setup
@@ -273,6 +294,11 @@ doc_events = {
 # ------------
 # Inject active theme into bootinfo so first paint is themed without a round-trip.
 boot_session = "nexus_theme.api.extend_boot_session"
+
+# Website
+# -------
+# Theme the login page and public web pages from the site default theme.
+update_website_context = "nexus_theme.website.update_website_context"
 
 # Fixtures
 # --------

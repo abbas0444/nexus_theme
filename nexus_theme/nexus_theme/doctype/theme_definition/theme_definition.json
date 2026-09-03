@@ -15,6 +15,7 @@
   "is_dark",
   "owner_user",
   "is_public",
+  "restrict_to_roles",
   "colors_section",
   "bg_primary",
   "bg_surface",
@@ -95,6 +96,13 @@
    "fieldname": "is_public",
    "fieldtype": "Check",
    "label": "Public"
+  },
+  {
+   "description": "Limit this theme to these roles. Leave empty to show it to everyone.",
+   "fieldname": "restrict_to_roles",
+   "fieldtype": "Table MultiSelect",
+   "label": "Restrict to Roles",
+   "options": "Theme Role"
   },
   {
    "fieldname": "colors_section",

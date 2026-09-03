@@ -1,0 +1,7 @@
+{
+  "name": "nexus_theme",
+  "private": true,
+  "scripts": {
+    "build": "node ../frappe/esbuild/index.js --apps nexus_theme"
+  }
+}

@@ -9,6 +9,8 @@
  "field_order": [
   "user",
   "active_theme",
+  "theme_mode",
+  "dark_theme",
   "overrides_json"
  ],
  "fields": [
@@ -28,6 +30,22 @@
    "label": "Active Theme",
    "options": "Theme Definition",
    "reqd": 1
+  },
+  {
+   "default": "Single",
+   "description": "Single uses one theme always. Automatic pairs the active theme (light) with the dark theme below and follows the operating system.",
+   "fieldname": "theme_mode",
+   "fieldtype": "Select",
+   "label": "Theme Mode",
+   "options": "Single\nAutomatic"
+  },
+  {
+   "depends_on": "eval:doc.theme_mode=='Automatic'",
+   "description": "Used when the operating system is in dark mode.",
+   "fieldname": "dark_theme",
+   "fieldtype": "Link",
+   "label": "Dark Theme",
+   "options": "Theme Definition"
   },
   {
    "description": "Sparse CSS variable overrides layered on top of the active theme.",

@@ -20,16 +20,27 @@
   function injectNavbarButton() {
     if (document.querySelector(".theme-switcher-btn")) return true;
 
-    const container =
-      document.querySelector(".navbar .navbar-collapse .navbar-nav.ms-auto") ||
-      document.querySelector(".navbar .navbar-collapse .navbar-nav:last-child") ||
-      document.querySelector("header .navbar-nav");
+    const candidates = [
+      ".navbar .navbar-collapse .navbar-nav.ms-auto",
+      ".navbar .navbar-collapse .navbar-nav:last-child",
+      ".navbar .navbar-nav",
+      "header .navbar-nav",
+      ".navbar-nav",
+      "nav.navbar-nav",
+      ".navbar-collapse .navbar-nav",
+    ];
+
+    let container = null;
+    for (const selector of candidates) {
+      container = document.querySelector(selector);
+      if (container) break;
+    }
 
     if (!container) return false;
 
-    const li = document.createElement("li");
-    li.className = "nav-item theme-switcher-btn";
-    li.innerHTML = `
+    const listItem = document.createElement("li");
+    listItem.className = "nav-item theme-switcher-btn";
+    listItem.innerHTML = `
       <a class="nav-link" href="#" title="Customize Theme" aria-label="Customize Theme" role="button">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -37,11 +48,17 @@
           <path d="M12 2a10 10 0 0 0 0 20 5 5 0 0 0 0-10 5 5 0 0 1 0-10z"></path>
         </svg>
       </a>`;
-    li.querySelector("a").addEventListener("click", (e) => {
+    listItem.querySelector("a").addEventListener("click", (e) => {
       e.preventDefault();
       openSwitcher();
     });
-    container.insertBefore(li, container.firstChild);
+
+    const firstChild = container.firstElementChild;
+    if (firstChild) {
+      container.insertBefore(listItem, firstChild);
+    } else {
+      container.appendChild(listItem);
+    }
     return true;
   }
 
@@ -56,6 +73,9 @@
     const defaults = data.defaults || [];
     const owned = data.owned || [];
     const publicThemes = data.public || [];
+    // Site governance. Absent (older server) means "everything allowed", so
+    // the dialog behaves exactly as it did before Theme Settings existed.
+    const gov = data.settings || { allow_custom_themes: 1, allow_public_sharing: 1 };
 
     // Build a flat lookup so card clicks resolve to full theme dicts
     // without another server round-trip.
@@ -99,10 +119,14 @@
         frappe.show_alert({ message: __("Theme applied"), indicator: "green" });
         dialog.hide();
       },
-      secondary_action_label: __("Save as Custom…"),
-      secondary_action: () => {
-        if (editor) editor.openSaveCustom();
-      },
+      secondary_action_label: gov.allow_custom_themes
+        ? __("Save as Custom…")
+        : undefined,
+      secondary_action: gov.allow_custom_themes
+        ? () => {
+            if (editor) editor.openSaveCustom();
+          }
+        : undefined,
     });
 
     // Safety net: regardless of `custom_cls` support, force the class onto
@@ -164,8 +188,174 @@
       return true;
     };
 
+    // ---- Automatic light/dark pairing ----
+    const handleAutoPair = async () => {
+      const allThemes = [...defaults, ...owned, ...publicThemes];
+      const darkThemes = allThemes.filter((t) => t.is_dark);
+      const lightThemes = allThemes.filter((t) => !t.is_dark);
+      if (!darkThemes.length || !lightThemes.length) {
+        frappe.show_alert({
+          message: __("Automatic mode needs both a light and a dark theme available"),
+          indicator: "orange",
+        });
+        return;
+      }
+      const current = (window.ThemeManager && ThemeManager.mode) || "Single";
+      const pair = (window.ThemeManager && ThemeManager.pair) || {};
+
+      const d = new frappe.ui.Dialog({
+        title: __("Automatic Light / Dark"),
+        fields: [
+          {
+            fieldtype: "HTML",
+            fieldname: "intro",
+            options: `<p class="text-muted">${__(
+              "Follow the operating system: your light theme during the day, your dark theme at night."
+            )}</p>`,
+          },
+          {
+            fieldtype: "Select",
+            fieldname: "mode",
+            label: __("Mode"),
+            options: "Single\nAutomatic",
+            default: current,
+          },
+          {
+            fieldtype: "Select",
+            fieldname: "light_theme",
+            label: __("Light Theme"),
+            depends_on: "eval:doc.mode=='Automatic'",
+            options: lightThemes.map((t) => t.name).join("\n"),
+            default: (pair.light && !pair.light.is_dark && pair.light.name) || undefined,
+          },
+          {
+            fieldtype: "Select",
+            fieldname: "dark_theme",
+            label: __("Dark Theme"),
+            depends_on: "eval:doc.mode=='Automatic'",
+            options: darkThemes.map((t) => t.name).join("\n"),
+            default: (pair.dark && pair.dark.name) || undefined,
+          },
+        ],
+        primary_action_label: __("Save"),
+        primary_action: async (v) => {
+          try {
+            if (v.mode === "Automatic") {
+              if (!v.light_theme || !v.dark_theme) {
+                frappe.show_alert({
+                  message: __("Pick both a light and a dark theme"),
+                  indicator: "orange",
+                });
+                return;
+              }
+              // The light half is the stored active theme, so set it first.
+              await ThemeManager.setActive(v.light_theme, {});
+              await ThemeManager.setThemeMode("Automatic", v.dark_theme);
+            } else {
+              await ThemeManager.setThemeMode("Single", null);
+            }
+            frappe.show_alert({ message: __("Saved"), indicator: "green" });
+            d.hide();
+            dialog.hide();
+          } catch (err) {
+            frappe.show_alert({
+              message: __("Could not save: {0}", [(err && err.message) || ""]),
+              indicator: "red",
+            });
+          }
+        },
+      });
+      d.show();
+    };
+
+    // ---- Export / import ----
+    const handleExport = async () => {
+      if (!selectedTheme) {
+        frappe.show_alert({ message: __("Pick a theme first"), indicator: "orange" });
+        return;
+      }
+      try {
+        const r = await frappe.call({
+          method: "nexus_theme.api.export_theme",
+          args: { theme_name: selectedTheme.name },
+        });
+        if (!r || !r.message) return;
+        const blob = new Blob([JSON.stringify(r.message, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${selectedTheme.theme_key || "theme"}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        // Revoking immediately can cancel the download in some browsers.
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+      } catch (_err) {
+        frappe.show_alert({ message: __("Could not export theme"), indicator: "red" });
+      }
+    };
+
+    const handleImport = () => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "application/json,.json";
+      input.addEventListener("change", async () => {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        try {
+          const text = await file.text();
+          const r = await frappe.call({
+            method: "nexus_theme.api.import_theme",
+            args: { payload: text },
+          });
+          if (r && r.message && r.message.name) {
+            frappe.show_alert({ message: __("Theme imported"), indicator: "green" });
+            dialog.hide();
+            openSwitcher();
+          }
+        } catch (err) {
+          frappe.show_alert({
+            message: __("Could not import: {0}", [(err && err.message) || ""]),
+            indicator: "red",
+          });
+        }
+      });
+      input.click();
+    };
+
+    const injectFooterButtons = () => {
+      const $footer = dialog.$wrapper.find(".modal-footer").first();
+      if (!$footer.length) return;
+      const $slot = $footer.find(".custom-actions").first();
+      const place = ($btn) => {
+        if ($slot.length) $slot.append($btn);
+        else $footer.prepend($btn);
+      };
+
+      const add = (cls, label, handler) => {
+        if ($footer.find("." + cls).length) return;
+        const $btn = $(
+          `<button type="button" class="btn btn-default btn-sm ${cls}">${label}</button>`
+        );
+        $btn.on("click", handler);
+        place($btn);
+      };
+
+      add("btn-auto-pair", __("Auto Light/Dark"), handleAutoPair);
+      add("btn-export-theme", __("Export"), handleExport);
+      if (gov.allow_custom_themes) {
+        add("btn-import-theme", __("Import"), handleImport);
+      }
+    };
+
     injectResetButton();
-    dialog.$wrapper.on("shown.bs.modal", injectResetButton);
+    injectFooterButtons();
+    dialog.$wrapper.on("shown.bs.modal", () => {
+      injectResetButton();
+      injectFooterButtons();
+    });
 
     // ---- Preview pane ----
     const $preview = dialog.fields_dict.preview.$wrapper;
@@ -216,6 +406,7 @@
       editor = window.openThemeEditor($editor, dialog, {
         getSelectedTheme: () => selectedTheme,
         onPreview: () => renderPreview(),
+        allowPublicSharing: !!gov.allow_public_sharing,
       });
     }
 
@@ -446,6 +637,12 @@
   }
 
   function boot() {
+    // Frappe v16 replaced the top navbar with the left sidebar, so none of
+    // the selectors below exist any more and this quietly does nothing —
+    // Theme Studio is reached through the Navbar Item registered by
+    // install.ensure_navbar_items() instead. Kept for v15 and earlier,
+    // where the navbar icon is still the only entry point.
+    if (!document.querySelector(".navbar-nav")) return;
     let attempts = 0;
     const tryInject = () => {
       if (injectNavbarButton()) return;
@@ -461,4 +658,9 @@
   } else {
     boot();
   }
+
+  // The Navbar Item action calls this, and the README documents it as a
+  // public entry point. It was never actually assigned, so Theme Studio had
+  // no reachable opener at all once the navbar icon stopped resolving.
+  window.openThemeSwitcher = openSwitcher;
 })();

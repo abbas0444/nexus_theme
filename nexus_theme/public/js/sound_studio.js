@@ -484,6 +484,11 @@
   }
 
   function boot() {
+    // Same story as the theme switcher: the v13–v15 user dropdown these
+    // selectors target does not exist in v16, so this polled for ten
+    // seconds on every page load and found nothing. Sound Settings is
+    // reached through its Navbar Item there.
+    if (!document.querySelector(".dropdown-navbar-user, .navbar-user")) return;
     let attempts = 0;
     const tryInject = () => {
       if (injectUserMenuItem()) return;

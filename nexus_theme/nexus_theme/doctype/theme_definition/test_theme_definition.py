@@ -1,7 +1,7 @@
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from nexus_theme.themes.doctype.theme_definition.theme_definition import _SLUG_RE
+from nexus_theme.nexus_theme.doctype.theme_definition.theme_definition import _SLUG_RE
 
 
 class TestThemeDefinition(FrappeTestCase):

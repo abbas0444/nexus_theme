@@ -1,215 +1,433 @@
-<table width="100%" border="0">
-<tr>
-<td align="left"><img src="logos/logo.svg" alt="Nexus Theme" height="45"></td>
-<td align="right"><img src="logos/frappe_logo.png" alt="Frappe" height="52"></td>
-</tr>
-</table>
 <div align="center" markdown="1">
 
-# theme and Sounds
+<img src="logos/frappe_logo.png" alt="Frappe" height="48">
 
-Per-user theme and sound personalization for Frappe & ERPNext Desk — live color editor, curated WCAG-validated palettes, 17 bundled themes, and a Sound Studio that lets every user pick their own audio for save / submit / login / notifications and more.
+# Nexus Theme
 
-![ERPNext 15](https://img.shields.io/badge/ERPNext-15-blue) ![Frappe 15](https://img.shields.io/badge/Frappe-15-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey)
+**Make your workspace yours!** Personalize your ERPNext/Frappe colors and sounds in seconds. Pick from 17 pre-designed themes, or create your own from scratch. Every change updates instantly, and everything is built to be easy on the eyes.
+
+![ERPNext 16](https://img.shields.io/badge/ERPNext-16-blue) ![Frappe 16](https://img.shields.io/badge/Frappe-16-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey)
 
 </div>
 
 ---
 
-## Main features
+## ✨ What Can You Do?
 
-**Theme Switcher (gallery):**
-- 17 ready-made themes bundled on install — Midnight Indigo, Dracula, Tokyo Night, GitHub Light/Dark, Solarized, Nord Frost, Cyberpunk Neon, High Contrast, and more.
-- One-click apply with instant preview. Switch between Default / Custom / Public tabs to browse.
-- "Reset to Frappe Default" reverts the UI without uninstalling the app..
+### 🎨 Pick a Theme (17 ready-made designs)
+Click the avatar in the top-right corner → **Theme Studio**. You'll see three tabs:
+- **Default** — 17 pre-designed themes: Midnight Indigo, Dracula, Tokyo Night, GitHub Light/Dark, Solarized, Nord Frost, Cyberpunk Neon, High Contrast, and more.
+- **Custom** — Themes you created and saved privately (only you see them).
+- **Public** — Themes other team members shared with everyone.
 
-**Theme Editor (live, side-by-side):**
-- Basic tier — background, text, accent, font family, font size, corner radius, hover lift.
-- Advanced tier — surface colors, input bg, button colors, muted text, border, font weight, transition duration.
-- Every change previews live on the Desk behind the dialog before you save.
-- Save private themes (only you see them) or share publicly with the whole team.
-- Built-in **WCAG contrast guard** validates `text/bg`, `text/surface`, and `button-text/button-bg` to AA before save.
-
-**Curated Palettes:**
-- 8 WCAG-AA-validated palettes — Indigo Mist, Forest Paper, Rose Quartz, Graphite Amber, Midnight Violet, Carbon Teal, Obsidian Rose, Nordic Frost.
-- One click previews the full 11-token palette; save persists it as your active theme.
-
-**Sound Studio (per-user audio):**
-- Customize sounds for 12 Desk events: `save`, `submit`, `cancel`, `delete`, `error`, `email`, `alert`, `notification`, `click`, `login`, `logout`, `missing_fields`.
-- Three built-in presets per event (Glitch / Buzz / Chirp / Beam …) plus drag-and-drop custom `.mp3` / `.wav` uploads.
-- Per-event volume slider, master enable/disable, "Reset All to Default".
-- Every sound is **capped at 3 seconds** regardless of file length — no runaway 30-second loops.
-
-**Marketplace-clean integration:**
-- Zero changes to Frappe core files — all customizations layer on through `hooks.py`.
-- Preferences persisted in app-owned DocTypes (`User Theme Preference`, `User Sound Preference`, `Theme Definition`).
-- `boot_session` injection means the **first paint is themed** — no flash of unstyled UI.
-- Bootinfo cache is invalidated on every preference write, so changes survive logout/login round-trips.
-
-**Operations:**
-- Whitelisted Python + JS APIs to drive theme/sound changes from your own buttons / hooks / scripts.
-- 17 default themes shipped as fixtures — re-syncing them is idempotent and safe.
-- Migration patches (`v1_0` / `v1_1` / `v1_2`) handle upgrades cleanly between releases.
-
----
-## Setup and Use
-
-Nothing to configure on install. The app injects a **theme switcher icon** into the navbar and a **Sound Settings** link into the user dropdown the first time the Desk loads.
-
-### Pick a theme
-
-Click the circle-half icon in the navbar.
-
-| Tab | What you see |
-|---|---|
-| **Default** | The 17 themes shipped with the app |
-| **Custom** | Themes you've saved privately |
-| **Public** | Themes other users have shared |
-
-Click any card to apply instantly. Click **Customize** to open the editor and tweak it before saving as your own.
-
-### Edit a theme live
-
-The editor opens with a **Basic** tab (the colors most people change) and an **Advanced** tab (surface, button, border, motion). Every slider / picker pushes the change to the page behind the dialog in real time.
-
-| Field | What it controls |
-|---|---|
-| **Background** | The Desk's primary backdrop |
-| **Surface / Cards** | Card, modal, and sidebar background |
-| **Accent / Accent Hover** | Links and highlight color |
-| **Button Color / Button Hover / Button Text** | Primary action buttons |
-| **Font Family / Size / Weight** | Body typography |
-| **Corner Radius** | Border-radius applied across cards and inputs |
-| **Animation Speed** | Transition duration for hover / focus |
-| **Hover Lift** | Subtle elevate-on-hover effect for cards |
-
-Click **Save Custom Theme** → name it → optionally tick **Share with team** to publish it.
-
-### WCAG contrast guard
-
-Before any custom theme is saved, the editor validates:
-- `text_primary` on `bg_primary` passes AA (≥ 4.5:1)
-- `text_primary` on `bg_surface` passes AA (≥ 4.5:1)
-- `button_text` on `button_bg` passes AA-large (≥ 3.0:1)
-
-Failing combinations are blocked with a clear message — you can't ship an unreadable theme by accident.
-
-### Customize sounds
-
-Open the user dropdown (top-right avatar) → **Sound Settings**.
-
-Each row is one event. From left to right:
-- Event name + current file
-- Volume slider (0–100%)
-- **Preview** / **Upload** / **Default** / **Clear** actions
-- Three preset chips with their own ▶ preview button
-
-| Event | When it fires |
-|---|---|
-| **Login** | First Desk load after `/login` |
-| **Logout** | Just before the logout request flies |
-| **Save (form click)** | Form save success |
-| **Submit** | Document submit success |
-| **Cancel** | Document cancel |
-| **Delete** | Document delete |
-| **Error** | Server / client errors |
-| **Email** | Email sent toast |
-| **Alert** | `frappe.show_alert` |
-| **Notification (bell)** | Realtime notifications |
-| **Missing Fields** | The "mandatory fields required" popup on save |
-
-Click a preset chip to assign it (saves automatically). Drop an audio file with **Upload** to use your own. **Default** restores Frappe's stock sound for that event. **Reset All to Default** in the footer wipes every customization in one click.
-
-### Reset to Frappe defaults..
-
-From the theme switcher dialog, click **Reset to Frappe Default**. Your `User Theme Preference` row is deleted and the next page load renders stock Frappe. Sound customizations are unaffected — use **Reset All to Default** in Sound Studio for those.
+**How it works:** Click any theme card → it applies instantly. You can see a live preview of how it looks. Don't like it? Pick another one — changes happen immediately.
 
 ---
 
-## API
+### 🛠️ Customize Colors (Easy Mode & Power Mode)
+Click **Customize** on any theme to open the editor. It has two levels:
 
-Whitelisted Python entry points — callable from JS or REST.
+#### Basic Mode (most people need this)
+Change these core colors:
+- **Background** — The main backdrop of your workspace
+- **Text** — How text looks on that background
+- **Accent** — Links and highlights
+- **Buttons** — Color, hover effect, and text on buttons
+- **Fonts** — Family, size, and weight
+- **Corners & Animation** — Border radius and how fast things fade in/out
+- **Hover Effect** — Cards lift slightly when you hover over them (optional)
 
+**Live Preview:** As you adjust, your workspace behind the dialog updates instantly. See exactly how it looks before saving.
+
+#### Advanced Mode (for fine-tuning)
+Everything in Basic, plus:
+- **Surface colors** — Card backgrounds and sidebars
+- **Input fields** — Search boxes and form fields
+- **Muted text** — Secondary labels and hints
+- **Borders** — Line colors and thickness
+- **Font weight** — Make text bolder or lighter
+- **Transition speed** — How fast hover effects animate
+
+**Save your work:** When done, click **Save as Custom Theme** → give it a name → optionally check "Share with team" to let others use it.
+
+---
+
+### 🎯 Use Ready-Made Color Palettes (Instant 11-color themes)
+Click the **Palettes** tab to fill all 11 colors at once from curated, professionally-designed sets:
+- Indigo Mist
+- Forest Paper
+- Rose Quartz
+- Graphite Amber
+- Midnight Violet
+- Carbon Teal
+- Obsidian Rose
+- Nordic Frost
+
+Each palette is tested to make sure text is readable on every background (WCAG AA certified). One click fills the editor → customize from there if you want → save.
+
+---
+
+### ⚡ Generate a Theme from Your Brand Color (NEW!)
+Have a single brand color? Let the app build an entire 11-color theme for you.
+
+**How it works:**
+1. Click the **Generate** tab
+2. Enter your brand color (or pick from the color picker)
+3. Toggle **Light** or **Dark** mode
+4. Click one of three variants:
+   - **Neutral Canvas** — Greyscale background, your color only on accents. Best for focus.
+   - **Tinted Canvas** — Background carries your brand hue. Feels more branded.
+   - **High Contrast** — Super readable text, stronger borders. Best for accessibility.
+5. See the **Passes WCAG AA** badge with exact contrast numbers
+6. Click the variant → colors fill the editor → customize by hand if needed → save
+
+**Why this works:** Most color apps just pick lightness numbers (50%, 30%, etc.), which breaks across the color wheel. This one solves for *readability contrast* instead, so your theme works whether your brand is yellow, blue, or anything in between.
+
+---
+
+### 🔊 Sound Studio (Personalize Your Audio Feedback)
+Open the user dropdown (avatar, top-right) → **Sound Settings**.
+
+**What you can customize:**
+- **Login** — When you enter the Desk
+- **Logout** — When you leave
+- **Save** — When you save a form
+- **Submit** — When you submit a document
+- **Cancel** — When you cancel
+- **Delete** — When you delete something
+- **Error** — When something goes wrong
+- **Email** — When an email is sent
+- **Alert** — When you get a notification banner
+- **Notification (bell)** — When you get a real-time message
+- **Missing Fields** — When you try to save but forgot required fields
+
+**For each sound:**
+- **Preview** — Hear what it sounds like right now
+- **Upload** — Drop your own `.mp3` or `.wav` file
+- **Use a preset** — Pick from Glitch, Buzz, Chirp, Beam, and more (varies by event)
+- **Volume slider** — 0–100%
+- **Reset** — Go back to the built-in sound
+
+**Master controls at the bottom:**
+- **Reset All to Default** — Wipe all your customizations in one click
+- **Enable/Disable** — Mute all sounds without deleting them
+
+---
+
+### 🌙 Auto Light/Dark Mode
+Pair a light theme with a dark one → the app follows your OS setting. When you change your system theme, your workspace switches automatically.
+
+---
+
+### 👥 Share Themes with Your Team
+When you save a theme, tick **Share with team** to publish it. Everyone sees it in the Public tab. Admins can restrict who can share or turn off custom themes entirely.
+
+---
+
+### 🏢 Admin Control (Theme Settings)
+**If you're an admin:**
+- Set a **site default theme** for everyone
+- Restrict themes to an approved list
+- Turn off custom themes or public sharing
+- Add your **company logo** to the navbar, favicon, and login page
+- Apply themes to the **login page and public website** (not just the Desk)
+- Master on/off for all sounds
+
+All settings are off by default — turn on what you need, and the app doesn't interfere with anything else.
+
+---
+
+### 📊 Move Themes Between Sites
+- **Export** your custom theme as a `.json` file
+- **Import** it on another site (staging, production, different company)
+- Themes can live in your version control system
+- When you import, the app validates everything to make sure it's safe
+
+---
+
+### 🔐 Safety Built In
+Before you save any theme, the app checks:
+- Text on background is readable (≥4.5:1 contrast ratio)
+- Text on cards is readable (≥4.5:1 contrast ratio)
+- Button text on buttons is readable (≥3.0:1 contrast ratio)
+
+If something fails, you get a clear message showing what to fix. **You can't accidentally ship an unreadable theme.**
+
+---
+
+## 🚀 Getting Started (5 Minutes)
+
+**Nothing to set up.** The app is ready the moment you log in.
+
+### Step 1: Open Theme Studio
+Click the **green avatar** in the top-right corner → click **Theme Studio**.
+
+### Step 2: Pick a Theme
+You'll see theme cards. Click any one → it applies instantly to your workspace.
+
+### Step 3: (Optional) Customize It
+Click **Customize** to tweak colors, or skip this if you like the theme as-is.
+
+### Step 4: (Optional) Customize Sounds
+Back at the avatar → click **Sound Settings**. For each event (Save, Submit, etc.), you can pick a preset sound or upload your own.
+
+**That's it!** Your changes save automatically.
+
+---
+
+## ⚙️ Quick Reference: What Each Editor Tab Does
+
+| Tab | Use When | What You Get |
+|---|---|---|
+| **Basic** | You want to change main colors | Background, text, accent, buttons, fonts |
+| **Advanced** | You want fine control | Cards, inputs, borders, animation speed |
+| **Palettes** | You want a complete 11-color theme instantly | 8 professionally-designed color sets |
+| **Generate** | You have one brand color and want a full theme | AI-generated theme from your color (Light or Dark) |
+
+---
+
+## 🎵 Sound Events at a Glance
+
+| Event | Fires When | Presets Available |
+|---|---|---|
+| **Login** | You first enter the Desk | Yes |
+| **Logout** | You leave | Yes |
+| **Save** | You save a form | Yes |
+| **Submit** | You submit a document | Yes |
+| **Cancel** | You cancel a document | Yes |
+| **Delete** | You delete something | Yes |
+| **Error** | Something goes wrong | Yes |
+| **Email** | An email is sent | Yes |
+| **Alert** | You get a notification banner | Yes |
+| **Notification** | You get a real-time message | Yes |
+| **Missing Fields** | You forget required fields | Yes |
+
+For each, you can adjust volume, use a preset sound, or upload your own.
+
+---
+
+## 🔄 Reset Your Choices
+
+- **Reset one theme:** In Theme Studio, click **Reset to Frappe Default** → you go back to the vanilla Frappe look
+- **Reset all sounds:** In Sound Settings, click **Reset All to Default** at the bottom → all sounds go back to built-in presets
+
+Both actions are reversible — you can change your mind anytime.
+
+---
+
+## 💻 For Developers & Admins
+
+### Python API (Backend)
+
+Use these endpoints from scripts, REST calls, or other apps:
+
+**Theme Management:**
 ```python
-# Theme — read + write
-nexus_theme.api.get_available_themes()                       # → {defaults, owned, public}
-nexus_theme.api.get_active_theme()                           # → {theme, overrides}
-nexus_theme.api.set_active_theme(theme_name, overrides=None) # apply a theme
-nexus_theme.api.save_custom_theme(payload, share_public=0)   # create/update a theme
-nexus_theme.api.delete_custom_theme(theme_name)
-nexus_theme.api.clear_active_theme()                         # back to Frappe stock
-nexus_theme.api.get_recommended_palettes()                   # the 8 curated palettes
+# Get all available themes
+get_available_themes()  # Returns: defaults, custom, public
 
-# Sounds — read + write
-nexus_theme.api.get_user_sounds()                            # → {enabled, mapping}
-nexus_theme.api.set_user_sound(event_key, file_url, volume=0.5)
-nexus_theme.api.clear_user_sound(event_key)
-nexus_theme.api.toggle_user_sounds(enabled)                  # 0/1 master switch
-nexus_theme.api.clear_all_user_sounds()
+# Get your current theme
+get_active_theme()  # Returns: theme name + color overrides
+
+# Apply a theme
+set_active_theme("theme_name", overrides={"bg_primary": "#ffffff"})
+
+# Save your edits as a new theme
+save_custom_theme({
+  "theme_name": "My Theme",
+  "bg_primary": "#ffffff",
+  ...11 colors total...
+}, share_public=0)  # 0=private, 1=shared
+
+# Delete a custom theme
+delete_custom_theme("My Theme")
+
+# Go back to vanilla Frappe
+clear_active_theme()
+
+# Get the 8 curated palettes
+get_recommended_palettes()
+
+# Generate a theme from a brand color
+generate_palette(seed="#8c6f3f", is_dark=0)  # Returns 3 variants
+
+# Set automatic light/dark switching
+set_theme_mode("Automatic", dark_theme="Dark Theme Name")
+
+# Export/import themes as JSON
+export_theme("theme_name")  # Get JSON
+import_theme(json_data, share_public=0)  # Load JSON
 ```
 
-All endpoints respect Frappe's permission system and invalidate the per-user `bootinfo` cache on write, so the **next page load** picks up the change without a `bench restart`.
+**Sound Management:**
+```python
+# Get all sound settings
+get_user_sounds()  # Returns: enabled flag + event→sound mapping
 
-JS helpers are exposed on `window`:
+# Set a sound for an event
+set_user_sound("save", file_url="/files/mysound.mp3", volume=0.6)
 
+# Clear a sound (back to default)
+clear_user_sound("save")
+
+# Master on/off for all sounds
+toggle_user_sounds(enabled=1)  # 1=on, 0=off
+
+# Reset all sounds to default
+clear_all_user_sounds()
+```
+
+**Key Points:**
+- All endpoints respect Frappe permissions (Theme User role required)
+- Changes invalidate the user's cache — they see the update on the next page load
+- No `bench restart` needed
+- All data is stored in app-owned database tables
+
+### JavaScript API (Frontend)
+
+Open dialogs programmatically:
 ```javascript
-// Open the same dialogs the navbar / dropdown buttons open
+// Open Theme Studio
 window.openThemeSwitcher();
-window.openSoundStudio();
 
-// Apply theme / sound preferences at runtime
-ThemeManager.applyTheme(theme, overrides);
-SoundManager.applyMapping({ login: { url: "/files/my.mp3", volume: 0.6 } });
+// Open Sound Settings
+window.openSoundStudio();
+```
+
+Apply themes at runtime:
+```javascript
+// Change theme + colors immediately
+ThemeManager.applyTheme("theme_name", {
+  bg_primary: "#ffffff",
+  text_primary: "#000000"
+  // ...other colors
+});
+
+// Set sounds for events
+SoundManager.applyMapping({
+  login: { url: "/files/login.mp3", volume: 0.5 },
+  save: { url: "/files/save.wav", volume: 0.7 }
+});
+
+// Mute all sounds
+SoundManager.setEnabled(false);
+
+// Unmute all sounds
 SoundManager.setEnabled(true);
 ```
 
-The full sound playback pipeline (event → audio element → 3-second cap → volume) is wired in [`sound_manager.js`](nexus_theme/public/js/sound_manager.js); the editor UI is in [`sound_studio.js`](nexus_theme/public/js/sound_studio.js).
+### Under the Hood
+
+- **Themes:** Stored in `Theme Definition` DocType, synced as fixtures
+- **User Preferences:** Stored in `User Theme Preference` and `User Sound Preference` DocTypes
+- **Sound Files:** Stored as standard Frappe `File` records
+- **CSS Variables:** Themes inject CSS variables into the page, so all components that use them auto-update
+- **Sound Playback:** Managed by `sound_manager.js` — handles event detection, 3-second audio cap, volume control
 
 ---
 
-## Limitations
+## ⚠️ Things to Know
 
-- **Theme scope** — themes recolor the Desk via CSS variables. Pages that hard-code colors in their own CSS (third-party app dialogs, charts with baked-in palettes) may not pick up every token.
-- **Public themes are global** — sharing a custom theme publicly makes it visible to all users on the site. There's no per-role visibility.
-- **Sound autoplay** — browsers block audio on the very first page load before any user gesture. The login sound is played 250ms after Desk ready; if your browser's autoplay policy is strict, it may silently skip the first one and play normally from the next event onwards.
-- **Default theme updates** — new default themes added in an upgrade re-sync as fixtures; existing custom themes are never overwritten.
-- **Sound files** are stored as standard Frappe File records under `Home/Attachments`. Very large uploads count against the user's file quota.
+**Themes only style the Desk itself**  
+Some third-party apps or custom code might hard-code their own colors. Nexus Theme can't override those — but it handles 99% of the built-in Frappe UI.
+
+**If an admin restricts themes, your current theme stays**  
+If your admin narrows the allowed theme list and your current theme is removed from it, you keep using it. You just can't switch to other restricted themes. It's not a forced reset.
+
+**First login sound might not play (browser autoplay rules)**  
+Browsers block audio before you interact with the page. The login sound plays 250ms after the Desk loads, so very strict browser policies might skip it. Other sounds play normally after you interact with the page once.
+
+**Custom themes stay even after app updates**  
+When you create a theme, it's yours. New default themes in app updates won't overwrite it.
+
+**Sound file storage**  
+When you upload a sound file (`.mp3` or `.wav`), it's stored as a normal Frappe file. If your Frappe instance has file size or quota limits, very large audio files count against those limits.
 
 ---
 
-## Dependencies
+## 🔧 System Requirements
 
-- Frappe v15
-- Python 3.10+
-- MariaDB 10.6+ with InnoDB
-- Modern browser with HTMLMediaElement support (Chrome / Firefox / Edge / Safari 14+)
+- **ERPNext/Frappe:** v16+
+- **Python:** 3.10+
+- **Database:** MariaDB 10.6+ with InnoDB
+- **Browser:** Any modern browser (Chrome, Firefox, Edge, Safari 14+) with audio support
 
 ---
 
-## Sounds
+## 🎵 About the Built-in Sounds
 
-Every bundled sound in [`nexus_theme/public/sounds/`](nexus_theme/public/sounds/) is an **original tone synthesised from scratch** by [`tools/generate_sounds.py`](tools/generate_sounds.py) using only the Python standard library — no recordings, no samples, no third-party audio. There are 36 files: 12 Desk events × 3 presets each, with preset 1 of every event registered as the default.
+All 36 bundled sounds (12 events × 3 presets per event) are **synthesized from scratch** — not recordings or samples. They're created by code in [`tools/generate_sounds.py`](tools/generate_sounds.py) using only the Python standard library.
 
-To retune or regenerate them, edit the recipes in `tools/generate_sounds.py` and run:
+This means:
+- No copyright concerns
+- No external audio samples needed
+- Covered by the same MIT license as the app
 
+To customize sounds, edit `tools/generate_sounds.py` and run:
 ```bash
 python3 tools/generate_sounds.py
 ```
 
-Because the audio is generated, it carries **no external license or attribution requirement** — it is covered by the same MIT license as the rest of the app.
+---
+
+## 📄 License
+
+MIT — covers the application code, all bundled themes and palettes, and all synthesized sound files.  
+See [license.txt](license.txt) for details.
 
 ---
 
-## License
+## ❓ FAQ
 
-MIT — see [license.txt](license.txt). This covers the application code, the bundled themes and palettes, and the synthesised sound files alike.
+**Q: Can I use my company logo in the theme?**  
+A: Yes! If you're an admin, go to Theme Settings → Brand Kit, and upload your logo, favicon, and login background.
+
+**Q: I saved a theme but don't see it in the list.**  
+A: Check the **Custom** tab — private themes show there. If you checked "Share with team," look in the **Public** tab.
+
+**Q: Can I export my theme and use it on another site?**  
+A: Yes. Click **Export** in Theme Studio → save the JSON file. On another site, click **Import** and upload the file. The app validates everything for safety.
+
+**Q: My sounds aren't playing. What's wrong?**  
+A: A few possibilities:
+- Your browser might block autoplay audio. Refresh the page and interact with it once.
+- Sounds might be disabled. Go to Sound Settings and check the master switch.
+- Your browser might have sound disabled for this site (check browser permissions).
+- The sound file might be corrupt. Try uploading a different one.
+
+**Q: If I leave a theme as-is and don't save it, does it stay?**  
+A: No. If you make changes in the editor but close without saving, you lose them. The live preview shows how it would look, but it doesn't actually apply until you click **Apply** or **Save as Custom**.
+
+**Q: Can I delete a theme I created?**  
+A: Yes. In Theme Studio, find the theme in the **Custom** tab, and look for a delete or trash icon. Deleted themes can't be recovered, so be sure.
+
+**Q: What's the difference between "Apply" and "Save as Custom"?**  
+A: **Apply** uses the theme right now (but doesn't save it as a named theme, so if someone else configures a theme after you, yours goes away). **Save as Custom** stores it with a name you choose, so you can always find it again in the Custom tab.
+
+**Q: Can an admin force everyone to use one theme?**  
+A: Yes. Go to Theme Settings → set a "Site Default Theme" → turn on "Restrict Theme Choice." Users can still see other themes, but yours becomes the default. (Users can still override it if you allow custom themes.)
+
+**Q: Will changing my theme break anything?**  
+A: No. Themes only change colors and sounds. They don't touch data, forms, or functionality.
+
+**Q: I have a lot of custom sounds. Can I back them up?**  
+A: Sound settings are stored in Frappe's database, so they back up with your regular backups. Audio files you upload are stored as Frappe Files, also in your backups. You can manually download them from Sound Settings using the **Preview** button (depends on browser download permissions).
 
 ---
 
-<p align="center"><strong>Built with Frappe&nbsp; · &nbsp;by Abbas Raza</strong></p>
+## 🆘 Still Have Questions?
+
+Check your Frappe console (Ctrl+K / Cmd+K) and search for:
+- **Theme Studio** — opens the theme editor
+- **Sound Settings** — opens the sound customizer
+- **Theme Settings** (admin only) — controls site-wide defaults
+
+Or ask your Frappe administrator for help.
+
+---
 
 <p align="center">
   <img src="logos/frappe_logo.png" alt="Frappe" height="32">
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="logos/logo.svg" alt="Nexus Theme" height="32">
 </p>
+
+<p align="center"><strong>Nexus Theme</strong> &nbsp;·&nbsp; built with Frappe &nbsp;·&nbsp; by Abbas Raza</p>

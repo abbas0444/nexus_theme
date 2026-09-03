@@ -8,6 +8,11 @@
   const STORAGE_KEY = "theme:active";
   const APP_ATTR = "data-app-theme";
   const HOVER_ATTR = "data-hover-lift";
+  // Exposes the active theme's polarity to CSS. Elevation has to be built
+  // differently for each: on light surfaces depth reads as a dark hairline
+  // plus a soft drop shadow, while on dark surfaces a black shadow is
+  // invisible and the edge has to come from a light hairline instead.
+  const DARK_ATTR = "data-app-dark";
   const ROOT = document.documentElement;
 
   const VAR_MAP = {
@@ -36,14 +41,78 @@
       this.frappeMode = ROOT.getAttribute("data-theme-mode") || "light";
       this._listeners = new Set();
       this._frappeObserver = null;
+      // Automatic light/dark pairing. `pair` holds the two themes the user
+      // chose; `_systemQuery` is what decides which one is showing.
+      this.mode = "Single";
+      this.pair = { light: null, dark: null };
+      this._systemQuery = null;
+    }
+
+    /** The theme that should be showing right now, given mode + system. */
+    _resolvePair() {
+      if (this.mode !== "Automatic" || !this.pair.dark) return this.pair.light;
+      const prefersDark =
+        this._systemQuery
+          ? this._systemQuery.matches
+          : window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches;
+      return prefersDark ? this.pair.dark : this.pair.light;
+    }
+
+    /**
+     * Store the pair and start (or stop) following the OS setting.
+     * Re-entrant: called on every load and after every save.
+     */
+    _setPair(mode, lightTheme, darkTheme) {
+      this.mode = mode === "Automatic" && darkTheme ? "Automatic" : "Single";
+      this.pair = { light: lightTheme || null, dark: darkTheme || null };
+
+      if (this.mode !== "Automatic") {
+        this._unwatchSystem();
+        return;
+      }
+      this._watchSystem();
+    }
+
+    _watchSystem() {
+      if (this._systemQuery || !window.matchMedia) return;
+      this._systemQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      this._onSystemChange = () => {
+        const next = this._resolvePair();
+        if (next) this._crossfade(() => this._apply(next, this.overrides));
+      };
+      // addEventListener is unavailable on the legacy MediaQueryList in
+      // older Safari, which only exposes addListener.
+      if (this._systemQuery.addEventListener) {
+        this._systemQuery.addEventListener("change", this._onSystemChange);
+      } else if (this._systemQuery.addListener) {
+        this._systemQuery.addListener(this._onSystemChange);
+      }
+    }
+
+    _unwatchSystem() {
+      if (!this._systemQuery || !this._onSystemChange) return;
+      if (this._systemQuery.removeEventListener) {
+        this._systemQuery.removeEventListener("change", this._onSystemChange);
+      } else if (this._systemQuery.removeListener) {
+        this._systemQuery.removeListener(this._onSystemChange);
+      }
+      this._systemQuery = null;
+      this._onSystemChange = null;
     }
 
     bootstrapFromCache() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return;
-        const { theme, overrides } = JSON.parse(raw);
-        if (theme) this._apply(theme, overrides || {});
+        const cached = JSON.parse(raw);
+        if (cached.mode === "Automatic" && cached.dark_theme) {
+          this._setPair("Automatic", cached.light_theme, cached.dark_theme);
+          const showing = this._resolvePair();
+          if (showing) this._apply(showing, cached.overrides || {});
+          return;
+        }
+        if (cached.theme) this._apply(cached.theme, cached.overrides || {});
       } catch (_e) {
         /* ignore malformed cache */
       }
@@ -79,8 +148,10 @@
       }
 
       if (result && result.theme) {
-        this._apply(result.theme, result.overrides || {});
-        this._cache(result.theme, result.overrides || {});
+        this._setPair(result.mode, result.theme, result.dark_theme);
+        const showing = this._resolvePair() || result.theme;
+        this._apply(showing, result.overrides || {});
+        this._cache(showing, result.overrides || {}, result);
       } else {
         // Server says "no custom theme" — clear local state so Frappe's
         // native palette renders without our variables interfering.
@@ -101,11 +172,27 @@
       });
       const r = await frappe.call({ method: "nexus_theme.api.get_active_theme" });
       if (r && r.message && r.message.theme) {
+        const msg = r.message;
+        this._setPair(msg.mode, msg.theme, msg.dark_theme);
+        const showing = this._resolvePair() || msg.theme;
         this._crossfade(() => {
-          this._apply(r.message.theme, r.message.overrides || {});
-          this._cache(r.message.theme, r.message.overrides || {});
+          this._apply(showing, msg.overrides || {});
+          this._cache(showing, msg.overrides || {}, msg);
         });
       }
+    }
+
+    /**
+     * Turn automatic light/dark pairing on or off.
+     * `darkThemeName` is required when enabling.
+     */
+    async setThemeMode(mode, darkThemeName) {
+      if (!window.frappe || !frappe.call) return;
+      await frappe.call({
+        method: "nexus_theme.api.set_theme_mode",
+        args: { mode: mode, dark_theme: darkThemeName || null },
+      });
+      await this.loadFromServer();
     }
 
     previewOverrides(partial) {
@@ -189,13 +276,39 @@
       // though it inherits from <html>. We do NOT touch any element
       // tagged `theme-studio-isolated` here, ever.
       ROOT.setAttribute(APP_ATTR, theme.theme_key || "custom");
-      ROOT.setAttribute(HOVER_ATTR, theme.enable_hover_lift ? "1" : "0");
       // Reset before applying so stale variables from a previous theme
       // can never leak into the new one.
       for (const cssVar of Object.values(VAR_MAP)) {
         ROOT.style.removeProperty(cssVar);
       }
       const merged = Object.assign({}, theme, overrides);
+      // Hover lift is not in VAR_MAP (it's an attribute, not a variable), so
+      // it has to be read off `merged` — reading it off `theme` would ignore
+      // the editor's override and leave the toggle inert. Compare against
+      // "0" explicitly: a cached override can arrive as a numeric string.
+      const hoverLift = merged.enable_hover_lift;
+      ROOT.setAttribute(
+        HOVER_ATTR,
+        hoverLift && hoverLift !== "0" ? "1" : "0"
+      );
+      const isDark = !!(merged.is_dark && merged.is_dark !== "0");
+      ROOT.setAttribute(DARK_ATTR, isDark ? "1" : "0");
+      // Align Frappe's own polarity with the theme's.
+      //
+      // Frappe defines ~70 design tokens twice — once on :root and again
+      // under [data-theme="dark"] — and we only remap about 20 of them.
+      // The rest keep whatever polarity `data-theme` says. Leaving it on
+      // "dark" while a light theme paints the page produced a light Desk
+      // with a black sidebar and black dropdowns, because every unmapped
+      // token was still resolving to its dark value (and the mirror image
+      // on the other side).
+      //
+      // Setting it here fixes all of them at once, including tokens added
+      // by future Frappe versions. Safe with respect to our own observer:
+      // _watchFrappeToggle() filters on `data-theme-mode`, and Frappe's
+      // observer in desk.js filters on the same — neither reacts to
+      // `data-theme`, so this cannot loop.
+      ROOT.setAttribute("data-theme", isDark ? "dark" : "light");
       for (const [field, cssVar] of Object.entries(VAR_MAP)) {
         const v = merged[field];
         if (v != null && v !== "") ROOT.style.setProperty(cssVar, String(v));
@@ -206,19 +319,43 @@
     _clearAppTheme() {
       this.active = null;
       this.overrides = {};
+      // Stop following the OS setting — otherwise a system change would
+      // re-apply a theme we have just stepped away from.
+      this._unwatchSystem();
+      this.mode = "Single";
+      this.pair = { light: null, dark: null };
       ROOT.removeAttribute(APP_ATTR);
       ROOT.removeAttribute(HOVER_ATTR);
+      ROOT.removeAttribute(DARK_ATTR);
+      // Hand `data-theme` back to Frappe rather than guessing: its own
+      // resolver knows how to expand "automatic" via the media query.
+      if (window.frappe && frappe.ui && typeof frappe.ui.set_theme === "function") {
+        try {
+          frappe.ui.set_theme();
+        } catch (_e) {
+          /* fall through to the manual derivation below */
+        }
+      } else {
+        const mode = ROOT.getAttribute("data-theme-mode") || "light";
+        ROOT.setAttribute("data-theme", mode === "automatic" ? "light" : mode);
+      }
       for (const cssVar of Object.values(VAR_MAP)) {
         ROOT.style.removeProperty(cssVar);
       }
     }
 
-    _cache(theme, overrides) {
+    _cache(theme, overrides, pairInfo) {
       try {
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({ theme, overrides: overrides || {} })
-        );
+        const payload = { theme, overrides: overrides || {} };
+        // Cache the pair as well as the resolved theme, so a reload with the
+        // OS in the other mode paints the correct side immediately instead
+        // of flashing the previous one until the server responds.
+        if (pairInfo && pairInfo.mode === "Automatic" && pairInfo.dark_theme) {
+          payload.mode = "Automatic";
+          payload.light_theme = pairInfo.theme;
+          payload.dark_theme = pairInfo.dark_theme;
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
       } catch (_e) {
         /* quota or disabled — non-fatal */
       }

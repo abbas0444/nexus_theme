@@ -19,7 +19,7 @@ build-backend = "flit_core.buildapi"
 # version. Constraints are comma-separated NPM/pip-style ranges and must be
 # bounded (both a lower and an upper limit).
 [tool.bench.frappe-dependencies]
-frappe = ">=15.0.0,<16.0.0"
+frappe = ">=16.0.0,<17.0.0"
 
 # These dependencies are only installed when developer mode is enabled
 [tool.bench.dev-dependencies]
