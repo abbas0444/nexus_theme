@@ -10,16 +10,23 @@ app_license = "MIT"
 
 # required_apps = []
 
-# Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "nexus_theme",
-# 		"logo": "/assets/nexus_theme/logo.png",
-# 		"title": "Themes",
-# 		"route": "/theme",
-# 		"has_permission": "nexus_theme.api.permission.has_app_permission"
-# 	}
-# ]
+# Puts the app on the Desk's apps screen and gives it a Desktop Icon on the
+# home grid. Frappe builds that icon from these four keys
+# (create_desktop_icons_from_installed_apps), so without this hook the app has
+# no tile at all and is reachable only from the avatar dropdown.
+#
+# The route has to resolve to something real: the app's own UI is dialog-based,
+# so it points at the Workspace shipped in nexus_theme/workspace/, which
+# collects the theme and sound entry points in one place.
+add_to_apps_screen = [
+	{
+		"name": "nexus_theme",
+		"logo": "/assets/nexus_theme/images/logo.svg",
+		"title": "Nexus Theme",
+		"route": "/app/nexus-theme",
+		"has_permission": "nexus_theme.api.check_app_permission",
+	}
+]
 
 # Includes in <head>
 # ------------------

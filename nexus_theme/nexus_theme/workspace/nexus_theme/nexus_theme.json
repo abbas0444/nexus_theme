@@ -1,0 +1,113 @@
+{
+ "app": "nexus_theme",
+ "charts": [],
+ "content": "[{\"id\":\"nxHeaderShort\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Your Shortcuts</b></span>\",\"col\":12}},{\"id\":\"nxScThemes\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Themes\",\"col\":3}},{\"id\":\"nxScSettings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Theme Settings\",\"col\":3}},{\"id\":\"nxScSounds\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"My Sounds\",\"col\":3}},{\"id\":\"nxSpacer1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"nxHeaderMasters\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Reports &amp; Masters</b></span>\",\"col\":12}},{\"id\":\"nxCardThemes\",\"type\":\"card\",\"data\":{\"card_name\":\"Themes\",\"col\":4}},{\"id\":\"nxCardPrefs\",\"type\":\"card\",\"data\":{\"card_name\":\"My Preferences\",\"col\":4}}]",
+ "creation": "2026-09-03 18:55:00.000000",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "customization",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "Nexus Theme",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Themes",
+   "link_count": 2,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Theme Definition",
+   "link_count": 0,
+   "link_to": "Theme Definition",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Theme Settings",
+   "link_count": 0,
+   "link_to": "Theme Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "My Preferences",
+   "link_count": 2,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "User Theme Preference",
+   "link_count": 0,
+   "link_to": "User Theme Preference",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "User Sound Preference",
+   "link_count": 0,
+   "link_to": "User Sound Preference",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-09-03 18:55:00.000000",
+ "modified_by": "Administrator",
+ "module": "Nexus Theme",
+ "name": "Nexus Theme",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 24.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Themes",
+   "link_to": "Theme Definition",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "",
+   "label": "Theme Settings",
+   "link_to": "Theme Settings",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "My Sounds",
+   "link_to": "User Sound Preference",
+   "type": "DocType"
+  }
+ ],
+ "title": "Nexus Theme",
+ "type": "Workspace"
+}

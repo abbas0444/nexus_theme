@@ -579,3 +579,18 @@ def clear_all_user_sounds():
 	pref.save(ignore_permissions=False)
 	_invalidate_bootinfo()
 	return {"ok": True}
+
+
+def check_app_permission() -> bool:
+	"""Gate the app's tile on the Desk apps screen.
+
+	Frappe calls this from `add_to_apps_screen`; returning False hides the
+	tile. Every Desk user gets the "Theme User" role on install and on
+	user creation (see install.py), so in practice this shows the tile to
+	anyone who can actually personalize their theme, and hides it from
+	Website-only users who cannot.
+	"""
+	if frappe.session.user == "Administrator":
+		return True
+	roles = frappe.get_roles()
+	return "Theme User" in roles or "System Manager" in roles

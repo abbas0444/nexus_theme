@@ -123,17 +123,60 @@ def ensure_navbar_items() -> None:
 		frappe.log_error(title="nexus_theme: could not add navbar items")
 
 
+def ensure_desktop_icon() -> None:
+	"""Put the app's tile on the Desk home grid. Idempotent.
+
+	Frappe builds these icons from `add_to_apps_screen`, but only inside
+	`frappe.utils.install`, which runs when a *site* is created. An app
+	installed later onto an existing site therefore never gets a tile —
+	so we create ours here instead of waiting for the next new site.
+
+	`label` is the Desktop Icon autoname, so an icon of any type already
+	holding "Nexus Theme" (a workspace tile, say) means there is nothing
+	to add.
+	"""
+	if not frappe.db.exists("DocType", "Desktop Icon"):
+		return
+	try:
+		screen = frappe.get_hooks("add_to_apps_screen", app_name="nexus_theme")
+		if not screen:
+			return
+		entry = screen[0]
+		label = entry.get("title") or "Nexus Theme"
+		if frappe.db.exists("Desktop Icon", label):
+			return
+
+		icon = frappe.new_doc("Desktop Icon")
+		icon.label = label
+		icon.link_type = "External"
+		icon.icon_type = "App"
+		icon.app = "nexus_theme"
+		icon.link = entry.get("route")
+		icon.logo_url = entry.get("logo")
+		icon.insert(ignore_permissions=True, ignore_if_duplicate=True)
+
+		from frappe.desk.doctype.desktop_icon.desktop_icon import clear_desktop_icons_cache
+
+		clear_desktop_icons_cache()
+	except Exception:
+		# A missing tile costs the user an icon; raising here would abort
+		# the whole install or migrate.
+		frappe.log_error(title="nexus_theme: could not add desktop icon")
+
+
 def after_install() -> None:
 	"""Run once on `bench install-app`."""
 	provision_theme_user_role()
 	sync_public_assets()
 	ensure_navbar_items()
+	ensure_desktop_icon()
 
 
 def after_migrate() -> None:
 	"""Run after migrate so the public assets stay available after upgrades."""
 	sync_public_assets()
 	ensure_navbar_items()
+	ensure_desktop_icon()
 
 
 def assign_theme_role(doc, method=None) -> None:
