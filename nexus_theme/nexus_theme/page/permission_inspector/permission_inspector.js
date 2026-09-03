@@ -1,10 +1,10 @@
 // Permission Inspector — /app/permission-inspector
 //
-// A window onto Frappe's own role-permission records for one User or one
-// Role. The backend (nexus_theme/permission_inspector/api.py) reads through
-// Frappe's permission helpers and writes through Custom DocPerm, exactly as
-// the stock Role Permission Manager does. This file only draws, filters and
-// batches edits; the numbers it shows are Frappe's, not its own.
+// A plain-language window onto Frappe's own role-permission records for one
+// person or one role. The backend (nexus_theme/permission_inspector/api.py)
+// reads through Frappe's permission helpers and writes through Custom
+// DocPerm, exactly as the stock Role Permission Manager does. This file only
+// draws, filters and batches edits; the answers it shows are Frappe's.
 //
 // Loaded by Frappe's Page loader together with the .html and .css beside it.
 
@@ -31,21 +31,41 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 
 	const API = "nexus_theme.permission_inspector.api";
 	const esc = (v) => frappe.utils.escape_html(v == null ? "" : String(v));
-	const GLYPH = { 1: "✓", 0: "✗", 2: "◐", na: "—" };
 	const CHUNK = 150; // rows rendered per animation frame
 
-	// Frappe's rule dependencies (frappe.core.doctype.doctype.validate_permissions).
-	// Ticking a flag pulls in what it needs; clearing one drops what needed it.
+	// Plain words for Frappe's permission flags, with a one-line explanation.
+	const LABELS = {
+		read: [__("View"), __("Open and look at these records.")],
+		write: [__("Edit"), __("Change and save records that already exist.")],
+		create: [__("Create"), __("Make new records.")],
+		delete: [__("Delete"), __("Delete records.")],
+		submit: [__("Submit"), __("Finalise a record so it counts. Only for record types that use submission.")],
+		cancel: [__("Cancel"), __("Cancel a submitted record. Needs Submit.")],
+		amend: [__("Amend"), __("Make a corrected copy of a cancelled record. Needs Edit.")],
+		print: [__("Print"), __("Print these records.")],
+		email: [__("Email"), __("Send these records by email.")],
+		report: [__("Reports"), __("Use reports and the report builder on these records.")],
+		import: [__("Import"), __("Bring records in from a spreadsheet with Data Import. Needs Create.")],
+		export: [__("Export"), __("Download these records to a spreadsheet.")],
+		share: [__("Share"), __("Share one record with another person.")],
+		select: [__("Pick in lists"), __("Choose these records in drop-downs without being able to open them. Comes free with View.")],
+		mask: [__("See masked values"), __("See the real value of fields that show as asterisks to others.")],
+	};
+	const ESSENTIAL = ["read", "write", "create", "delete", "submit", "cancel"];
+	const STATE_TEXT = { 1: __("Yes"), 0: __("No"), 2: __("Own only"), na: "–" };
+
+	// Frappe's rule dependencies. Ticking a flag pulls in what it needs;
+	// clearing one drops what needed it. The server applies the same rules.
 	const NEEDS = { cancel: ["submit", "write"], submit: ["write"], amend: ["write"], import: ["create"] };
 	const DEPENDENTS = { write: ["submit", "cancel", "amend"], submit: ["cancel"], create: ["import"] };
 
-	const FLAG_LABELS = {
-		single: __("Single"),
-		submittable: __("Submittable"),
-		tree: __("Tree"),
-		virtual: __("Virtual"),
-		custom: __("Custom"),
-		child: __("Child table"),
+	const FLAG_WORDS = {
+		single: __("single record"),
+		submittable: __("uses submission"),
+		tree: __("tree"),
+		virtual: __("virtual"),
+		custom: __("custom"),
+		child: __("child table"),
 	};
 
 	class Inspector {
@@ -56,13 +76,14 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 			$(page.main).addClass("nxpi-page").empty().append(this.$root);
 
 			this.options = null;
+			this.kind = "user";
 			this.target = null; // { type: "user"|"role", name }
-			this.data = null; // last get_matrix response
+			this.data = null;
 			this.rows = [];
 			this.row_index = new Map();
 			this.pending = new Map(); // key -> { doctype, role, ptype, value }
 			this.editing = false;
-			this.filters = { search: "", module: "", ptype: "", show: "all", child: false };
+			this.filters = { search: "", module: "", show: "all", columns: "essential", child: false };
 			this.drawer_doctype = null;
 			this.render_token = 0;
 			this._silent = false;
@@ -79,24 +100,31 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 
 		cache_dom() {
 			const $ = (sel) => this.$root.find(sel);
-			this.$target_info = $(".nxpi-target-info");
-			this.$toolbar = $(".nxpi-toolbar");
-			this.$body = $(".nxpi-body");
+			this.$summary = $(".nxpi-summary");
+			this.$userperms = $(".nxpi-userperms");
+			this.$step_matrix = $(".nxpi-step-matrix");
+			this.$matrix_title = $(".nxpi-matrix-title");
+			this.$matrix_sub = $(".nxpi-matrix-sub");
 			this.$empty = $(".nxpi-empty");
+			this.$help = $(".nxpi-help");
 			this.$thead = $(".nxpi-table thead");
 			this.$tbody = $(".nxpi-table tbody");
 			this.$wrap = $(".nxpi-matrix-wrap");
 			this.$no_rows = $(".nxpi-no-rows");
+			this.$body = $(".nxpi-body");
 			this.$drawer = $(".nxpi-drawer");
-			this.$userperms = $(".nxpi-userperms");
-			this.$popover = $(".nxpi-popover");
 			this.$count = $(".nxpi-count");
 			this.$edit_btn = $(".nxpi-edit");
+			this.$editbar = $(".nxpi-editbar");
+			this.$editbar_text = $(".nxpi-editbar-text");
 			this.$module = $(".nxpi-module");
-			this.$ptype = $(".nxpi-ptype");
 			this.$show = $(".nxpi-show");
+			this.$columns = $(".nxpi-columns");
 			this.$search = $(".nxpi-search");
 			this.$child = $(".nxpi-child");
+			this.$clear = $(".nxpi-clear");
+			this.$savebar = $(".nxpi-savebar");
+			this.$savebar_text = $(".nxpi-savebar-text");
 		}
 
 		make_controls() {
@@ -105,7 +133,7 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 					fieldtype: "Link",
 					options: "User",
 					fieldname: "nxpi_user",
-					placeholder: __("Pick a user"),
+					placeholder: __("Type a name or email"),
 					get_query: () => ({
 						filters: [
 							["User", "name", "!=", "Guest"],
@@ -122,7 +150,7 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 					fieldtype: "Link",
 					options: "Role",
 					fieldname: "nxpi_role",
-					placeholder: __("Pick a role"),
+					placeholder: __("Type a role name, e.g. Accounts User"),
 					get_query: () => ({ filters: { disabled: 0 } }),
 					change: () => this.on_pick("role"),
 				},
@@ -134,7 +162,9 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 		}
 
 		bind() {
-			this.$root.on("click", ".nxpi-clear", () => this.clear());
+			this.$root.on("click", ".nxpi-seg", (e) => this.set_kind($(e.currentTarget).data("kind")));
+			this.$clear.on("click", () => this.clear());
+			this.$root.on("click", ".nxpi-help-btn", () => this.$help.prop("hidden", !this.$help.prop("hidden")));
 
 			const debounced = frappe.utils.debounce(() => {
 				this.filters.search = (this.$search.val() || "").trim().toLowerCase();
@@ -145,12 +175,12 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 				this.filters.module = this.$module.val();
 				this.render_table();
 			});
-			this.$ptype.on("change", () => {
-				this.filters.ptype = this.$ptype.val();
-				this.render_table();
-			});
 			this.$show.on("change", () => {
 				this.filters.show = this.$show.val();
+				this.render_table();
+			});
+			this.$columns.on("change", () => {
+				this.filters.columns = this.$columns.val();
 				this.render_table();
 			});
 			this.$child.on("change", () => {
@@ -166,16 +196,13 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 				this.open_drawer($(e.currentTarget).data("dt"));
 			});
 			this.$tbody.on("click", ".nxpi-cell.is-editable", (e) => this.on_cell_click(e));
-			this.$tbody.on("change", ".nxpi-cell input[type=checkbox]", (e) => this.on_role_checkbox(e));
 
-			// Target info actions
+			// Summary actions
 			this.$root.on("click", ".nxpi-open-userperms", () => this.toggle_userperms());
 			this.$root.on("click", ".nxpi-open-manager", () => frappe.set_route("permission-manager"));
-			this.$root.on("click", ".nxpi-open-user", () => {
-				if (this.target && this.target.type === "user") frappe.set_route("Form", "User", this.target.name);
-			});
-			this.$root.on("click", ".nxpi-open-role", () => {
-				if (this.target && this.target.type === "role") frappe.set_route("Form", "Role", this.target.name);
+			this.$root.on("click", ".nxpi-open-target", () => {
+				if (!this.target) return;
+				frappe.set_route("Form", this.target.type === "user" ? "User" : "Role", this.target.name);
 			});
 
 			// Drawer
@@ -199,22 +226,13 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 			});
 			this.$userperms.on("click", ".nxpi-up-close", () => this.$userperms.prop("hidden", true));
 
-			// Popover
-			this.$popover.on("change", "input[type=checkbox]", (e) => this.on_popover_checkbox(e));
-			this.$popover.on("click", ".nxpi-popover-all", (e) => this.popover_set_all($(e.currentTarget).data("value")));
-			this.$popover.on("click", ".nxpi-popover-close", () => this.close_popover());
-			$(document).on("mousedown.nxpi", (e) => {
-				if (this.$popover.prop("hidden")) return;
-				if ($(e.target).closest(".nxpi-popover, .nxpi-cell").length) return;
-				this.close_popover();
-			});
-			$(document).on("keydown.nxpi", (e) => {
-				if (e.key === "Escape") {
-					this.close_popover();
-				}
-			});
-			this.$wrap.on("scroll", () => this.close_popover());
+			// Save bar
+			this.$root.on("click", ".nxpi-save", () => this.confirm_and_save());
+			this.$root.on("click", ".nxpi-discard", () => this.discard());
 
+			$(document).on("keydown.nxpi", (e) => {
+				if (e.key === "Escape" && this.drawer_doctype) this.close_drawer();
+			});
 			$(window).on("beforeunload.nxpi", () => {
 				if (this.pending.size) return __("You have unsaved permission changes.");
 			});
@@ -223,7 +241,6 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 		load_options() {
 			frappe.xcall(`${API}.get_options`).then((opts) => {
 				this.options = opts;
-				this.fill_ptype_select(opts.columns, []);
 			});
 		}
 
@@ -234,10 +251,8 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 			if (!kind) return;
 			frappe.route_options = null;
 			const value = ro[kind];
-			this.silently(() => {
-				(kind === "user" ? this.user_control : this.role_control).set_value(value);
-				(kind === "user" ? this.role_control : this.user_control).set_value("");
-			});
+			this.set_kind(kind);
+			this.silently(() => this.control(kind).set_value(value));
 			this.select(kind, value);
 		}
 
@@ -250,25 +265,41 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 			}
 		}
 
+		control(kind) {
+			return kind === "user" ? this.user_control : this.role_control;
+		}
+
 		// ------------------------------------------------------------------
-		// Target selection and loading
+		// Picking a person or a role
 		// ------------------------------------------------------------------
+
+		set_kind(kind) {
+			if (kind !== "user" && kind !== "role") return;
+			this.kind = kind;
+			this.$root.find(".nxpi-seg").each((_, el) => {
+				$(el).toggleClass("is-active", $(el).data("kind") === kind);
+			});
+			this.$root.find('[data-control="user"]').prop("hidden", kind !== "user");
+			this.$root.find('[data-control="role"]').prop("hidden", kind !== "role");
+			if (this.target && this.target.type !== kind) {
+				// Switching kind while looking at the other: start fresh.
+				this.clear(true);
+			}
+		}
 
 		on_pick(kind) {
 			if (this._silent) return;
-			const control = kind === "user" ? this.user_control : this.role_control;
-			const value = control.get_value();
+			const value = this.control(kind).get_value();
 			if (!value) {
-				if (this.target && this.target.type === kind) this.clear();
+				if (this.target && this.target.type === kind) this.clear(true);
 				return;
 			}
-			const other = kind === "user" ? this.role_control : this.user_control;
-			if (other.get_value()) this.silently(() => other.set_value(""));
 			this.select(kind, value);
 		}
 
 		select(kind, name) {
-			if (this.pending.size && !this.confirm_discard()) {
+			if (this.pending.size) {
+				this.block_for_unsaved();
 				return;
 			}
 			this.target = { type: kind, name };
@@ -276,23 +307,21 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 			this.editing = false;
 			this.close_drawer();
 			this.$userperms.prop("hidden", true).empty();
+			this.$clear.prop("hidden", false);
 			this.update_dirty();
 			this.reload();
 		}
 
-		confirm_discard() {
-			// Called synchronously from selection; we cannot await a dialog here,
-			// so unsaved edits block the switch and say so.
+		block_for_unsaved() {
 			frappe.show_alert({
-				message: __("Save or discard your unsaved permission changes first."),
+				message: __("You have unsaved changes. Save or discard them first."),
 				indicator: "orange",
 			});
-			return false;
 		}
 
-		clear() {
+		clear(keep_kind) {
 			if (this.pending.size) {
-				this.confirm_discard();
+				this.block_for_unsaved();
 				return;
 			}
 			this.silently(() => {
@@ -305,13 +334,13 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 			this.row_index.clear();
 			this.editing = false;
 			this.close_drawer();
-			this.close_popover();
 			this.$userperms.prop("hidden", true).empty();
-			this.$target_info.prop("hidden", true).empty();
-			this.$toolbar.prop("hidden", true);
-			this.$body.prop("hidden", true);
+			this.$summary.prop("hidden", true).empty();
+			this.$step_matrix.prop("hidden", true);
 			this.$empty.prop("hidden", false);
+			this.$clear.prop("hidden", true);
 			this.update_dirty();
+			if (!keep_kind) this.set_kind("user");
 		}
 
 		reload() {
@@ -331,12 +360,11 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 					this.row_index = new Map(this.rows.map((r) => [r.n, r]));
 					this.columns = data.columns || [];
 					this.locked_roles = new Set(data.locked_roles || []);
-					this.render_target_info();
+					this.render_summary();
+					this.render_matrix_heading();
 					this.fill_module_select();
-					this.fill_ptype_select(this.columns, this.custom_ptypes());
 					this.$empty.prop("hidden", true);
-					this.$toolbar.prop("hidden", false);
-					this.$body.prop("hidden", false);
+					this.$step_matrix.prop("hidden", false);
 					this.update_edit_button();
 					this.render_table();
 					if (this.drawer_doctype && this.row_index.has(this.drawer_doctype)) {
@@ -346,8 +374,8 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 					}
 				})
 				.catch(() => {
-					this.$toolbar.prop("hidden", true);
-					this.$body.prop("hidden", true);
+					this.$step_matrix.prop("hidden", true);
+					this.$summary.prop("hidden", true);
 					this.$empty.prop("hidden", false);
 				})
 				.finally(() => frappe.dom.unfreeze());
@@ -356,135 +384,39 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 		refresh_from_server() {
 			if (!this.target) return;
 			if (this.pending.size) {
-				this.confirm_discard();
+				this.block_for_unsaved();
 				return;
 			}
 			frappe
 				.xcall(`${API}.refresh_cache`, { target_type: this.target.type, target: this.target.name })
-				.then(() => {
-					frappe.show_alert({ message: __("Permission caches cleared."), indicator: "blue" });
-					this.reload();
-				});
-		}
-
-		custom_ptypes() {
-			const set = new Set();
-			this.rows.forEach((r) => (r.x || []).forEach((x) => set.add(x)));
-			return Array.from(set).sort();
+				.then(() => this.reload());
 		}
 
 		// ------------------------------------------------------------------
-		// Target summary
+		// Labels
 		// ------------------------------------------------------------------
 
-		render_target_info() {
+		label(ptype) {
+			if (LABELS[ptype]) return LABELS[ptype][0];
+			return frappe.unscrub(ptype);
+		}
+
+		explain(ptype) {
+			if (LABELS[ptype]) return LABELS[ptype][1];
+			return __("A custom permission type defined for this record type.");
+		}
+
+		target_label() {
 			const t = this.data.target;
-			const stats = this.stats();
-			let html = "";
-
-			if (t.type === "user") {
-				const badges = [];
-				badges.push(
-					t.enabled
-						? `<span class="indicator-pill green">${__("Enabled")}</span>`
-						: `<span class="indicator-pill red">${__("Disabled")}</span>`
-				);
-				badges.push(`<span class="indicator-pill gray">${esc(t.user_type)}</span>`);
-				if (t.is_system_manager && !t.is_admin) {
-					badges.push(`<span class="indicator-pill blue">${__("System Manager")}</span>`);
-				}
-				const chips = t.roles
-					.map((r) => {
-						const cls = ["nxpi-chip"];
-						if (t.disabled_roles.includes(r)) cls.push("is-disabled");
-						if (this.locked_roles.has(r)) cls.push("is-locked");
-						const title = t.disabled_roles.includes(r)
-							? __("This role is disabled")
-							: this.locked_roles.has(r)
-							? __("This role's rules cannot be edited here")
-							: "";
-						return `<span class="${cls.join(" ")}" title="${esc(title)}">${esc(r)}</span>`;
-					})
-					.concat(
-						t.automatic_roles.map(
-							(r) =>
-								`<span class="nxpi-chip is-auto" title="${esc(__("Automatic role: every user of this type has it"))}">${esc(r)}</span>`
-						)
-					)
-					.join("");
-
-				let notes = "";
-				if (t.is_admin) {
-					notes += `<div class="nxpi-note is-warn">${__(
-						"Administrator bypasses role permissions entirely. Every DocType is fully allowed and nothing on this screen can change that."
-					)}</div>`;
-				} else if (!t.roles.length) {
-					notes += `<div class="nxpi-note is-warn">${__("This user has no roles, so no role grants them anything.")}</div>`;
-				}
-				if (!t.enabled) {
-					notes += `<div class="nxpi-note is-warn">${__("Disabled users cannot log in. The permissions below are what they would get if enabled.")}</div>`;
-				}
-				if (t.blocked_modules && t.blocked_modules.length) {
-					notes += `<div class="nxpi-note">${__("Blocked modules on the User record: {0}", [
-						esc(t.blocked_modules.join(", ")),
-					])}</div>`;
-				}
-
-				html = `
-					<div class="nxpi-info-main">
-						<div class="nxpi-info-title">${esc(t.label)} <span class="nxpi-info-sub">${esc(t.name)}</span> ${badges.join(" ")}</div>
-						<div class="nxpi-info-sub">${__("Last login")}: ${t.last_login ? esc(frappe.datetime.prettyDate(t.last_login)) : __("never")}</div>
-						<div class="nxpi-chips">${chips || `<span class="nxpi-info-sub">${__("No roles")}</span>`}</div>
-						${notes}
-					</div>
-					${this.stats_html(stats)}
-					<div class="nxpi-info-actions">
-						<button class="btn btn-default btn-xs nxpi-open-userperms">${__("User Permissions")} (${t.user_permission_count})</button>
-						<button class="btn btn-default btn-xs nxpi-open-user">${__("Open User")}</button>
-						<button class="btn btn-default btn-xs nxpi-open-manager">${__("Role Permission Manager")}</button>
-					</div>`;
-			} else {
-				const badges = [];
-				badges.push(
-					t.disabled
-						? `<span class="indicator-pill red">${__("Disabled")}</span>`
-						: `<span class="indicator-pill green">${__("Active")}</span>`
-				);
-				if (t.desk_access) badges.push(`<span class="indicator-pill gray">${__("Desk access")}</span>`);
-				if (t.is_custom) badges.push(`<span class="indicator-pill gray">${__("Custom role")}</span>`);
-				if (t.is_automatic) badges.push(`<span class="indicator-pill blue">${__("Automatic")}</span>`);
-				if (t.two_factor_auth) badges.push(`<span class="indicator-pill orange">${__("2FA")}</span>`);
-
-				let notes = "";
-				if (this.locked_roles.has(t.name)) {
-					notes += `<div class="nxpi-note is-warn">${__("The rules of this role cannot be edited from here.")}</div>`;
-				}
-				if (t.name === "System Manager") {
-					notes += `<div class="nxpi-note">${__(
-						"System Managers can also import and export any DocType and manage permissions, on top of the rules below."
-					)}</div>`;
-				}
-				const users = t.users.length
-					? esc(t.users.slice(0, 12).join(", ")) + (t.user_count > 12 ? ` +${t.user_count - 12}` : "")
-					: __("nobody");
-
-				html = `
-					<div class="nxpi-info-main">
-						<div class="nxpi-info-title">${esc(t.label)} ${badges.join(" ")}</div>
-						<div class="nxpi-info-sub" title="${users}">${__("Held by {0} enabled user(s)", [t.user_count])}: ${users}</div>
-						${notes}
-					</div>
-					${this.stats_html(stats)}
-					<div class="nxpi-info-actions">
-						<button class="btn btn-default btn-xs nxpi-open-role">${__("Open Role")}</button>
-						<button class="btn btn-default btn-xs nxpi-open-manager">${__("Role Permission Manager")}</button>
-					</div>`;
-			}
-			this.$target_info.html(html).prop("hidden", false);
+			return t.type === "user" ? t.label : __("people with the role {0}", [t.label]);
 		}
+
+		// ------------------------------------------------------------------
+		// Summary
+		// ------------------------------------------------------------------
 
 		stats() {
-			const keys = ["read", "write", "create", "submit", "delete"];
+			const keys = ["read", "write", "create", "delete", "submit"];
 			const out = { total: this.rows.length };
 			keys.forEach((k) => (out[k] = 0));
 			this.rows.forEach((row) => {
@@ -496,24 +428,153 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 			return out;
 		}
 
+		sentence(s) {
+			const t = this.data.target;
+			const who = t.type === "user" ? esc(t.label) : __("People with the role {0}", [esc(t.label)]);
+			if (t.type === "user" && t.is_admin) {
+				return __("{0} is the Administrator and can do everything, everywhere. Nothing here can limit that.", [who]);
+			}
+			if (t.type === "user" && !t.roles.length) {
+				return __("{0} has no roles yet, so no role gives them anything to do.", [who]);
+			}
+			return __("{0} can view <b>{1}</b> types of records, edit <b>{2}</b>, create <b>{3}</b> and delete <b>{4}</b>.", [
+				who,
+				s.read,
+				s.write,
+				s.create,
+				s.delete,
+			]);
+		}
+
 		stats_html(s) {
 			const tile = (n, label) => `<div class="nxpi-stat"><b>${n}</b><span>${label}</span></div>`;
 			return `<div class="nxpi-stats">
-				${tile(s.total, __("DocTypes"))}
-				${tile(s.read, __("Read"))}
-				${tile(s.write, __("Write"))}
-				${tile(s.create, __("Create"))}
-				${tile(s.submit, __("Submit"))}
-				${tile(s.delete, __("Delete"))}
+				${tile(s.read, __("can view"))}
+				${tile(s.write, __("can edit"))}
+				${tile(s.create, __("can create"))}
+				${tile(s.delete, __("can delete"))}
+				${tile(s.submit, __("can submit"))}
+				${tile(s.total, __("record types"))}
 			</div>`;
 		}
 
-		refresh_stats() {
-			this.$target_info.find(".nxpi-stats").replaceWith(this.stats_html(this.stats()));
+		render_summary() {
+			const t = this.data.target;
+			const s = this.stats();
+			let html = "";
+
+			if (t.type === "user") {
+				const badges = [];
+				badges.push(
+					t.enabled
+						? `<span class="indicator-pill green">${__("Active")}</span>`
+						: `<span class="indicator-pill red">${__("Disabled")}</span>`
+				);
+				if (t.is_system_manager && !t.is_admin) {
+					badges.push(`<span class="indicator-pill blue" title="${esc(__("Can manage users and permissions"))}">${__("System Manager")}</span>`);
+				}
+				const chips = t.roles
+					.map((r) => {
+						const cls = ["nxpi-chip"];
+						let title = "";
+						if (t.disabled_roles.includes(r)) {
+							cls.push("is-disabled");
+							title = __("This role is switched off, so it gives nothing");
+						}
+						return `<span class="${cls.join(" ")}" title="${esc(title)}">${esc(r)}</span>`;
+					})
+					.join("");
+
+				let notes = "";
+				if (t.is_admin) {
+					notes += `<div class="nxpi-note is-warn">${__(
+						"The Administrator account is above the permission system. Every row below shows Yes, and editing is switched off."
+					)}</div>`;
+				}
+				if (!t.enabled) {
+					notes += `<div class="nxpi-note is-warn">${__(
+						"This person is disabled and cannot log in. The table shows what they would get if they were enabled again."
+					)}</div>`;
+				}
+				if (t.blocked_modules && t.blocked_modules.length) {
+					notes += `<div class="nxpi-note">${__("Modules hidden for this person on their User record: {0}", [
+						esc(t.blocked_modules.join(", ")),
+					])}</div>`;
+				}
+
+				html = `
+					<div class="nxpi-summary-main">
+						<div class="nxpi-summary-title">${esc(t.label)} <span class="nxpi-summary-id">${esc(t.name)}</span> ${badges.join(" ")}</div>
+						<div class="nxpi-summary-sentence">${this.sentence(s)}</div>
+						<div class="nxpi-chips"><span class="nxpi-roles-label">${__("Roles")}:</span>${
+							chips || `<span class="nxpi-summary-id">${__("none")}</span>`
+						}</div>
+						${notes}
+					</div>
+					${this.stats_html(s)}
+					<div class="nxpi-summary-actions">
+						<button class="btn btn-default btn-sm nxpi-open-userperms">${__("Which records can they see?")} (${t.user_permission_count})</button>
+						<button class="btn btn-default btn-sm nxpi-open-target">${__("Open this user")}</button>
+						<button class="btn btn-default btn-sm nxpi-open-manager">${__("Open Frappe's Role Permission Manager")}</button>
+					</div>`;
+			} else {
+				const badges = [];
+				badges.push(
+					t.disabled
+						? `<span class="indicator-pill red">${__("Switched off")}</span>`
+						: `<span class="indicator-pill green">${__("Active")}</span>`
+				);
+				if (t.is_automatic) {
+					badges.push(`<span class="indicator-pill blue" title="${esc(__("Frappe gives this role to users automatically"))}">${__("Automatic")}</span>`);
+				}
+				let notes = "";
+				if (this.locked_roles.has(t.name)) {
+					notes += `<div class="nxpi-note is-warn">${__("This role is managed by Frappe itself, so it cannot be changed from here.")}</div>`;
+				}
+				if (t.name === "System Manager") {
+					notes += `<div class="nxpi-note">${__(
+						"System Managers can additionally import and export any record type and manage permissions, on top of the rows below."
+					)}</div>`;
+				}
+				const users = t.users.length
+					? esc(t.users.slice(0, 10).join(", ")) + (t.user_count > 10 ? ` +${t.user_count - 10}` : "")
+					: __("nobody yet");
+
+				html = `
+					<div class="nxpi-summary-main">
+						<div class="nxpi-summary-title">${esc(t.label)} ${badges.join(" ")}</div>
+						<div class="nxpi-summary-sentence">${this.sentence(s)}</div>
+						<div class="nxpi-summary-id" title="${users}">${__("Who has this role")}: ${users}</div>
+						${notes}
+					</div>
+					${this.stats_html(s)}
+					<div class="nxpi-summary-actions">
+						<button class="btn btn-default btn-sm nxpi-open-target">${__("Open this role")}</button>
+						<button class="btn btn-default btn-sm nxpi-open-manager">${__("Open Frappe's Role Permission Manager")}</button>
+					</div>`;
+			}
+			this.$summary.html(html).prop("hidden", false);
+		}
+
+		refresh_summary() {
+			if (this.data) this.render_summary();
+		}
+
+		render_matrix_heading() {
+			const t = this.data.target;
+			if (t.type === "user") {
+				this.$matrix_title.text(__("What can {0} do?", [t.label]));
+				this.$matrix_sub.text(
+					__("Each row is one type of record. The last column tells you which role gives the permission.")
+				);
+			} else {
+				this.$matrix_title.text(__("What does the role {0} allow?", [t.label]));
+				this.$matrix_sub.text(__("Each row is one type of record and what this role allows on it."));
+			}
 		}
 
 		// ------------------------------------------------------------------
-		// Filters
+		// Filters and columns
 		// ------------------------------------------------------------------
 
 		fill_module_select() {
@@ -525,20 +586,24 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 			else this.filters.module = "";
 		}
 
-		fill_ptype_select(columns, extra) {
-			const current = this.filters.ptype;
-			this.$ptype.empty().append(`<option value="">${__("Any permission")}</option>`);
-			columns.forEach((c) => this.$ptype.append(`<option value="${esc(c.key)}">${esc(c.label)}</option>`));
-			extra.forEach((x) => this.$ptype.append(`<option value="${esc(x)}">${esc(frappe.unscrub(x))}</option>`));
-			const valid = columns.some((c) => c.key === current) || extra.includes(current);
-			if (valid) this.$ptype.val(current);
-			else this.filters.ptype = "";
+		custom_ptypes() {
+			const set = new Set();
+			this.rows.forEach((r) => (r.x || []).forEach((x) => set.add(x)));
+			return Array.from(set).sort();
+		}
+
+		visible_columns() {
+			const all = this.columns.map((c) => c.key);
+			if (this.filters.columns === "essential") {
+				return ESSENTIAL.filter((k) => all.includes(k));
+			}
+			return all.concat(this.custom_ptypes());
 		}
 
 		visible_rows() {
 			const f = this.filters;
 			const rights = this.data.rights;
-			return this.rows.filter((row) => {
+			const rows = this.rows.filter((row) => {
 				if (f.search && !(row.n.toLowerCase().includes(f.search) || row.m.toLowerCase().includes(f.search))) {
 					return false;
 				}
@@ -546,13 +611,12 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 				if (f.show === "customised") return !!row.c;
 				if (f.show === "changed") return this.row_has_pending(row.n);
 				if (f.show === "all") return true;
-
 				const p = this.effective(row).perms;
-				const keys = f.ptype ? [f.ptype] : rights.concat(row.x || []);
-				if (f.ptype && (row.na || []).includes(f.ptype)) return false;
-				const any_on = keys.some((k) => p[k]);
+				const any_on = rights.concat(row.x || []).some((k) => p[k]);
 				return f.show === "enabled" ? any_on : !any_on;
 			});
+			// Grouped by module, then by name, so the table reads like a book.
+			return rows.sort((a, b) => a.m.localeCompare(b.m) || a.n.localeCompare(b.n));
 		}
 
 		// ------------------------------------------------------------------
@@ -574,7 +638,7 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 		}
 
 		pending_key(doctype, role, ptype) {
-			return `${doctype} ${role} ${ptype}`;
+			return `${doctype}${role}${ptype}`;
 		}
 
 		pending_value(doctype, role, ptype) {
@@ -589,7 +653,6 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 			return false;
 		}
 
-		// Current (base + pending) plain-rule grants of one role on one row.
 		role_grants(row, role) {
 			const set = this.base_grants(row, role);
 			this.all_rights(row).forEach((pt) => {
@@ -642,40 +705,44 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 		// Matrix rendering
 		// ------------------------------------------------------------------
 
-		has_custom_column() {
-			return this.rows.some((r) => r.x && r.x.length);
-		}
-
-		render_head() {
-			const focus = this.filters.ptype;
-			let html = `<tr><th class="nxpi-h-dt">${__("DocType")}</th><th class="nxpi-h-mod">${__("Module")}</th>`;
-			this.columns.forEach((c) => {
-				html += `<th class="nxpi-h-col${c.key === focus ? " is-focus" : ""}" title="${esc(c.description)}">${esc(c.label)}</th>`;
+		render_head(cols) {
+			let html = `<tr><th class="nxpi-h-dt">${__("Record type")}</th>`;
+			cols.forEach((key) => {
+				html += `<th title="${esc(this.explain(key))}">${esc(this.label(key))}</th>`;
 			});
-			if (this.has_custom_column()) {
-				html += `<th title="${esc(__("Custom permission types defined for this DocType"))}">${__("Custom")}</th>`;
-			}
-			html += `<th class="nxpi-h-src">${this.data.target.type === "user" ? __("Granted by") : __("Source")}</th></tr>`;
+			html += `<th class="nxpi-h-src">${this.data.target.type === "user" ? __("Because of") : __("Note")}</th></tr>`;
 			this.$thead.html(html);
 		}
 
 		render_table() {
 			if (!this.data) return;
-			this.close_popover();
-			this.render_head();
+			const cols = this.visible_columns();
+			this.render_head(cols);
 			const visible = this.visible_rows();
-			this.$count.text(__("{0} of {1} DocTypes", [visible.length, this.rows.length]));
+			this.$count.text(__("{0} of {1} record types", [visible.length, this.rows.length]));
 			this.$no_rows.prop("hidden", visible.length > 0);
 			this.$tbody.empty();
 
 			const token = ++this.render_token;
-			const with_custom = this.has_custom_column();
+			const span = cols.length + 2;
+			const groups = {};
+			visible.forEach((r) => (groups[r.m] = (groups[r.m] || 0) + 1));
 			let i = 0;
+			let last_module = null;
 			const step = () => {
 				if (token !== this.render_token) return;
 				const parts = [];
 				const end = Math.min(i + CHUNK, visible.length);
-				for (; i < end; i++) parts.push(this.row_html(visible[i], with_custom));
+				for (; i < end; i++) {
+					const row = visible[i];
+					if (row.m !== last_module) {
+						last_module = row.m;
+						parts.push(
+							`<tr class="nxpi-group"><td colspan="${span}">${esc(row.m)} · ${__("{0} record types", [groups[row.m]])}</td></tr>`
+						);
+					}
+					parts.push(this.row_html(row, cols));
+				}
 				this.$tbody[0].insertAdjacentHTML("beforeend", parts.join(""));
 				if (i < visible.length) window.requestAnimationFrame(step);
 			};
@@ -687,31 +754,31 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 			if (!row) return;
 			const $old = this.$tbody.find(`tr[data-dt="${CSS.escape(doctype)}"]`);
 			if (!$old.length) return;
-			$old.replaceWith(this.row_html(row, this.has_custom_column()));
+			$old.replaceWith(this.row_html(row, this.visible_columns()));
 		}
 
-		row_html(row, with_custom) {
+		row_flags_html(row) {
+			const words = Object.keys(FLAG_WORDS)
+				.filter((k) => row.f && row.f[k] && k !== "submittable")
+				.map((k) => `<span class="nxpi-flag">${FLAG_WORDS[k]}</span>`);
+			if (row.c) {
+				words.unshift(
+					`<span class="nxpi-flag is-customised" title="${esc(
+						__("Someone changed the rules for this record type; they no longer match the standard ones")
+					)}">${__("customised")}</span>`
+				);
+			}
+			return words.join("");
+		}
+
+		row_html(row, cols) {
 			const ev = this.effective(row);
 			const changed = this.row_has_pending(row.n);
-			const flags = Object.keys(FLAG_LABELS)
-				.filter((k) => row.f && row.f[k])
-				.map((k) => `<span class="nxpi-flag">${FLAG_LABELS[k]}</span>`)
-				.join("");
-			const customised = row.c
-				? `<span class="nxpi-flag is-customised" title="${esc(__("Rules differ from the standard shipped in code"))}">${__("Customised")}</span>`
-				: "";
 			const lock = row.lock ? ` title="${esc(row.lock)}"` : "";
-
-			let tds = `<td class="nxpi-dt"${lock}><a href="#" class="nxpi-dt-link" data-dt="${esc(row.n)}">${esc(row.n)}</a>${customised}${flags}</td>`;
-			tds += `<td class="nxpi-mod" title="${esc(row.m)}">${esc(row.m)}</td>`;
-			this.columns.forEach((c) => {
-				tds += this.cell_html(row, c.key, c.label, ev);
+			let tds = `<td class="nxpi-dt"${lock}><a href="#" class="nxpi-dt-link" data-dt="${esc(row.n)}">${esc(row.n)}</a>${this.row_flags_html(row)}</td>`;
+			cols.forEach((key) => {
+				tds += this.cell_html(row, key, ev);
 			});
-			if (with_custom) {
-				tds += `<td class="nxpi-xcell">${(row.x || [])
-					.map((x) => this.custom_chip_html(row, x, ev))
-					.join("")}</td>`;
-			}
 			tds += `<td class="nxpi-src">${this.source_html(row, ev)}</td>`;
 			const cls = ["nxpi-row"];
 			if (changed) cls.push("is-changed");
@@ -724,26 +791,21 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 			return ev.perms[ptype] || 0;
 		}
 
-		cell_title(row, ptype, label, state, ev) {
-			const status =
-				state === "na"
-					? __("Not applicable to this DocType")
-					: state === 2
-					? __("Only for documents the user owns")
-					: state === 1
-					? __("Allowed")
-					: __("Not allowed");
-			let text = `${label}: ${status}`;
+		cell_title(row, ptype, state, ev) {
+			const label = this.label(ptype);
+			let text;
+			if (state === "na") text = __("{0}: does not apply to this record type", [label]);
+			else if (state === 2) text = __("{0}: only on records they created themselves", [label]);
+			else if (state === 1) text = __("{0}: allowed", [label]);
+			else text = __("{0}: not allowed", [label]);
 			if (state !== "na" && state !== 0) {
 				if (this.data.target.type === "user") {
 					const src = (ev.sources && ev.sources[ptype]) || [];
-					if (src.length) text += `\n${__("Granted by")}: ${src.join(", ")}`;
-				} else {
-					text += `\n${__("Source")}: ${__("Current role")}`;
-					if (row.o && row.o[this.data.target.name] && row.o[this.data.target.name].includes(ptype)) {
-						text += ` (${__("if owner")})`;
-					}
+					if (src.length) text += `\n${__("Because of")}: ${src.join(", ")}`;
 				}
+			}
+			if (this.editing && this.is_cell_editable(row, ptype)) {
+				text += `\n${this.data.target.type === "user" ? __("Click to choose which role should change") : __("Click to switch between Yes and No")}`;
 			}
 			if (row.lock) text += `\n${row.lock}`;
 			return text;
@@ -757,56 +819,31 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 			return !this.locked_roles.has(t.name);
 		}
 
-		cell_html(row, ptype, label, ev) {
+		cell_html(row, ptype, ev) {
 			const state = this.cell_state(row, ptype, ev);
 			const editable = this.is_cell_editable(row, ptype);
-			const cls = ["nxpi-cell", `is-${state}`];
+			const cls = ["nxpi-cell"];
 			if (editable) cls.push("is-editable");
-			if (ptype === this.filters.ptype) cls.push("is-focus");
 			const pending = this.scope_roles().some((role) => this.pending_value(row.n, role, ptype) !== null);
 			if (pending) cls.push("is-pending");
-			const title = esc(this.cell_title(row, ptype, label, state, ev));
-
-			let inner;
-			if (editable && this.data.target.type === "role") {
+			let own_mark = "";
+			if (this.data.target.type === "role" && state !== "na") {
 				const role = this.data.target.name;
-				const checked = this.role_grants(row, role).has(ptype) ? " checked" : "";
-				const owner_mark =
-					row.o && row.o[role] && row.o[role].includes(ptype)
-						? `<span class="nxpi-owner-mark" title="${esc(__("Also granted by an if-owner rule"))}">${GLYPH[2]}</span>`
-						: "";
-				inner = `<input type="checkbox" data-role="${esc(role)}"${checked}>${owner_mark}`;
-			} else {
-				inner = GLYPH[state];
+				if (row.o && row.o[role] && row.o[role].includes(ptype) && state !== 2) {
+					own_mark = `<span class="nxpi-own-mark" title="${esc(__("Also allowed on their own records by a separate rule"))}">${__("+ own")}</span>`;
+				}
 			}
-			return `<td class="${cls.join(" ")}" data-dt="${esc(row.n)}" data-pt="${esc(ptype)}" data-label="${esc(label)}" title="${title}">${inner}</td>`;
-		}
-
-		custom_chip_html(row, ptype, ev) {
-			const state = this.cell_state(row, ptype, ev);
-			const editable = this.is_cell_editable(row, ptype);
-			const label = frappe.unscrub(ptype);
-			const cls = ["nxpi-xchip", "nxpi-cell", `is-${state}`];
-			if (editable) cls.push("is-editable");
-			const pending = this.scope_roles().some((role) => this.pending_value(row.n, role, ptype) !== null);
-			if (pending) cls.push("is-pending");
-			const title = esc(this.cell_title(row, ptype, label, state, ev));
-			let mark = GLYPH[state];
-			if (editable && this.data.target.type === "role") {
-				const checked = this.role_grants(row, this.data.target.name).has(ptype) ? " checked" : "";
-				mark = `<input type="checkbox" data-role="${esc(this.data.target.name)}"${checked}>`;
-			}
-			return `<span class="${cls.join(" ")}" data-dt="${esc(row.n)}" data-pt="${esc(ptype)}" data-label="${esc(label)}" title="${title}">${esc(label)} ${mark}</span>`;
+			return `<td class="${cls.join(" ")}" data-dt="${esc(row.n)}" data-pt="${esc(ptype)}" title="${esc(
+				this.cell_title(row, ptype, state, ev)
+			)}"><span class="nxpi-pill is-${state}">${STATE_TEXT[state]}</span>${own_mark}</td>`;
 		}
 
 		source_html(row, ev) {
 			if (this.data.target.type === "role") {
 				const role = this.data.target.name;
-				const bits = [];
-				if (row.r && row.r[role]) bits.push(__("Current role"));
-				if (row.o && row.o[role]) bits.push(`<span class="nxpi-chip">${__("if owner")}</span>`);
-				if (row.lr && row.lr.length) bits.push(`<span class="nxpi-chip is-locked">${__("locked")}</span>`);
-				return bits.join(" ") || (Object.keys(ev.perms).length ? "" : `<span>${__("No rule")}</span>`);
+				if (row.o && row.o[role] && !(row.r && row.r[role])) return __("only on their own records");
+				if (!(row.r && row.r[role]) && !(row.o && row.o[role])) return `<span>${__("no rule")}</span>`;
+				return "";
 			}
 			if (this.data.target.is_admin) return __("Administrator");
 			const roles = new Set();
@@ -816,9 +853,11 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 				});
 			});
 			const list = Array.from(roles).sort();
-			if (!list.length) return `<span>${__("No rule")}</span>`;
+			if (!list.length) return `<span>${__("no role allows this")}</span>`;
 			const shown = list.slice(0, 3).map((r) => `<span class="nxpi-chip" title="${esc(r)}">${esc(r)}</span>`);
-			if (list.length > 3) shown.push(`<span class="nxpi-chip" title="${esc(list.slice(3).join(", "))}">+${list.length - 3}</span>`);
+			if (list.length > 3) {
+				shown.push(`<span class="nxpi-chip" title="${esc(list.slice(3).join(", "))}">+${list.length - 3}</span>`);
+			}
 			return shown.join(" ");
 		}
 
@@ -831,18 +870,25 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 			const blocked = t.type === "user" ? t.is_admin : this.locked_roles.has(t.name);
 			this.$edit_btn
 				.prop("disabled", blocked)
-				.toggleClass("is-on", this.editing)
-				.text(this.editing ? __("Done editing") : __("Edit permissions"))
+				.toggleClass("btn-primary", !this.editing)
+				.toggleClass("btn-default", this.editing)
+				.text(this.editing ? __("Stop editing") : __("Change permissions"))
 				.attr(
 					"title",
 					blocked
 						? t.type === "user"
-							? __("Administrator's access cannot be edited")
-							: __("This role's rules cannot be edited here")
-						: this.editing
-						? __("Leave edit mode; unsaved changes stay pending")
-						: __("Change the underlying role permissions from this screen")
+							? __("The Administrator cannot be limited")
+							: __("This role is managed by Frappe itself")
+						: ""
 				);
+			this.$editbar.prop("hidden", !this.editing);
+			if (this.editing) {
+				this.$editbar_text.text(
+					t.type === "user"
+						? __("Click any Yes or No. You will be asked which of this person's roles should change. Nothing is saved until you press Save changes.")
+						: __("Click any Yes or No to switch it. Nothing is saved until you press Save changes.")
+				);
+			}
 		}
 
 		toggle_edit() {
@@ -850,12 +896,6 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 			this.editing = !this.editing;
 			this.update_edit_button();
 			this.render_table();
-			if (this.editing && this.data.target.type === "user") {
-				frappe.show_alert({
-					message: __("Click a cell to choose which of the user's roles should change."),
-					indicator: "blue",
-				});
-			}
 		}
 
 		set_pending(doctype, role, ptype, value, cascade = true) {
@@ -877,65 +917,165 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 			}
 		}
 
-		on_role_checkbox(e) {
-			const $input = $(e.currentTarget);
-			const $cell = $input.closest(".nxpi-cell");
-			const doctype = $cell.data("dt");
-			const ptype = $cell.data("pt");
-			const role = $input.data("role");
-			this.set_pending(doctype, role, ptype, $input.prop("checked") ? 1 : 0);
-			this.after_edit(doctype);
+		cascade_note(ptype, value) {
+			const linked = value ? NEEDS[ptype] || [] : DEPENDENTS[ptype] || [];
+			if (!linked.length) return "";
+			const names = linked.map((k) => this.label(k)).join(", ");
+			return value
+				? __("Turning {0} on also turns on {1}, because Frappe requires it.", [this.label(ptype), names])
+				: __("Turning {0} off also turns off {1}, because they depend on it.", [this.label(ptype), names]);
 		}
 
 		on_cell_click(e) {
-			if ($(e.target).is("input")) return; // the checkbox handles itself
 			const $cell = $(e.currentTarget);
 			const doctype = $cell.data("dt");
 			const ptype = $cell.data("pt");
+			const row = this.row_index.get(doctype);
+			if (!row) return;
 			if (this.data.target.type === "role") {
-				const $input = $cell.find("input[type=checkbox]");
-				if ($input.length) $input.prop("checked", !$input.prop("checked")).trigger("change");
+				const role = this.data.target.name;
+				const now = this.role_grants(row, role).has(ptype) ? 1 : 0;
+				this.set_pending(doctype, role, ptype, now ? 0 : 1);
+				const note = this.cascade_note(ptype, now ? 0 : 1);
+				if (note) frappe.show_alert({ message: note, indicator: "blue" }, 4);
+				this.after_edit(doctype);
 				return;
 			}
-			this.open_popover($cell, doctype, ptype, $cell.data("label"));
+			this.open_role_dialog(row, ptype);
 		}
 
 		after_edit(doctype) {
 			this.rerender_row(doctype);
 			this.update_dirty();
-			this.refresh_stats();
+			this.refresh_summary();
 		}
+
+		// The user view never guesses: the admin picks which role changes.
+		open_role_dialog(row, ptype) {
+			const t = this.data.target;
+			const label = this.label(ptype);
+			const ev = this.effective(row);
+			const allowed_now = !!ev.perms[ptype];
+			const roles = this.scope_roles()
+				.slice()
+				.sort((a, b) => {
+					const ra = row.r && row.r[a] ? 0 : 1;
+					const rb = row.r && row.r[b] ? 0 : 1;
+					return ra - rb || a.localeCompare(b);
+				});
+
+			const items = roles
+				.map((role) => {
+					const locked = this.locked_roles.has(role);
+					const checked = this.role_grants(row, role).has(ptype);
+					const has_rule = row.r && row.r[role];
+					const owner = row.o && row.o[role] && row.o[role].includes(ptype);
+					let hint = "";
+					if (locked) hint = __("managed by Frappe");
+					else if (owner && !checked) hint = __("own records only");
+					else if (!has_rule) hint = __("no rule yet for this record type");
+					return `<label class="nxpi-dialog-role${locked ? " is-locked" : ""}">
+						<input type="checkbox" data-role="${esc(role)}"${checked ? " checked" : ""}${locked ? " disabled" : ""}>
+						<span>${esc(role)}</span>${hint ? `<small>${esc(hint)}</small>` : ""}
+					</label>`;
+				})
+				.join("");
+
+			const intro = allowed_now
+				? __("{0} can <b>{1}</b> {2} because of the roles ticked below.", [esc(t.label), esc(label), esc(row.n)])
+				: __("{0} cannot <b>{1}</b> {2} at the moment. Tick the role that should allow it.", [
+						esc(t.label),
+						esc(label),
+						esc(row.n),
+				  ]);
+			const body = `<div class="nxpi-dialog">
+				<p>${intro}</p>
+				<div class="nxpi-dialog-roles">${items}</div>
+				<p class="text-muted">${__(
+					"Permissions live on roles, not on people. Ticking or unticking a role changes that role for everyone who has it."
+				)}</p>
+				${
+					this.cascade_note(ptype, 1) || this.cascade_note(ptype, 0)
+						? `<p class="text-muted">${esc(this.cascade_note(ptype, 1))} ${esc(this.cascade_note(ptype, 0))}</p>`
+						: ""
+				}
+			</div>`;
+
+			const d = new frappe.ui.Dialog({
+				title: __("{0} on {1}", [label, row.n]),
+				fields: [{ fieldtype: "HTML", fieldname: "body", options: body }],
+				primary_action_label: __("Apply"),
+				primary_action: () => {
+					d.$wrapper.find("input[type=checkbox]:not(:disabled)").each((_, el) => {
+						this.set_pending(row.n, $(el).data("role"), ptype, el.checked ? 1 : 0);
+					});
+					d.hide();
+					this.after_edit(row.n);
+				},
+			});
+			d.show();
+		}
+
+		// ------------------------------------------------------------------
+		// Unsaved changes, save, discard
+		// ------------------------------------------------------------------
 
 		update_dirty() {
 			const n = this.pending.size;
+			this.$savebar.prop("hidden", !n);
 			if (n) {
+				this.$savebar_text.html(
+					__("<b>{0}</b> unsaved change(s). Nothing has been applied yet.", [n])
+				);
 				this.page.set_indicator(__("{0} unsaved", [n]), "orange");
-				this.page.set_primary_action(__("Save Changes"), () => this.save(), "save");
-				this.page.set_secondary_action(__("Discard"), () => this.discard());
 			} else {
 				this.page.clear_indicator();
-				this.page.clear_primary_action();
-				this.page.clear_secondary_action();
 			}
+		}
+
+		change_lines() {
+			// Group pending edits per role and record type so the confirmation
+			// reads like a sentence, not a diff.
+			const grouped = {};
+			this.pending.forEach((ch) => {
+				const key = `${ch.role}${ch.doctype}`;
+				grouped[key] = grouped[key] || { role: ch.role, doctype: ch.doctype, on: [], off: [] };
+				(ch.value ? grouped[key].on : grouped[key].off).push(this.label(ch.ptype));
+			});
+			return Object.values(grouped)
+				.sort((a, b) => a.role.localeCompare(b.role) || a.doctype.localeCompare(b.doctype))
+				.map((g) => {
+					const bits = [];
+					if (g.on.length) bits.push(__("will be able to {0}", [g.on.join(", ")]));
+					if (g.off.length) bits.push(__("will no longer be able to {0}", [g.off.join(", ")]));
+					return __("Everyone with the role <b>{0}</b> {1} on <b>{2}</b>.", [esc(g.role), bits.join(` ${__("and")} `), esc(g.doctype)]);
+				});
+		}
+
+		confirm_and_save() {
+			if (!this.pending.size) return;
+			const lines = this.change_lines();
+			const html = `<div class="nxpi-dialog"><p>${__("You are about to change these role permissions:")}</p>
+				<ul class="nxpi-dialog-list">${lines.map((l) => `<li>${l}</li>`).join("")}</ul>
+				<p class="text-muted">${__("Frappe will enforce this immediately for everyone who has these roles.")}</p></div>`;
+			frappe.confirm(html, () => this.save());
 		}
 
 		discard() {
 			if (!this.pending.size) return;
 			const touched = Array.from(new Set(Array.from(this.pending.values()).map((c) => c.doctype)));
 			this.pending.clear();
-			this.close_popover();
 			this.update_dirty();
 			if (this.filters.show === "changed") this.render_table();
 			else touched.forEach((dt) => this.rerender_row(dt));
-			this.refresh_stats();
-			frappe.show_alert({ message: __("Changes discarded."), indicator: "blue" });
+			this.refresh_summary();
+			frappe.show_alert({ message: __("Changes discarded. Nothing was saved."), indicator: "blue" });
 		}
 
 		save() {
 			if (!this.pending.size || !this.target) return;
 			const changes = Array.from(this.pending.values());
-			this.close_popover();
-			frappe.dom.freeze(__("Saving {0} permission change(s)…", [changes.length]));
+			frappe.dom.freeze(__("Saving…"));
 			frappe
 				.xcall(`${API}.save_changes`, {
 					changes,
@@ -952,122 +1092,36 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 					});
 					this.pending.clear();
 					this.update_dirty();
-					this.render_target_info();
+					this.render_summary();
 					this.render_table();
-					const summary = (r.applied || [])
-						.filter((a) => a.action !== "unchanged")
-						.map((a) => `${a.role} · ${a.doctype}: ${a.action}`)
-						.slice(0, 6)
-						.join("<br>");
 					frappe.show_alert(
 						{
-							message: `${__("Saved. Frappe now enforces these rules.")}${summary ? "<br><small>" + esc(summary).replace(/&lt;br&gt;/g, "<br>") + "</small>" : ""}`,
+							message: __("Saved. The new permissions are in force now."),
 							indicator: "green",
 						},
-						7
+						6
 					);
 					if (this.drawer_doctype && touched.includes(this.drawer_doctype)) {
 						this.open_drawer(this.drawer_doctype);
 					}
 				})
 				.catch(() => {
-					// Frappe has already shown the server's message; the batch was
-					// rolled back, so the pending edits stay for the admin to fix.
-					frappe.show_alert({ message: __("Nothing was saved. Fix the highlighted rule and try again."), indicator: "red" });
+					// Frappe has shown the server's message; nothing was saved and
+					// the pending edits stay so the admin can fix and retry.
+					frappe.show_alert({ message: __("Nothing was saved. Please check the message and try again."), indicator: "red" });
 				})
 				.finally(() => frappe.dom.unfreeze());
 		}
 
 		// ------------------------------------------------------------------
-		// Popover: which role should change (user view)
-		// ------------------------------------------------------------------
-
-		open_popover($cell, doctype, ptype, label) {
-			const row = this.row_index.get(doctype);
-			if (!row) return;
-			this.popover_ctx = { doctype, ptype };
-			const roles = this.scope_roles().slice().sort((a, b) => {
-				const ra = row.r && row.r[a] ? 0 : 1;
-				const rb = row.r && row.r[b] ? 0 : 1;
-				return ra - rb || a.localeCompare(b);
-			});
-			const items = roles
-				.map((role) => {
-					const locked = this.locked_roles.has(role);
-					const checked = this.role_grants(row, role).has(ptype) ? " checked" : "";
-					const has_rule = row.r && row.r[role];
-					const owner = row.o && row.o[role] && row.o[role].includes(ptype);
-					const hint = owner ? `<small>${__("if owner")}</small>` : !has_rule ? `<small style="color:var(--text-muted)">${__("new rule")}</small>` : "";
-					return `<label class="nxpi-popover-role${locked ? " is-locked" : ""}" title="${locked ? esc(__("This role's rules cannot be edited here")) : ""}">
-						<input type="checkbox" data-role="${esc(role)}"${checked}${locked ? " disabled" : ""}> <span>${esc(role)}</span>${hint}
-					</label>`;
-				})
-				.join("");
-			this.$popover
-				.html(
-					`<div class="nxpi-popover-title">${esc(label)} · ${esc(doctype)}</div>
-					<div class="nxpi-popover-sub">${__("Tick the roles that should grant this. The user gets it if any of their roles does.")}</div>
-					<div class="nxpi-popover-roles">${items}</div>
-					<div class="nxpi-popover-foot">
-						<span>
-							<button class="btn btn-xs btn-default nxpi-popover-all" data-value="1">${__("All on")}</button>
-							<button class="btn btn-xs btn-default nxpi-popover-all" data-value="0">${__("All off")}</button>
-						</span>
-						<button class="btn btn-xs btn-primary nxpi-popover-close">${__("Done")}</button>
-					</div>`
-				)
-				.prop("hidden", false);
-
-			const root = this.$root.offset();
-			const off = $cell.offset();
-			const width = this.$popover.outerWidth();
-			let left = off.left - root.left + $cell.outerWidth() / 2 - width / 2;
-			left = Math.max(8, Math.min(left, this.$root.width() - width - 8));
-			this.$popover.css({ top: off.top - root.top + $cell.outerHeight() + 4, left });
-		}
-
-		close_popover() {
-			this.$popover.prop("hidden", true).empty();
-			this.popover_ctx = null;
-		}
-
-		on_popover_checkbox(e) {
-			if (!this.popover_ctx) return;
-			const $input = $(e.currentTarget);
-			const { doctype, ptype } = this.popover_ctx;
-			this.set_pending(doctype, $input.data("role"), ptype, $input.prop("checked") ? 1 : 0);
-			this.after_edit(doctype);
-			this.sync_popover();
-		}
-
-		popover_set_all(value) {
-			if (!this.popover_ctx) return;
-			const { doctype, ptype } = this.popover_ctx;
-			this.$popover.find("input[type=checkbox]:not(:disabled)").each((_, el) => {
-				this.set_pending(doctype, $(el).data("role"), ptype, Number(value));
-			});
-			this.after_edit(doctype);
-			this.sync_popover();
-		}
-
-		sync_popover() {
-			if (!this.popover_ctx) return;
-			const { doctype, ptype } = this.popover_ctx;
-			const row = this.row_index.get(doctype);
-			this.$popover.find("input[type=checkbox]").each((_, el) => {
-				el.checked = this.role_grants(row, $(el).data("role")).has(ptype);
-			});
-		}
-
-		// ------------------------------------------------------------------
-		// Drawer: one DocType in depth
+		// Drawer: one record type in depth
 		// ------------------------------------------------------------------
 
 		open_drawer(doctype) {
 			if (!this.target) return;
 			this.drawer_doctype = doctype;
 			this.$body.addClass("has-drawer");
-			this.$drawer.prop("hidden", false).html(`<div class="nxpi-info-sub">${__("Loading…")}</div>`);
+			this.$drawer.prop("hidden", false).html(`<div class="nxpi-drawer-sub">${__("Loading…")}</div>`);
 			frappe
 				.xcall(`${API}.get_doctype_detail`, {
 					target_type: this.target.type,
@@ -1089,96 +1143,117 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 
 		drawer_html(d) {
 			const t = this.data.target;
-			const flags = Object.keys(FLAG_LABELS)
+			const row = this.row_index.get(d.doctype);
+			const flags = Object.keys(FLAG_WORDS)
 				.filter((k) => d.flags && d.flags[k])
-				.map((k) => `<span class="nxpi-flag">${FLAG_LABELS[k]}</span>`)
-				.join("");
-			const customised = d.customised
-				? `<span class="nxpi-flag is-customised">${__("Customised")}</span>`
-				: "";
-			const label_of = (pt) => {
-				const col = this.columns.find((c) => c.key === pt);
-				return col ? col.label : frappe.unscrub(pt);
-			};
-			const rules_table = (rules, empty) => {
-				if (!rules || !rules.length) return `<div class="nxpi-info-sub">${empty}</div>`;
-				return `<table class="nxpi-rules"><thead><tr><th>${__("Role")}</th><th>${__("Level")}</th><th>${__("Grants")}</th></tr></thead><tbody>${rules
-					.map(
-						(r) => `<tr>
-							<td>${esc(r.role)}${r.if_owner ? ` <span class="nxpi-chip">${__("if owner")}</span>` : ""}</td>
-							<td>${r.permlevel}</td>
-							<td><div class="nxpi-chips">${(r.granted || []).map((g) => `<span class="nxpi-chip">${esc(label_of(g))}</span>`).join("") || `<span class="nxpi-info-sub">${__("nothing")}</span>`}</div></td>
-						</tr>`
-					)
-					.join("")}</tbody></table>`;
-			};
+				.map((k) => FLAG_WORDS[k]);
+			const pill = (state) => `<span class="nxpi-pill is-${state}">${STATE_TEXT[state]}</span>`;
+			const chips = (keys) =>
+				`<div class="nxpi-chips">${(keys || [])
+					.map((k) => `<span class="nxpi-chip">${esc(this.label(k))}</span>`)
+					.join("")}</div>`;
 
 			let html = `<div class="nxpi-drawer-head">
 				<div>
 					<h4 class="nxpi-drawer-title">${esc(d.doctype)}</h4>
-					<div class="nxpi-info-sub">${esc(d.module)}${d.app ? " · " + esc(d.app) : ""} ${customised}${flags}</div>
+					<div class="nxpi-drawer-sub">${esc(d.module)}${flags.length ? " · " + esc(flags.join(", ")) : ""}${
+						d.customised ? ` · <span class="nxpi-flag is-customised">${__("customised")}</span>` : ""
+					}</div>
 				</div>
 				<button class="btn btn-default btn-xs nxpi-drawer-close" title="${esc(__("Close"))}">&times;</button>
 			</div>`;
-			if (d.description) html += `<p class="nxpi-drawer-desc">${esc(d.description)}</p>`;
+			if (d.description) html += `<p>${esc(d.description)}</p>`;
 			if (d.lock) html += `<div class="nxpi-note is-warn">${esc(d.lock)}</div>`;
 			if (d.flags && d.flags.child && d.parents && d.parents.length) {
 				html += `<div class="nxpi-note">${__("Used inside")}: ${esc(d.parents.join(", "))}</div>`;
 			}
-			if (d.na && d.na.length) {
-				html += `<div class="nxpi-info-sub">${__("Never applicable here")}: ${esc(d.na.map(label_of).join(", "))}</div>`;
-			}
 
-			html += `<div><h6>${t.type === "user" ? __("Rules from this user's roles") : __("Rules for this role")}</h6>${rules_table(
-				d.rules,
-				__("No rule at all: nothing grants access to this DocType.")
-			)}</div>`;
-
-			if (d.standard_rules) {
-				html += `<details><summary>${__("Standard rules shipped in code (before customisation)")}</summary>${rules_table(
-					d.standard_rules,
-					__("No standard rule for these roles.")
-				)}</details>`;
-			}
-
-			if (d.live) {
-				html += `<div><h6>${__("Frappe's own answer for {0}", [esc(t.name)])}</h6><div class="nxpi-live">${d.rights
-					.filter((pt) => !(d.na || []).includes(pt))
-					.map(
-						(pt) => `<div class="nxpi-live-item is-${d.live[pt] ? 1 : 0}"><span>${esc(label_of(pt))}</span><b>${
-							d.live[pt] ? GLYPH[1] : GLYPH[0]
-						}</b></div>`
-					)
+			// What can they do here?
+			const applicable = d.rights.filter((pt) => !(d.na || []).includes(pt));
+			const state_of = (pt) => {
+				if (d.live) return d.live[pt] ? 1 : 0;
+				if (!row) return 0;
+				return this.cell_state(row, pt, this.effective(row));
+			};
+			html += `<div><h6>${
+				t.type === "user" ? __("What can {0} do here?", [esc(t.label)]) : __("What does this role allow here?")
+			}</h6>
+				<div class="nxpi-actions-grid">${applicable
+					.map((pt) => `<div class="nxpi-action-item"><span title="${esc(this.explain(pt))}">${esc(this.label(pt))}</span>${pill(state_of(pt))}</div>`)
 					.join("")}</div>
-					<div class="nxpi-info-sub" style="margin-top:4px">${__("Asked live through frappe.has_permission, so this is what the system enforces right now.")}</div></div>`;
-			}
+				${
+					d.live
+						? `<p style="margin-top:6px">${__("Checked live with Frappe, so this is exactly what the system enforces right now.")}</p>`
+						: ""
+				}
+			</div>`;
 
+			// Why?
+			const level0 = (d.rules || []).filter((r) => r.permlevel === 0);
+			const higher = (d.rules || []).filter((r) => r.permlevel > 0);
+			html += `<div><h6>${__("Why?")}</h6>`;
+			if (!level0.length) {
+				html += `<p>${
+					t.type === "user"
+						? __("None of this person's roles has a rule for this record type, so they get nothing here.")
+						: __("This role has no rule for this record type, so it allows nothing here.")
+				}</p>`;
+			} else {
+				html += `<div class="nxpi-reasons">${level0
+					.map(
+						(r) => `<div class="nxpi-reason">
+							<b>${__("Role {0} allows", [esc(r.role)])}${r.if_owner ? ` <span class="nxpi-pill is-2">${__("Own only")}</span>` : ""}</b>
+							${r.granted.length ? chips(r.granted) : `<span class="text-muted">${__("nothing")}</span>`}
+						</div>`
+					)
+					.join("")}</div>`;
+			}
+			if (higher.length) {
+				html += `<p style="margin-top:8px">${__("Extra field-level rules")}: ${higher
+					.map((r) => `${esc(r.role)} (${__("level {0}", [r.permlevel])}: ${r.granted.map((k) => esc(this.label(k))).join(", ")})`)
+					.join("; ")}</p>`;
+			}
+			html += `</div>`;
+
+			// Which records?
 			if (t.type === "user" && !t.is_admin) {
 				const ups = d.user_permissions || [];
-				html += `<div><h6>${__("User Permissions touching this DocType")}</h6>`;
+				html += `<div><h6>${__("Which records?")}</h6>`;
 				if (!ups.length) {
-					html += `<div class="nxpi-info-sub">${__("None. Row-level access is not restricted for this user here.")}</div>`;
+					html += `<p>${__("No restriction. Any record their roles allow.")}</p>`;
 				} else {
-					html += `<table class="nxpi-rules"><thead><tr><th>${__("Allow")}</th><th>${__("Value")}</th><th>${__("Applies to")}</th></tr></thead><tbody>${ups
+					html += `<div class="nxpi-reasons">${ups
 						.map(
-							(u) => `<tr><td>${esc(u.allow)}</td><td class="nxpi-up-value">${esc(u.for_value)}${
-								u.is_default ? ` <span class="nxpi-chip">${__("default")}</span>` : ""
-							}</td><td>${u.apply_to_all_doctypes ? __("All DocTypes") : esc(u.applicable_for || "")}</td></tr>`
+							(u) => `<div class="nxpi-reason">${__("Only where <b>{0}</b> is <b>{1}</b>", [esc(u.allow), esc(u.for_value)])}${
+								u.apply_to_all_doctypes ? "" : ` (${__("for {0} only", [esc(u.applicable_for || "")])})`
+							}</div>`
 						)
-						.join("")}</tbody></table>`;
+						.join("")}</div>`;
 				}
 				html += `</div>`;
 			}
 
+			if (d.standard_rules) {
+				html += `<details><summary>${__("Standard rules before they were customised")}</summary>
+					<table class="nxpi-rules"><thead><tr><th>${__("Role")}</th><th>${__("Allowed")}</th></tr></thead><tbody>${d.standard_rules
+						.filter((r) => r.permlevel === 0)
+						.map(
+							(r) => `<tr><td>${esc(r.role)}${r.if_owner ? ` (${__("own only")})` : ""}</td><td>${
+								r.granted.map((k) => esc(this.label(k))).join(", ") || __("nothing")
+							}</td></tr>`
+						)
+						.join("")}</tbody></table></details>`;
+			}
+
 			html += `<div class="nxpi-drawer-actions">
-				<button class="btn btn-default btn-xs nxpi-drawer-manager">${__("Open in Role Permission Manager")}</button>
-				${t.type === "user" ? `<button class="btn btn-default btn-xs nxpi-drawer-up-list">${__("User Permissions")}</button>` : ""}
+				<button class="btn btn-default btn-xs nxpi-drawer-manager">${__("Open in Frappe's Role Permission Manager")}</button>
+				${t.type === "user" ? `<button class="btn btn-default btn-xs nxpi-drawer-up-list">${__("Manage which records")}</button>` : ""}
 			</div>`;
 			return html;
 		}
 
 		// ------------------------------------------------------------------
-		// User Permissions panel (the other layer, shown separately)
+		// Which records can they see? (User Permissions)
 		// ------------------------------------------------------------------
 
 		toggle_userperms() {
@@ -1187,24 +1262,26 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 				this.$userperms.prop("hidden", true);
 				return;
 			}
-			this.$userperms.prop("hidden", false).html(`<div class="nxpi-info-sub">${__("Loading…")}</div>`);
+			this.$userperms.prop("hidden", false).html(`<p>${__("Loading…")}</p>`);
 			frappe.xcall(`${API}.get_user_permissions`, { user: this.target.name }).then((d) => {
 				const rows = d.rows || [];
+				const t = this.data.target;
 				let body;
 				if (!rows.length) {
-					body = `<div class="nxpi-info-sub">${__(
-						"No User Permissions. This user sees every document their roles allow; nothing is narrowed to a particular Company, Customer or other value."
-					)}</div>`;
+					body = `<p>${__(
+						"No restrictions. {0} can open any record their roles allow, in every Company, Customer and so on.",
+						[esc(t.label)]
+					)}</p>`;
 				} else {
 					body = `<table class="nxpi-rules"><thead><tr>
-						<th>${__("Allow (DocType)")}</th><th>${__("Value")}</th><th>${__("Applies to")}</th><th>${__("Default")}</th><th>${__("Descendants")}</th><th></th>
+						<th>${__("Limited to")}</th><th>${__("Value")}</th><th>${__("Applies to")}</th><th>${__("Default")}</th><th>${__("Sub-records")}</th><th></th>
 					</tr></thead><tbody>${rows
 						.map(
 							(u) => `<tr>
 								<td>${esc(u.allow)}</td>
-								<td class="nxpi-up-value">${esc(u.for_value)}</td>
-								<td>${u.apply_to_all_doctypes ? __("All DocTypes") : esc(u.applicable_for || "")}</td>
-								<td>${u.is_default ? GLYPH[1] : ""}</td>
+								<td><b>${esc(u.for_value)}</b></td>
+								<td>${u.apply_to_all_doctypes ? __("Every record type") : esc(u.applicable_for || "")}</td>
+								<td>${u.is_default ? __("Yes") : ""}</td>
 								<td>${u.hide_descendants ? __("hidden") : __("included")}</td>
 								<td><a href="/app/user-permission/${encodeURIComponent(u.name)}">${__("Open")}</a></td>
 							</tr>`
@@ -1213,16 +1290,16 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 				}
 				this.$userperms.html(`
 					<div class="nxpi-userperms-head">
-						<h5>${__("User Permissions for {0}", [esc(this.target.name)])} <span class="nxpi-info-sub">(${rows.length})</span></h5>
+						<h5>${__("Which records can {0} see?", [esc(t.label)])}</h5>
 						<span>
-							<button class="btn btn-default btn-xs nxpi-up-new">${__("New")}</button>
-							<button class="btn btn-default btn-xs nxpi-up-manage">${__("Manage")}</button>
+							<button class="btn btn-default btn-xs nxpi-up-new">${__("Add a restriction")}</button>
+							<button class="btn btn-default btn-xs nxpi-up-manage">${__("Manage all")}</button>
 							<button class="btn btn-default btn-xs nxpi-up-close">&times;</button>
 						</span>
 					</div>
-					<div class="nxpi-info-sub">${__(
-						"User Permissions narrow which documents this user may see for the DocTypes above. They do not grant anything; role permissions decide the actions, these decide the rows."
-					)}${d.strict ? " " + __("Strict mode is on: documents with an empty link field are hidden too.") : ""}</div>
+					<p>${__(
+						"These are User Permissions. They never add abilities; they only narrow which records this person may see, for example one Company or one Customer. The abilities themselves come from the roles in the table below."
+					)}${d.strict ? " " + __("Strict mode is on: records with an empty link field are hidden too.") : ""}</p>
 					${body}`);
 			});
 		}

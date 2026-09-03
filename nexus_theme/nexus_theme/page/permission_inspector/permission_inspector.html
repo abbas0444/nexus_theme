@@ -1,77 +1,128 @@
 <div class="nxpi">
-	<section class="nxpi-target">
-		<div class="nxpi-target-pick">
-			<div class="nxpi-pick nxpi-pick-user">
-				<label class="nxpi-pick-label">{{ __("User") }}</label>
-				<div class="nxpi-pick-control" data-control="user"></div>
-			</div>
-			<div class="nxpi-or">{{ __("or") }}</div>
-			<div class="nxpi-pick nxpi-pick-role">
-				<label class="nxpi-pick-label">{{ __("Role") }}</label>
-				<div class="nxpi-pick-control" data-control="role"></div>
-			</div>
-			<div class="nxpi-pick-actions">
-				<button class="btn btn-default btn-sm nxpi-clear" type="button">{{ __("Clear") }}</button>
-			</div>
-		</div>
-		<div class="nxpi-target-info" hidden></div>
-	</section>
 
-	<section class="nxpi-toolbar" hidden>
-		<div class="nxpi-filters">
-			<div class="nxpi-filter nxpi-filter-search">
-				<input type="search" class="form-control input-sm nxpi-search" placeholder="{{ __("Search DocType or module") }}" autocomplete="off">
+	<!-- Step 1: pick who to look at -->
+	<section class="nxpi-card nxpi-step">
+		<div class="nxpi-step-head">
+			<span class="nxpi-step-no">1</span>
+			<div class="nxpi-step-text">
+				<h4>{{ __("Who do you want to check?") }}</h4>
+				<p>{{ __("Pick a person to see everything their roles let them do, or pick a role to see what that one role allows.") }}</p>
 			</div>
-			<div class="nxpi-filter">
-				<select class="form-control input-sm nxpi-module">
-					<option value="">{{ __("All modules") }}</option>
-				</select>
-			</div>
-			<div class="nxpi-filter">
-				<select class="form-control input-sm nxpi-ptype">
-					<option value="">{{ __("Any permission") }}</option>
-				</select>
-			</div>
-			<div class="nxpi-filter">
-				<select class="form-control input-sm nxpi-show">
-					<option value="all">{{ __("Show all") }}</option>
-					<option value="enabled">{{ __("Only enabled") }}</option>
-					<option value="disabled">{{ __("Only disabled") }}</option>
-					<option value="customised">{{ __("Only customised (differs from standard)") }}</option>
-					<option value="changed">{{ __("Only unsaved changes") }}</option>
-				</select>
-			</div>
-			<label class="nxpi-filter nxpi-check">
-				<input type="checkbox" class="nxpi-child"> <span>{{ __("Child tables") }}</span>
-			</label>
+			<button class="btn btn-default btn-sm nxpi-help-btn" type="button">{{ __("How does this work?") }}</button>
 		</div>
-		<div class="nxpi-toolbar-right">
-			<span class="nxpi-count"></span>
-			<button class="btn btn-default btn-sm nxpi-refresh" type="button" title="{{ __("Re-read permissions from the database and clear caches") }}">{{ __("Refresh") }}</button>
-			<button class="btn btn-default btn-sm nxpi-edit" type="button">{{ __("Edit permissions") }}</button>
+
+		<div class="nxpi-pick-row">
+			<div class="nxpi-segment" role="tablist" aria-label="{{ __("Person or role") }}">
+				<button type="button" class="nxpi-seg is-active" data-kind="user">{{ __("A person") }}</button>
+				<button type="button" class="nxpi-seg" data-kind="role">{{ __("A role") }}</button>
+			</div>
+			<div class="nxpi-pick-control" data-control="user"></div>
+			<div class="nxpi-pick-control" data-control="role" hidden></div>
+			<button class="btn btn-default btn-sm nxpi-clear" type="button" hidden>{{ __("Start over") }}</button>
+		</div>
+
+		<div class="nxpi-help" hidden>
+			<div class="nxpi-help-item">
+				<b>{{ __("Roles decide what someone can do.") }}</b>
+				<span>{{ __("Every person has one or more roles, such as Accounts User or Sales User. Each role allows actions like View, Edit or Create on each type of record. A person can do something if any of their roles allows it.") }}</span>
+			</div>
+			<div class="nxpi-help-item">
+				<b>{{ __("User Permissions decide which records they can see.") }}</b>
+				<span>{{ __("They narrow a person down to, for example, one Company or one Customer. They never add abilities, they only limit records. Use the Which records button to see them.") }}</span>
+			</div>
+			<div class="nxpi-help-item">
+				<b>{{ __("Changing a permission changes a role.") }}</b>
+				<span>{{ __("Because abilities come from roles, this screen edits the role behind the permission. That change applies to everyone who has that role, not only the person you picked.") }}</span>
+			</div>
 		</div>
 	</section>
 
-	<section class="nxpi-userperms" hidden></section>
+	<!-- Summary of the picked person or role -->
+	<section class="nxpi-card nxpi-summary" hidden></section>
 
-	<section class="nxpi-body" hidden>
-		<div class="nxpi-matrix-wrap">
-			<table class="nxpi-table">
-				<thead></thead>
-				<tbody></tbody>
-			</table>
-			<div class="nxpi-no-rows" hidden>{{ __("No DocTypes match these filters.") }}</div>
+	<!-- User Permissions (which records), shown on request -->
+	<section class="nxpi-card nxpi-userperms" hidden></section>
+
+	<!-- Step 2: the permission table -->
+	<section class="nxpi-step nxpi-step-matrix" hidden>
+		<div class="nxpi-step-head">
+			<span class="nxpi-step-no">2</span>
+			<div class="nxpi-step-text">
+				<h4 class="nxpi-matrix-title"></h4>
+				<p class="nxpi-matrix-sub"></p>
+			</div>
 		</div>
-		<aside class="nxpi-drawer" hidden></aside>
+
+		<div class="nxpi-card nxpi-matrix-card">
+			<div class="nxpi-toolbar">
+				<div class="nxpi-filters">
+					<input type="search" class="form-control nxpi-search" placeholder="{{ __("Search a record type, e.g. Sales Invoice") }}" autocomplete="off">
+					<select class="form-control nxpi-module" title="{{ __("Show one module only") }}">
+						<option value="">{{ __("All modules") }}</option>
+					</select>
+					<select class="form-control nxpi-show" title="{{ __("Which rows to show") }}">
+						<option value="all">{{ __("Show everything") }}</option>
+						<option value="enabled">{{ __("Only what they can access") }}</option>
+						<option value="disabled">{{ __("Only what they cannot access") }}</option>
+						<option value="customised">{{ __("Only record types with customised rules") }}</option>
+						<option value="changed">{{ __("Only my unsaved changes") }}</option>
+					</select>
+					<select class="form-control nxpi-columns" title="{{ __("Which actions to show as columns") }}">
+						<option value="essential">{{ __("Main actions") }}</option>
+						<option value="all">{{ __("All actions") }}</option>
+					</select>
+					<label class="nxpi-check" title="{{ __("Child tables are the rows inside other records, such as the items on an invoice. They follow their parent record and cannot be changed on their own.") }}">
+						<input type="checkbox" class="nxpi-child"> <span>{{ __("Include child tables") }}</span>
+					</label>
+				</div>
+				<div class="nxpi-toolbar-right">
+					<span class="nxpi-count"></span>
+					<button class="btn btn-default btn-sm nxpi-refresh" type="button" title="{{ __("Read everything again from the database") }}">{{ __("Reload") }}</button>
+					<button class="btn btn-primary btn-sm nxpi-edit" type="button">{{ __("Change permissions") }}</button>
+				</div>
+			</div>
+
+			<div class="nxpi-legend">
+				<span class="nxpi-pill is-1">{{ __("Yes") }}</span><span>{{ __("allowed") }}</span>
+				<span class="nxpi-pill is-0">{{ __("No") }}</span><span>{{ __("not allowed") }}</span>
+				<span class="nxpi-pill is-2">{{ __("Own only") }}</span><span>{{ __("only on records they created") }}</span>
+				<span class="nxpi-pill is-na">&ndash;</span><span>{{ __("does not apply to this record type") }}</span>
+				<span class="nxpi-legend-tip">{{ __("Click a record type for details and reasons.") }}</span>
+			</div>
+
+			<div class="nxpi-editbar" hidden>
+				<b>{{ __("Editing mode") }}</b>
+				<span class="nxpi-editbar-text"></span>
+			</div>
+
+			<div class="nxpi-body">
+				<div class="nxpi-matrix-wrap">
+					<table class="nxpi-table">
+						<thead></thead>
+						<tbody></tbody>
+					</table>
+					<div class="nxpi-no-rows" hidden>{{ __("Nothing matches. Try clearing the search or the filters.") }}</div>
+				</div>
+				<aside class="nxpi-drawer" hidden></aside>
+			</div>
+		</div>
 	</section>
 
-	<div class="nxpi-empty">
-		<div class="nxpi-empty-icon">
-			<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+	<!-- Sticky bar for unsaved changes -->
+	<div class="nxpi-savebar" hidden>
+		<div class="nxpi-savebar-text"></div>
+		<div class="nxpi-savebar-actions">
+			<button class="btn btn-default btn-sm nxpi-discard" type="button">{{ __("Discard") }}</button>
+			<button class="btn btn-primary btn-sm nxpi-save" type="button">{{ __("Save changes") }}</button>
 		</div>
-		<h3>{{ __("Who can do what?") }}</h3>
-		<p>{{ __("Pick a User to see the permissions they really get through all of their roles, or a Role to see exactly what it grants. Every value is read from the permission records Frappe itself enforces.") }}</p>
 	</div>
 
-	<div class="nxpi-popover" hidden></div>
+	<!-- Empty state -->
+	<div class="nxpi-empty">
+		<div class="nxpi-empty-steps">
+			<div class="nxpi-empty-step"><span>1</span>{{ __("Pick a person or a role above.") }}</div>
+			<div class="nxpi-empty-step"><span>2</span>{{ __("See, record type by record type, what they may View, Edit, Create, Delete, Submit or Cancel, and which role gives them that.") }}</div>
+			<div class="nxpi-empty-step"><span>3</span>{{ __("Press Change permissions if something should be different. Nothing changes until you press Save.") }}</div>
+		</div>
+	</div>
 </div>
