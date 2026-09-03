@@ -1,0 +1,77 @@
+<div class="nxpi">
+	<section class="nxpi-target">
+		<div class="nxpi-target-pick">
+			<div class="nxpi-pick nxpi-pick-user">
+				<label class="nxpi-pick-label">{{ __("User") }}</label>
+				<div class="nxpi-pick-control" data-control="user"></div>
+			</div>
+			<div class="nxpi-or">{{ __("or") }}</div>
+			<div class="nxpi-pick nxpi-pick-role">
+				<label class="nxpi-pick-label">{{ __("Role") }}</label>
+				<div class="nxpi-pick-control" data-control="role"></div>
+			</div>
+			<div class="nxpi-pick-actions">
+				<button class="btn btn-default btn-sm nxpi-clear" type="button">{{ __("Clear") }}</button>
+			</div>
+		</div>
+		<div class="nxpi-target-info" hidden></div>
+	</section>
+
+	<section class="nxpi-toolbar" hidden>
+		<div class="nxpi-filters">
+			<div class="nxpi-filter nxpi-filter-search">
+				<input type="search" class="form-control input-sm nxpi-search" placeholder="{{ __("Search DocType or module") }}" autocomplete="off">
+			</div>
+			<div class="nxpi-filter">
+				<select class="form-control input-sm nxpi-module">
+					<option value="">{{ __("All modules") }}</option>
+				</select>
+			</div>
+			<div class="nxpi-filter">
+				<select class="form-control input-sm nxpi-ptype">
+					<option value="">{{ __("Any permission") }}</option>
+				</select>
+			</div>
+			<div class="nxpi-filter">
+				<select class="form-control input-sm nxpi-show">
+					<option value="all">{{ __("Show all") }}</option>
+					<option value="enabled">{{ __("Only enabled") }}</option>
+					<option value="disabled">{{ __("Only disabled") }}</option>
+					<option value="customised">{{ __("Only customised (differs from standard)") }}</option>
+					<option value="changed">{{ __("Only unsaved changes") }}</option>
+				</select>
+			</div>
+			<label class="nxpi-filter nxpi-check">
+				<input type="checkbox" class="nxpi-child"> <span>{{ __("Child tables") }}</span>
+			</label>
+		</div>
+		<div class="nxpi-toolbar-right">
+			<span class="nxpi-count"></span>
+			<button class="btn btn-default btn-sm nxpi-refresh" type="button" title="{{ __("Re-read permissions from the database and clear caches") }}">{{ __("Refresh") }}</button>
+			<button class="btn btn-default btn-sm nxpi-edit" type="button">{{ __("Edit permissions") }}</button>
+		</div>
+	</section>
+
+	<section class="nxpi-userperms" hidden></section>
+
+	<section class="nxpi-body" hidden>
+		<div class="nxpi-matrix-wrap">
+			<table class="nxpi-table">
+				<thead></thead>
+				<tbody></tbody>
+			</table>
+			<div class="nxpi-no-rows" hidden>{{ __("No DocTypes match these filters.") }}</div>
+		</div>
+		<aside class="nxpi-drawer" hidden></aside>
+	</section>
+
+	<div class="nxpi-empty">
+		<div class="nxpi-empty-icon">
+			<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+		</div>
+		<h3>{{ __("Who can do what?") }}</h3>
+		<p>{{ __("Pick a User to see the permissions they really get through all of their roles, or a Role to see exactly what it grants. Every value is read from the permission records Frappe itself enforces.") }}</p>
+	</div>
+
+	<div class="nxpi-popover" hidden></div>
+</div>

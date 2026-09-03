@@ -137,6 +137,22 @@ All settings are off by default — turn on what you need, and the app doesn't i
 
 ---
 
+### 🔐 Permission Inspector (for System Managers)
+Open **Nexus Theme → Permission Inspector** (`/app/permission-inspector`) and pick either a **User** or a **Role**:
+
+- **User:** every DocType with the permissions that user *really* gets through all of their roles, and a "Granted by" column naming the role(s) responsible for each flag. Hover any cell for the full list.
+- **Role:** exactly what that one role grants, DocType by DocType.
+- All the standard flags — Read, Write, Create, Submit, Cancel, Amend, Delete, Print, Email, Report, Import, Export, Share, Select — plus Frappe v16's Mask and any custom Permission Types.
+- Search, filter by module or by one permission, show only enabled / disabled / customised / unsaved rows, and optionally include child tables.
+- Click a DocType name for the rule-by-rule breakdown, the standard rules it shipped with, the User Permissions that narrow it, and Frappe's own live answer from `has_permission`.
+- A separate **User Permissions** panel shows the row-level layer (Company, Customer, Territory…) so the two layers are never confused.
+
+**Editing:** click *Edit permissions*, tick or untick cells, then *Save Changes*. For a Role the change goes straight to that role's rule. For a User the inspector never invents anything: clicking a cell lists the user's roles and you choose which role's rule to change. Dependencies follow Frappe's own rules (Cancel needs Submit, Submit needs Write, Import needs Create…), the whole batch is saved in one transaction and rolled back on any error, the permission cache is cleared, and the rows are re-read from the database.
+
+Under the hood this writes the same `Custom DocPerm` records as Frappe's Role Permission Manager, so the two tools always agree, and every API method requires the System Manager role server-side.
+
+---
+
 ### 📊 Move Themes Between Sites
 - **Export** your custom theme as a `.json` file
 - **Import** it on another site (staging, production, different company)
@@ -323,6 +339,7 @@ SoundManager.setEnabled(true);
 - **Sound Files:** Stored as standard Frappe `File` records
 - **CSS Variables:** Themes inject CSS variables into the page, so all components that use them auto-update
 - **Sound Playback:** Managed by `sound_manager.js` — handles event detection, 3-second audio cap, volume control
+- **Permission Inspector:** Page under `nexus_theme/page/permission_inspector/`, API in `nexus_theme/permission_inspector/api.py`. Reads via `frappe.permissions` (`get_valid_perms`, `get_all_perms`, `get_roles`, `has_permission`) and writes via `Custom DocPerm` — no tables or permission logic of its own. Site tests: `bench --site <site> run-tests --app nexus_theme --module nexus_theme.tests_site.test_permission_inspector`
 
 ---
 
