@@ -692,23 +692,37 @@
             delete payload.is_default;
             delete payload.owner_user;
 
+            let saved;
             try {
               const r = await frappe.call({
                 method: "nexus_theme.api.save_custom_theme",
                 args: { payload: JSON.stringify(payload), share_public: v.share_public ? 1 : 0 },
               });
-              if (r && r.message && r.message.name) {
-                await ThemeManager.setActive(r.message.name, {});
-                frappe.show_alert({ message: __("Custom theme saved"), indicator: "green" });
-              }
-              d.hide();
-              if (parentDialog) parentDialog.hide();
+              saved = r && r.message && r.message.name;
             } catch (err) {
               frappe.show_alert({
-                message: __("Could not save theme: {0}", [err.message || ""]),
+                message: __("Could not save theme: {0}", [(err && err.message) || ""]),
                 indicator: "red",
               });
+              return;
             }
+            if (!saved) return;
+            frappe.show_alert({ message: __("Custom theme saved"), indicator: "green" });
+
+            // Applying is a separate step that can be refused on its own — a
+            // site with theme choice restricted still allows saving, but the
+            // new theme is not on the allow-list — and that must not read as
+            // the save having failed.
+            try {
+              await ThemeManager.setActive(saved, {});
+            } catch (err) {
+              frappe.show_alert({
+                message: __("Saved, but it could not be applied: {0}", [(err && err.message) || ""]),
+                indicator: "orange",
+              });
+            }
+            d.hide();
+            if (parentDialog) parentDialog.hide();
           },
         });
         d.show();

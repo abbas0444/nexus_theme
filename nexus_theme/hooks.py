@@ -203,11 +203,15 @@ before_uninstall = "nexus_theme.uninstall.before_uninstall"
 # ---------------
 # Hook on document methods and events
 
-# Grant the "Theme User" role to every newly created Desk user so theme and
-# sound self-service works out of the box. Website users are skipped.
+# Grant the "Theme User" role to every Desk user so theme and sound
+# self-service works out of the box. after_insert covers a user created with
+# a Desk role; on_update covers one promoted to System User later, which
+# Frappe does on any save that adds a Desk role. Website users are skipped
+# either way.
 doc_events = {
 	"User": {
 		"after_insert": "nexus_theme.install.assign_theme_role",
+		"on_update": "nexus_theme.install.assign_theme_role",
 	},
 }
 

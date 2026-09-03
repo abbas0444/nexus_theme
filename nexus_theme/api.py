@@ -1,4 +1,6 @@
 import json
+import re
+
 import frappe
 from frappe import _
 
@@ -306,6 +308,23 @@ def set_active_theme(theme_name: str, overrides=None):
 	return {"ok": True}
 
 
+def _unique_theme_key(base_key: str) -> str:
+	"""A theme_key no Theme Definition holds yet.
+
+	theme_key is the docname, so a collision surfaces as a raw duplicate-name
+	error from the database. A user naming their own theme "Dracula" collides
+	with the bundled one; a suffix keeps the save working. The caller has
+	already matched the user's *own* theme of that key, which is updated in
+	place and never reaches here.
+	"""
+	base = str(base_key)[:120]
+	key, suffix = base, 2
+	while frappe.db.exists("Theme Definition", key):
+		key = f"{base}-{suffix}"
+		suffix += 1
+	return key
+
+
 @frappe.whitelist()
 def save_custom_theme(payload, share_public=0):
 	if isinstance(payload, str):
@@ -324,14 +343,19 @@ def save_custom_theme(payload, share_public=0):
 		share_public = 0
 
 	user = frappe.session.user
+	# Saving under the same key *or* the same name as one of your own themes
+	# updates it in place — that is what "save with the same name" means.
+	own = {"owner_user": user, "is_default": 0}
 	existing = frappe.db.exists(
-		"Theme Definition",
-		{"theme_key": payload["theme_key"], "owner_user": user, "is_default": 0},
-	)
+		"Theme Definition", dict(own, theme_key=payload["theme_key"])
+	) or frappe.db.exists("Theme Definition", dict(own, theme_name=payload["theme_name"]))
 
+	theme_key = payload["theme_key"]
 	if existing:
 		doc = frappe.get_doc("Theme Definition", existing)
+		theme_key = doc.theme_key
 	else:
+		theme_key = _unique_theme_key(theme_key)
 		doc = frappe.new_doc("Theme Definition")
 		doc.is_default = 0
 		doc.owner_user = user
@@ -343,7 +367,7 @@ def save_custom_theme(payload, share_public=0):
 		if field in payload and payload[field] not in (None, ""):
 			setattr(doc, field, payload[field])
 
-	doc.theme_key = payload["theme_key"]
+	doc.theme_key = theme_key
 	doc.theme_name = payload["theme_name"]
 	doc.is_public = 1 if int(share_public or 0) else 0
 	doc.save(ignore_permissions=False)
@@ -417,8 +441,57 @@ def delete_custom_theme(theme_name: str):
 		frappe.throw(_("Default themes cannot be deleted"))
 	if doc.owner_user != frappe.session.user:
 		frappe.throw(_("You can only delete your own themes"))
+
+	# Theme Settings links to themes as well, and those links are an admin's
+	# choices — say where to look rather than let the generic link error out.
+	settings = _settings()
+	if theme_name == settings["site_default_theme"]:
+		frappe.throw(
+			_("{0} is the site default theme. Change that in Theme Settings first.").format(
+				doc.theme_name
+			)
+		)
+	if theme_name in set(settings["allowed_themes"] or []):
+		frappe.throw(
+			_("{0} is on the allowed themes list. Remove it in Theme Settings first.").format(
+				doc.theme_name
+			)
+		)
+
+	_detach_theme_from_preferences(theme_name)
 	frappe.delete_doc("Theme Definition", theme_name)
 	return {"ok": True}
+
+
+def _detach_theme_from_preferences(theme_name: str) -> None:
+	"""Release every User Theme Preference that points at a theme about to go.
+
+	Saving a custom theme applies it, so the owner's own preference almost
+	always links to it — and a shared theme may be in use by anyone. Left in
+	place, those links fail the delete with LinkExistsError, which the UI
+	showed as a bare "Failed to delete theme". Whoever had it active goes
+	back to "never chose" (the site default, or Frappe's own theme); whoever
+	paired it as the dark half of an automatic pair drops to a single theme.
+	"""
+	using = frappe.get_all(
+		"User Theme Preference", filters={"active_theme": theme_name}, pluck="user"
+	)
+	if using:
+		frappe.db.delete("User Theme Preference", {"active_theme": theme_name})
+
+	pairing = frappe.get_all(
+		"User Theme Preference", filters={"dark_theme": theme_name}, pluck="user"
+	)
+	if pairing:
+		frappe.db.set_value(
+			"User Theme Preference",
+			{"dark_theme": theme_name},
+			{"dark_theme": None, "theme_mode": "Single"},
+			update_modified=False,
+		)
+
+	for user in set(using) | set(pairing):
+		_invalidate_bootinfo(user)
 
 
 # ---------------------------------------------------------------------------
@@ -550,6 +623,35 @@ def _get_or_create_sound_pref(user: str | None = None):
 	return doc
 
 
+# A sound this site serves: uploads land under /files or /private/files, the
+# bundled presets under /assets. One path, an audio extension, nothing else.
+_SOUND_URL_RE = re.compile(
+	r"^/(?:assets|files|private/files)/(?:[\w .%()+-]+/)*[\w .%()+-]+"
+	r"\.(?:mp3|wav|ogg|oga|m4a|aac|flac|webm|opus)$",
+	re.IGNORECASE,
+)
+
+
+def _assert_sound_url(file_url: str) -> None:
+	"""Refuse anything that is not a sound file on this site.
+
+	The value becomes an <audio src> in the user's Desk on every event, so an
+	arbitrary URL is a stored outbound beacon to a third-party host, and a
+	scheme such as javascript: has no business anywhere near a src attribute.
+	Only checked here — the row's Attach field would accept any string.
+	"""
+	url = (file_url or "").strip()
+	if not _SOUND_URL_RE.match(url) or "/../" in url or "/./" in url:
+		frappe.throw(_("That is not a sound file on this site."))
+
+
+def _assert_sounds_allowed() -> None:
+	"""get_user_sounds() already reports sounds as off when the site turns
+	them off; the writes have to refuse too, or the switch is cosmetic."""
+	if not _settings()["allow_user_sounds"]:
+		frappe.throw(_("Custom sounds are turned off on this site."))
+
+
 @frappe.whitelist()
 def get_user_sounds():
 	"""Return this user's sound configuration: {enabled, mapping: {event: {url, volume}}}."""
@@ -575,10 +677,12 @@ def get_user_sounds():
 
 @frappe.whitelist()
 def set_user_sound(event_key: str, file_url: str, volume: float | str | None = 0.5):
+	_assert_sounds_allowed()
 	if event_key not in SOUND_EVENTS:
 		frappe.throw(_("Unknown sound event: {0}").format(event_key))
 	if not file_url:
 		frappe.throw(_("file_url is required"))
+	_assert_sound_url(file_url)
 	try:
 		vol = float(volume) if volume is not None else 0.5
 	except (TypeError, ValueError):
@@ -619,6 +723,7 @@ def clear_user_sound(event_key: str):
 
 @frappe.whitelist()
 def toggle_user_sounds(enabled):
+	_assert_sounds_allowed()
 	pref = _get_or_create_sound_pref()
 	pref.enabled = 1 if int(enabled or 0) else 0
 	pref.save(ignore_permissions=False)

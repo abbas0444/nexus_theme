@@ -10,7 +10,6 @@ new value — otherwise the next sync_for_app errors with
 
 import frappe
 
-
 OLD = "THemes"
 NEW = "Themes"
 

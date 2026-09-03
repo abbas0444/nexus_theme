@@ -23,7 +23,6 @@ The validate_palettes() function below enforces these on import in dev.
 
 from nexus_theme.utils.contrast import passes_aa
 
-
 PALETTES = [
 	# ---------- LIGHT ----------
 	{

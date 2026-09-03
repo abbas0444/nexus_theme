@@ -26,6 +26,8 @@
 	"root": true,
 	"globals": {
 		"frappe": true,
+		"ThemeManager": true,
+		"SoundManager": true,
 		"Vue": true,
 		"SetVueGlobals": true,
 		"__": true,

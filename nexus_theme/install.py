@@ -6,9 +6,10 @@ role must NOT be "All", which also covers Website (portal) users who have no
 business touching Desk personalization.
 
 The app therefore ships a dedicated "Theme User" role and grants it to every
-System (Desk) user: on install (`after_install`), on upgrade (patch v1_5), and
-whenever a new user is created (`doc_events` on User). Website users are never
-granted it.
+System (Desk) user: on install and on every migrate (`provision_theme_user_role`),
+and whenever a User is inserted or saved as a System User (`assign_theme_role`,
+wired to both `after_insert` and `on_update`). Website users are never granted
+it.
 """
 
 import shutil
@@ -32,16 +33,42 @@ def ensure_theme_user_role() -> None:
 	).insert(ignore_permissions=True)
 
 
+def _grant_theme_user(user_doc) -> None:
+	"""Add the role to a loaded User without a nested save.
+
+	`User.add_roles` appends and calls save(), which re-enters validate and
+	on_update — the very hook this is called from. Inserting the child row
+	directly sidesteps that; the user's role cache is then dropped so the
+	grant is visible on their next request.
+	"""
+	if any(row.role == THEME_USER_ROLE for row in user_doc.get("roles", [])):
+		return
+	row = user_doc.append("roles", {"role": THEME_USER_ROLE})
+	row.db_insert()
+	frappe.clear_cache(user=user_doc.name)
+
+
 def provision_theme_user_role() -> None:
 	"""Ensure the role exists and every System user holds it.
 
-	Idempotent — safe to run on install and on every migrate.
+	Idempotent, and cheap enough to run on every migrate: two queries to
+	find who is missing it, then one insert per missing user. The previous
+	version queried once per user and only ran on install, so a site whose
+	users were created before the app never caught up.
 	"""
 	ensure_theme_user_role()
-	for user in frappe.get_all("User", filters={"user_type": "System User"}, pluck="name"):
-		if frappe.db.exists("Has Role", {"parent": user, "role": THEME_USER_ROLE}):
-			continue
-		frappe.get_doc("User", user).add_roles(THEME_USER_ROLE)
+	system_users = set(
+		frappe.get_all("User", filters={"user_type": "System User"}, pluck="name")
+	)
+	holders = set(
+		frappe.get_all(
+			"Has Role",
+			filters={"parenttype": "User", "role": THEME_USER_ROLE},
+			pluck="parent",
+		)
+	)
+	for name in sorted(system_users - holders):
+		_grant_theme_user(frappe.get_doc("User", name))
 
 
 def sync_public_assets() -> None:
@@ -173,16 +200,26 @@ def after_install() -> None:
 
 
 def after_migrate() -> None:
-	"""Run after migrate so the public assets stay available after upgrades."""
+	"""Run after migrate so every provisioned thing stays in place after upgrades."""
+	provision_theme_user_role()
 	sync_public_assets()
 	ensure_navbar_items()
 	ensure_desktop_icon()
 
 
 def assign_theme_role(doc, method=None) -> None:
-	"""doc_event (User.after_insert): grant the role to new Desk users only."""
+	"""doc_event on User (after_insert and on_update): grant the role to Desk users.
+
+	after_insert alone was not enough. Frappe's User.validate() derives
+	user_type from the roles present, so a user created without a Desk role
+	is a Website User at insert time and gets nothing — and when a Desk role
+	is added later, the promotion to System User happens on a save this hook
+	never saw. Watching on_update as well catches it. Both checks are
+	in-memory, so the common case costs no query.
+	"""
 	if doc.user_type != "System User":
 		return
+	if any(row.role == THEME_USER_ROLE for row in doc.get("roles", [])):
+		return
 	ensure_theme_user_role()
-	if not any(row.role == THEME_USER_ROLE for row in doc.get("roles", [])):
-		doc.add_roles(THEME_USER_ROLE)
+	_grant_theme_user(doc)

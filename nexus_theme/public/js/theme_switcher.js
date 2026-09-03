@@ -68,7 +68,13 @@
       return;
     }
 
-    const res = await frappe.call({ method: "nexus_theme.api.get_available_themes" });
+    let res;
+    try {
+      res = await frappe.call({ method: "nexus_theme.api.get_available_themes" });
+    } catch (_err) {
+      frappe.show_alert({ message: __("Could not load themes"), indicator: "red" });
+      return;
+    }
     const data = (res && res.message) || {};
     const defaults = data.defaults || [];
     const owned = data.owned || [];
@@ -115,7 +121,17 @@
           return;
         }
         const overrides = editor ? editor.getOverrides() : {};
-        await ThemeManager.setActive(selectedTheme.name, overrides);
+        try {
+          await ThemeManager.setActive(selectedTheme.name, overrides);
+        } catch (err) {
+          // The server's own reason is already on screen via frappe.call;
+          // this keeps the dialog open instead of an unhandled rejection.
+          frappe.show_alert({
+            message: __("Could not apply theme: {0}", [(err && err.message) || ""]),
+            indicator: "red",
+          });
+          return;
+        }
         frappe.show_alert({ message: __("Theme applied"), indicator: "green" });
         dialog.hide();
       },
@@ -147,7 +163,7 @@
     const handleReset = async () => {
       const confirmed = await new Promise((resolve) => {
         frappe.confirm(
-          __("Switch back to Frappe's default UI? This removes your theme preference."),
+          __("Switch back to Frappe's own look? Your theme choice will be cleared."),
           () => resolve(true),
           () => resolve(false)
         );
@@ -368,7 +384,7 @@
     const $gallery = dialog.fields_dict.gallery.$wrapper;
     const selectedName = selectedTheme ? selectedTheme.name : null;
     $gallery.html(renderGallery({ defaults, owned, publicThemes }, selectedName));
-    bindGalleryEvents($gallery, (name) => {
+    const selectTheme = (name) => {
       const next = themesByName.get(name);
       if (!next) return;
       selectedTheme = next;
@@ -377,7 +393,38 @@
       if (editor) editor.reset();
       renderPreview();
       if (editor) editor.refresh();
-    });
+    };
+
+    // A deleted theme must not linger anywhere the dialog could still act
+    // on it: the lookup, the section list Auto Light/Dark reads, the
+    // selection Apply would send, or the live page if it was showing.
+    const onDeleted = (name) => {
+      themesByName.delete(name);
+      const i = owned.findIndex((t) => t.name === name);
+      if (i >= 0) owned.splice(i, 1);
+
+      if (selectedTheme && selectedTheme.name === name) {
+        selectedTheme = defaults[0] || owned[0] || publicThemes[0] || null;
+        if (editor) editor.reset();
+        renderPreview();
+        if (editor) editor.refresh();
+        $gallery.find(".theme-card").removeClass("is-selected");
+        if (selectedTheme) {
+          $gallery
+            .find(`.theme-card[data-name="${cssEscape(selectedTheme.name)}"]`)
+            .addClass("is-selected");
+        }
+      }
+
+      const live = window.ThemeManager && ThemeManager.active;
+      if (live && live.name === name && typeof ThemeManager.loadFromServer === "function") {
+        // The server has already released it; pull the fallback down now
+        // rather than leaving a theme that no longer exists on the page.
+        ThemeManager.loadFromServer();
+      }
+    };
+
+    bindGalleryEvents($gallery, selectTheme, onDeleted);
 
     // ---- ThemeManager.onChange (external sync) ----
     // If another tab or Frappe's native toggle changes the live theme
@@ -589,7 +636,7 @@
       </div>`;
   }
 
-  function bindGalleryEvents($gallery, onSelect) {
+  function bindGalleryEvents($gallery, onSelect, onDelete) {
     $gallery.on("click", ".theme-card", function (e) {
       if ($(e.target).closest("[data-action]").length) return;
       selectCard($gallery, this, onSelect);
@@ -619,9 +666,15 @@
           args: { theme_name: name },
         });
         card.remove();
+        if (typeof onDelete === "function") onDelete(name);
         frappe.show_alert({ message: __("Theme deleted"), indicator: "green" });
-      } catch (_err) {
-        frappe.show_alert({ message: __("Failed to delete theme"), indicator: "red" });
+      } catch (err) {
+        // A refusal (site default, allow-list) arrives with the server's own
+        // message via frappe.call; this covers a plain network failure.
+        frappe.show_alert({
+          message: __("Could not delete theme: {0}", [(err && err.message) || ""]),
+          indicator: "red",
+        });
       }
     });
   }

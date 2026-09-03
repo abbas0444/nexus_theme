@@ -48,6 +48,21 @@
     /** Swap the src of Frappe's `<audio id="sound-X">` elements with user uploads. */
     applyMapping(mapping) {
       this.mapping = mapping || {};
+
+      // Put the shipped file back on anything no longer mapped. Without
+      // this, "Reset All to Default" cleared the mapping but every <audio>
+      // element kept its custom src until the next full reload.
+      const stillMapped = new Set(
+        Object.entries(this.mapping)
+          .filter(([, def]) => def && def.url)
+          .map(([userKey]) => "sound-" + frappeKeyFor(userKey))
+      );
+      document.querySelectorAll("audio[data-sm-original-src]").forEach((el) => {
+        if (stillMapped.has(el.id)) return;
+        el.src = el.dataset.smOriginalSrc;
+        el.load && el.load();
+      });
+
       for (const [userKey, def] of Object.entries(this.mapping)) {
         if (!def || !def.url) continue;
         const frappeKey = frappeKeyFor(userKey);

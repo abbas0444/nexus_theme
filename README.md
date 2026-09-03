@@ -343,6 +343,9 @@ When you create a theme, it's yours. New default themes in app updates won't ove
 **Choosing Frappe's own theme opts you out of the site default**  
 If your admin set a site default theme, it applies to anyone who hasn't picked one. Choosing Frappe Light, Timeless Night, or Automatic in Frappe's own Switch Theme dialog — or clicking **Reset to Frappe Default** in Theme Studio — records that you want Frappe's built-in look, so the site default won't come back on your next reload. Pick any Nexus theme again to opt back in.
 
+**Deleting a theme that's in use**  
+You can delete your own custom theme even while it's applied — for you, or for anyone you shared it with. Whoever was using it goes back to the site default (or Frappe's own look if there isn't one). A theme an admin set as the site default or put on the allowed list has to be taken out of Theme Settings first.
+
 **Sound file storage**  
 When you upload a sound file (`.mp3` or `.wav`), it's stored as a normal Frappe file. If your Frappe instance has file size or quota limits, very large audio files count against those limits.
 

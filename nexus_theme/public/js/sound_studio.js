@@ -131,6 +131,17 @@
     }
   }
 
+  // The last path segment, decoded for display. A malformed percent-escape
+  // in a stored URL must not take the whole table down with a URIError.
+  function fileNameOf(url) {
+    const last = (url || "").split("/").pop() || "";
+    try {
+      return decodeURIComponent(last);
+    } catch (_e) {
+      return last;
+    }
+  }
+
   function escapeHtml(s) {
     if (window.frappe && frappe.utils && frappe.utils.escape_html) {
       return frappe.utils.escape_html(String(s == null ? "" : s));
@@ -181,7 +192,13 @@
       return;
     }
 
-    const res = await frappe.call({ method: "nexus_theme.api.get_user_sounds" });
+    let res;
+    try {
+      res = await frappe.call({ method: "nexus_theme.api.get_user_sounds" });
+    } catch (_err) {
+      frappe.show_alert({ message: __("Could not load sound settings"), indicator: "red" });
+      return;
+    }
     const state = (res && res.message) || { enabled: 1, mapping: {} };
 
     const dialog = new frappe.ui.Dialog({
@@ -202,10 +219,18 @@
 
     dialog.fields_dict.enabled.df.onchange = async () => {
       const enabled = dialog.get_value("enabled") ? 1 : 0;
-      await frappe.call({
-        method: "nexus_theme.api.toggle_user_sounds",
-        args: { enabled },
-      });
+      try {
+        await frappe.call({
+          method: "nexus_theme.api.toggle_user_sounds",
+          args: { enabled },
+        });
+      } catch (_err) {
+        // Refused (site-wide off) or failed: put the checkbox back so it
+        // never shows a state the server did not accept.
+        dialog.set_value("enabled", enabled ? 0 : 1);
+        frappe.show_alert({ message: __("Could not change sound setting"), indicator: "red" });
+        return;
+      }
       if (window.SoundManager) SoundManager.setEnabled(!!enabled);
     };
 
@@ -238,7 +263,12 @@
           );
         });
         if (!ok) return;
-        await frappe.call({ method: "nexus_theme.api.clear_all_user_sounds" });
+        try {
+          await frappe.call({ method: "nexus_theme.api.clear_all_user_sounds" });
+        } catch (_err) {
+          frappe.show_alert({ message: __("Could not reset sounds"), indicator: "red" });
+          return;
+        }
         state.mapping = {};
         if (window.SoundManager) SoundManager.applyMapping({});
         render();
@@ -278,7 +308,7 @@
       ? __("Using default")
       : selectedIdx >= 0
       ? __("Preset:") + " " + (PRESETS[event.key][selectedIdx].label || "")
-      : decodeURIComponent((savedUrl || "").split("/").pop() || "");
+      : fileNameOf(savedUrl);
 
     const presets = PRESETS[event.key] || [];
     const presetChips = presets
@@ -348,10 +378,15 @@
     // bundled audio plays. Same backend semantics as Clear, but explicit.
     $root.on("click", "[data-action='frappe-default']", async function () {
       const key = $(this).closest(".sound-row").data("event");
-      await frappe.call({
-        method: "nexus_theme.api.clear_user_sound",
-        args: { event_key: key },
-      });
+      try {
+        await frappe.call({
+          method: "nexus_theme.api.clear_user_sound",
+          args: { event_key: key },
+        });
+      } catch (_err) {
+        frappe.show_alert({ message: __("Could not reset sound"), indicator: "red" });
+        return;
+      }
       delete state.mapping[key];
       if (window.SoundManager) SoundManager.resetMappingFor(key);
       rerender();
@@ -368,10 +403,15 @@
 
     $root.on("click", "[data-action='clear']", async function () {
       const key = $(this).closest(".sound-row").data("event");
-      await frappe.call({
-        method: "nexus_theme.api.clear_user_sound",
-        args: { event_key: key },
-      });
+      try {
+        await frappe.call({
+          method: "nexus_theme.api.clear_user_sound",
+          args: { event_key: key },
+        });
+      } catch (_err) {
+        frappe.show_alert({ message: __("Could not clear sound"), indicator: "red" });
+        return;
+      }
       delete state.mapping[key];
       if (window.SoundManager) SoundManager.resetMappingFor(key);
       rerender();
@@ -437,10 +477,15 @@
       const vol = parseInt(this.value, 10) / 100;
       const mapped = state.mapping[key];
       if (!mapped || !mapped.url) return; // only persist if a custom file exists
-      await frappe.call({
-        method: "nexus_theme.api.set_user_sound",
-        args: { event_key: key, file_url: mapped.url, volume: vol },
-      });
+      try {
+        await frappe.call({
+          method: "nexus_theme.api.set_user_sound",
+          args: { event_key: key, file_url: mapped.url, volume: vol },
+        });
+      } catch (_err) {
+        frappe.show_alert({ message: __("Could not save volume"), indicator: "red" });
+        return;
+      }
       state.mapping[key].volume = vol;
     });
   }
@@ -462,14 +507,22 @@
       on_success: async (file_doc) => {
         const existing = state.mapping[eventKey];
         const volume = existing && typeof existing.volume === "number" ? existing.volume : 0.5;
-        await frappe.call({
-          method: "nexus_theme.api.set_user_sound",
-          args: {
-            event_key: eventKey,
-            file_url: file_doc.file_url,
-            volume,
-          },
-        });
+        try {
+          await frappe.call({
+            method: "nexus_theme.api.set_user_sound",
+            args: {
+              event_key: eventKey,
+              file_url: file_doc.file_url,
+              volume,
+            },
+          });
+        } catch (_err) {
+          frappe.show_alert({
+            message: __("Uploaded, but it could not be saved as your sound"),
+            indicator: "red",
+          });
+          return;
+        }
         state.mapping[eventKey] = { url: file_doc.file_url, volume };
         if (window.SoundManager) {
           SoundManager.applyMapping(state.mapping);

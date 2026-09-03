@@ -7,7 +7,8 @@ verbatim into every public page's <head>.
 
 import unittest
 
-from nexus_theme.utils.web_css import VAR_MAP, theme_css_rules as _theme_style_block
+from nexus_theme.utils.web_css import VAR_MAP
+from nexus_theme.utils.web_css import theme_css_rules as _theme_style_block
 
 
 def theme(**overrides):

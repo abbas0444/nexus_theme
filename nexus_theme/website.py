@@ -34,7 +34,7 @@ def update_website_context(context):
 		theme = frappe.db.get_value(
 			"Theme Definition",
 			settings["site_default_theme"],
-			list(VAR_MAP) + ["is_dark"],
+			[*VAR_MAP, "is_dark"],
 			as_dict=True,
 		)
 		if theme:
