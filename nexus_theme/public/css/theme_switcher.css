@@ -1053,3 +1053,48 @@
 .nxt-theme-switcher .modal-body .theme-grid .mt-3 {
   margin-top: 8px !important;
 }
+
+/* ==================================================================
+   Studio launcher pages (/app/theme-studio, /app/sound-studio)
+   ------------------------------------------------------------------
+   A workspace cannot link to a dialog, so each studio gets a Page that
+   opens it. This is the card those pages leave behind once the dialog
+   is dismissed. Colours come from Frappe's own tokens so the card
+   follows whichever theme is active.
+   ================================================================== */
+.nxt-studio-launch {
+  max-width: 480px;
+  margin: 8vh auto 0;
+  padding: 32px 34px 28px;
+  text-align: center;
+  background: var(--card-bg, var(--fg-color));
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg, 10px);
+}
+
+.nxt-studio-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.nxt-studio-launch .nxt-studio-title {
+  margin: 0 0 8px;
+  font-size: var(--text-2xl, 20px);
+  font-weight: 600;
+  color: var(--heading-color, var(--text-color));
+}
+
+.nxt-studio-launch .nxt-studio-body {
+  margin: 0 auto 20px;
+  max-width: 42ch;
+  font-size: var(--text-md, 13px);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.nxt-studio-launch .nxt-studio-hint {
+  margin: 16px 0 0;
+  font-size: var(--text-sm, 12px);
+  color: var(--text-light, var(--text-muted));
+}

@@ -52,6 +52,10 @@ app_include_js = [
 	# Settings items registered by install.py never render there and the app
 	# would otherwise have no entry point in the UI.
 	"desktop_menu.bundle.js",
+	# Shared factory behind the /app/theme-studio and /app/sound-studio
+	# launcher pages, which is how the two dialogs reach the Workspace —
+	# a workspace link cannot call a function.
+	"studio_page.bundle.js",
 	"sound_manager.bundle.js",
 	"sound_studio.bundle.js",
 ]
