@@ -1,5 +1,4 @@
 {
- "app": "nexus_theme",
  "charts": [],
  "content": "[{\"id\":\"nxHeaderShort\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Your Shortcuts</b></span>\",\"col\":12}},{\"id\":\"nxScTheme\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Theme Studio\",\"col\":3}},{\"id\":\"nxScSound\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sound Studio\",\"col\":3}},{\"id\":\"nxScThemes\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Themes\",\"col\":3}},{\"id\":\"nxScSettings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Theme Settings\",\"col\":3}},{\"id\":\"nxScPerms\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Permission Inspector\",\"col\":3}},{\"id\":\"nxSpacer1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"nxHeaderMasters\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Reports &amp; Masters</b></span>\",\"col\":12}},{\"id\":\"nxCardStudios\",\"type\":\"card\",\"data\":{\"card_name\":\"Studios\",\"col\":4}},{\"id\":\"nxCardThemes\",\"type\":\"card\",\"data\":{\"card_name\":\"Themes\",\"col\":4}},{\"id\":\"nxCardPrefs\",\"type\":\"card\",\"data\":{\"card_name\":\"My Preferences\",\"col\":4}},{\"id\":\"nxCardAdmin\",\"type\":\"card\",\"data\":{\"card_name\":\"Administration\",\"col\":4}}]",
  "creation": "2026-09-03 18:55:00.000000",
@@ -171,6 +170,5 @@
    "type": "Page"
   }
  ],
- "title": "Nexus Theme",
- "type": "Workspace"
+ "title": "Nexus Theme"
 }

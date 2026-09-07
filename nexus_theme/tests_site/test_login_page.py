@@ -20,9 +20,17 @@ from werkzeug.wrappers import Request
 from nexus_theme import login_page
 from nexus_theme.nexus_theme.doctype.theme_settings.theme_settings import clear_settings_cache
 
-# Ids and classes frappe/templates/includes/login/login.js selects.
+# Ids and classes frappe/templates/includes/login/login.js selects. This is
+# Frappe 15's list: 15 reports errors through frappe.msgprint and
+# login.set_status (which writes into `section:visible .btn-primary`), where 16
+# grew per-field errors and banners. The extra hooks 16 needs are deliberately
+# absent here — carrying markup no script drives would be dead weight.
 REQUIRED_HOOKS = (
 	'class="for-login"',
+	"for-email-login",
+	"for-forgot",
+	"for-signup",
+	"for-login-with-email-link",
 	"form-login",
 	"form-forgot",
 	"form-login-with-email-link",
@@ -32,13 +40,9 @@ REQUIRED_HOOKS = (
 	'id="login_with_email_link_email"',
 	"page-card-body",
 	"page-card-actions",
-	"field-error",
-	"login-error-banner",
-	"login-success-banner",
-	"resend-link",
-	"btn-resend-link",
 	"btn-login",
 	"btn-forgot",
+	"btn-primary",
 	"login-content",
 	"page-card",
 )

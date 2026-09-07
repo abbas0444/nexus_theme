@@ -28,9 +28,7 @@ from collections import defaultdict
 import frappe
 import frappe.permissions
 from frappe import _
-from frappe.core.doctype.custom_docperm.custom_docperm import update_custom_docperm
 from frappe.core.doctype.doctype.doctype import clear_permissions_cache
-from frappe.core.doctype.permission_type.permission_type import get_doctype_ptype_map
 from frappe.model import table_fields
 from frappe.permissions import (
 	AUTOMATIC_ROLES,
@@ -38,10 +36,36 @@ from frappe.permissions import (
 	get_linked_doctypes,
 	get_valid_perms,
 	setup_custom_perms,
-	std_rights,
+)
+from frappe.permissions import (
+	rights as std_rights,
 )
 from frappe.utils import cint, cstr
 from frappe.utils.user import get_users_with_role
+
+
+def get_doctype_ptype_map() -> dict:
+	"""Custom permission types, keyed by DocType.
+
+	Frappe 16 added a "Permission Type" DocType so a site can invent its own
+	rights beside read/write/create. Frappe 15 has no such thing, so there is
+	nothing to add and every DocType uses the standard rights alone. Kept as a
+	function of the same name so the rest of this file reads identically on
+	both branches.
+	"""
+	return {}
+
+
+def update_custom_docperm(docperm: str, values: dict) -> None:
+	"""Save changed flags onto one Custom DocPerm row.
+
+	Frappe 16 ships this as a helper; on 15 it is these three lines, which is
+	all the helper ever was.
+	"""
+	doc = frappe.get_doc("Custom DocPerm", docperm)
+	doc.update(values)
+	doc.save(ignore_permissions=True)
+
 
 try:  # the stock manager's own exclusion list; fall back to its known value
 	from frappe.core.page.permission_manager.permission_manager import (

@@ -54,9 +54,7 @@
 {%- macro credentials_body() -%}
 {% if not disable_user_pass_login or (ldap_settings and ldap_settings.enabled) %}
 <div class="page-card-body">
-	<div class="login-error-banner">{{ icon_alert() }}<span></span></div>
-
-	<div class="form-group">
+		<div class="form-group">
 		<label class="form-label" for="login_email">{{ login_label or _("Email") }} <span class="nxlogin-required">*</span></label>
 		<div class="nxlogin-field">
 			{{ icon_mail() }}
@@ -64,7 +62,6 @@
 				placeholder="{% if login_name_placeholder %}{{ login_name_placeholder }}{% else %}{{ _('Enter your username or email') }}{% endif %}"
 				required autofocus autocomplete="username">
 		</div>
-		<p class="field-error"></p>
 	</div>
 
 	<div class="form-group">
@@ -76,7 +73,6 @@
 			<button type="button" class="nxlogin-eye" data-nxlogin-toggle="#login_password"
 				aria-label="{{ _('Show password') }}">{{ icon_eye() }}</button>
 		</div>
-		<p class="field-error"></p>
 	</div>
 
 	<div class="nxlogin-row">
@@ -101,7 +97,7 @@
 	{% if login_with_email_link %}
 	<a href="#login-with-email-link" class="btn btn-block btn-login-option btn-login-with-email-link nxlogin-alt">{{ _("Login with Email Link") }}</a>
 	{% endif %}
-	{% if social_login %}
+	{% if social_login or login_with_frappe_cloud_url %}
 	<div class="social-logins">
 		<div class="nxlogin-divider"><span>{{ _("or") }}</span></div>
 		<div class="social-login-buttons">
@@ -112,6 +108,15 @@
 					{{ _("Login with {0}").format(provider.provider_name) }}</a>
 			</div>
 			{% endfor %}
+			{#- Frappe 15 offers this on sites hosted by Frappe Cloud. Frappe's own
+			    login page shows it, so this page shows it too. -#}
+			{% if login_with_frappe_cloud_url %}
+			<div class="login-button-wrapper">
+				<a href="{{ login_with_frappe_cloud_url }}"
+					class="btn btn-block btn-login-option nxlogin-alt btn-login-with-frappe-cloud">
+					{{ _("Login with Frappe Cloud") }}</a>
+			</div>
+			{% endif %}
 		</div>
 	</div>
 	{% endif %}
@@ -178,19 +183,17 @@
 					{{ card_head(_("Forgot Password?"), _("Enter your email and we will send you a reset link.")) }}
 					<form class="form-signin form-forgot" role="form" novalidate>
 						<div class="page-card-body">
-							<div class="login-error-banner">{{ icon_alert() }}<span></span></div>
-							<div class="form-group">
+											<div class="form-group">
 								<label class="form-label" for="forgot_email">{{ _("Email") }} <span class="nxlogin-required">*</span></label>
 								<div class="nxlogin-field">
 									{{ icon_mail() }}
 									<input type="email" id="forgot_email" class="form-control"
 										placeholder="{{ _('Enter your email') }}" required autocomplete="username">
 								</div>
-								<p class="field-error"></p>
 							</div>
 						</div>
 						<div class="page-card-actions">
-							<button class="btn btn-primary btn-block btn-signup btn-forgot nxlogin-submit" type="submit" disabled>{{ _("Send Link") }}</button>
+							<button class="btn btn-primary btn-block btn-forgot nxlogin-submit" type="submit">{{ _("Send Link") }}</button>
 						</div>
 					</form>
 					<div class="sign-up-message"><a href="#login">{{ _("Back to sign in") }}</a></div>
@@ -218,20 +221,16 @@
 					{{ card_head(_("Sign In"), _("We will email you a link that signs you in.")) }}
 					<form class="form-signin form-login-with-email-link" role="form" novalidate>
 						<div class="page-card-body">
-							<div class="login-success-banner">{{ icon_alert() }}<span>{{ _("Please check your email.") }}</span></div>
-							<div class="login-error-banner">{{ icon_alert() }}<span></span></div>
-							<div class="form-group">
+											<div class="form-group">
 								<label class="form-label" for="login_with_email_link_email">{{ _("Email") }} <span class="nxlogin-required">*</span></label>
 								<div class="nxlogin-field">
 									{{ icon_mail() }}
 									<input type="email" id="login_with_email_link_email" class="form-control"
 										placeholder="{{ _('Enter your email') }}" required autocomplete="username">
 								</div>
-								<p class="field-error"></p>
 							</div>
 						</div>
 						<div class="page-card-actions">
-							<p class="resend-link">{{ _("Didn't receive the link?") }} <a href="#" class="btn-resend-link">{{ _("Resend") }}</a></p>
 							<button class="btn btn-primary btn-block btn-login btn-login-with-email-link nxlogin-submit" type="submit">{{ _("Send login link") }}</button>
 							<a href="#login" class="btn btn-block btn-login-option nxlogin-alt">{{ _("Login with password") }}</a>
 						</div>

@@ -667,7 +667,7 @@ def set_user_sound(event_key: str, file_url: str, volume: float | str | None = 0
 	_assert_sound_url(file_url)
 	try:
 		vol = float(volume) if volume is not None else 0.5
-	except TypeError, ValueError:
+	except (TypeError, ValueError):
 		vol = 0.5
 	vol = max(0.0, min(1.0, vol))
 

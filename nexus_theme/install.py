@@ -110,14 +110,13 @@ def sync_public_assets() -> None:
 		return
 
 
-# Entries added to the sidebar's settings dropdown. Frappe v16 replaced the
-# top navbar with the left sidebar, so the app's own DOM injection (which
-# targets `.navbar-nav` and the v15 user dropdown) no longer finds anything
-# and Theme Studio / Sound Studio had no reachable entry point at all.
-#
-# Navbar Settings is the supported way in: sidebar_header.add_navbar_items()
-# reads `settings_dropdown` and renders each item. It is also how Frappe
-# itself registers "Toggle Theme".
+# Entries added to the navbar's settings dropdown — the menu behind the avatar
+# at the top right. Frappe 15 renders it from Navbar Settings
+# (`settings_dropdown`) in ui/toolbar/navbar.html, which is also how Frappe
+# itself registers "Toggle Theme", so this is the supported way in rather than
+# a DOM injection. theme_switcher.js additionally places an icon in the navbar
+# itself; the two are independent, and either alone is enough to reach the
+# studios.
 NAVBAR_ITEMS = (
 	{
 		"item_label": "Theme Studio",

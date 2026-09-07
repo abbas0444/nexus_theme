@@ -6,7 +6,10 @@
 
 **Make your workspace yours.** Colours, sounds, a themed sign-in screen and a clear view of who can do what, all inside your ERPNext / Frappe Desk. Pick one of 17 ready-made themes or build your own, choose the sounds the Desk plays, give the login page your own look, and let administrators see and change permissions in plain language.
 
-![ERPNext 16](https://img.shields.io/badge/ERPNext-16-blue) ![Frappe 16](https://img.shields.io/badge/Frappe-16-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey) ![Version 1.2.0](https://img.shields.io/badge/version-1.2.0-green)
+![ERPNext 15](https://img.shields.io/badge/ERPNext-15-blue) ![Frappe 15](https://img.shields.io/badge/Frappe-15-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey) ![Version 1.2.0](https://img.shields.io/badge/version-1.2.0-green)
+
+**You are on the `version-15` branch.** Same app, built for Frappe / ERPNext 15.
+For Frappe / ERPNext 16, use [`main`](https://github.com/abbas0444/nexus_theme/tree/main).
 
 </div>
 
@@ -69,11 +72,22 @@ Everything is per user. Your theme and sounds are yours; nobody else sees them u
 
 **On Frappe Cloud:** open your site, choose *Apps → Install App*, and pick **Nexus Theme** from the Marketplace. Nothing else to do.
 
+### Which branch do I need?
+
+| Your bench | Branch | Install with |
+|---|---|---|
+| Frappe / ERPNext **15** | `version-15` | `bench get-app --branch version-15 https://github.com/abbas0444/nexus_theme.git` |
+| Frappe / ERPNext **16** | `main` | `bench get-app https://github.com/abbas0444/nexus_theme.git` |
+
+Check yours with `bench version` before you start. The two branches hold the same
+features; they differ only where the two frameworks differ. Installing the wrong
+one will not damage anything, but the app will not work properly.
+
 **On your own bench:** run these commands. Replace `yoursite.com` with your site name.
 
 ```bash
 cd /path/to/your/bench
-bench get-app https://github.com/abbas0444/nexus_theme.git
+bench get-app --branch version-15 https://github.com/abbas0444/nexus_theme.git
 bench --site yoursite.com install-app nexus_theme
 bench --site yoursite.com migrate
 bench restart          # or restart `bench start` in development
@@ -84,7 +98,7 @@ Installation does all of this for you:
 - Creates the **Theme User** role and gives it to every Desk user, so Theme Studio and Sound Studio work at once. New Desk users get the role automatically when they are created or promoted.
 - Loads the **17 bundled themes**.
 - Creates the **Theme Settings** record with every option switched off, so the app changes nothing about your site until you decide.
-- Adds **Theme Studio** and **Sound Settings** to the avatar menu, the **Nexus Theme** tile to the apps screen, and the **Nexus Theme** workspace with all its shortcuts.
+- Adds **Theme Studio** and **Sound Settings** to the navbar's settings dropdown (Frappe 15 registers them through Navbar Settings), the **Nexus Theme** tile to the apps screen, and the **Nexus Theme** workspace with all its shortcuts.
 - Registers the **Permission Inspector** page for System Managers.
 
 Updating later is the usual `bench update` or `git pull` followed by `bench --site yoursite.com migrate`. Your custom themes and sound choices survive updates.

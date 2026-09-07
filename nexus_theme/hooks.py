@@ -1,6 +1,12 @@
 app_name = "nexus_theme"
 app_title = "Nexus Theme"
 app_publisher = "Abbas Raza"
+# --- Frappe 15 branch -------------------------------------------------------
+# This branch targets Frappe/ERPNext 15. It is the same app as `main`, which
+# targets 16; only the handful of places where the two frameworks differ are
+# changed. See "Which branch do I need?" in the README.
+# ---------------------------------------------------------------------------
+
 app_description = "Per-user theme and sound personalization for the Frappe & ERPNext Desk — a live color editor with WCAG contrast validation, 17 bundled themes, 8 curated accessible palettes, and a Sound Studio for customizing audio on save, submit, login, notifications and more."
 app_email = "abbasraza0444@gmail.com"
 app_license = "MIT"
@@ -44,16 +50,11 @@ app_include_js = [
 	"theme_switcher.bundle.js",
 	"theme_editor.bundle.js",
 	# Adds every Theme Definition to Frappe's own "Switch Theme" dialog
-	# (sidebar → Display → Toggle Theme). Must load after theme_manager,
+	# (avatar menu → Toggle Theme). Must load after theme_manager,
 	# which it delegates to when applying a theme.
 	"native_theme_switcher.bundle.js",
 	# Navbar logo / favicon from Theme Settings. No-op until one is set.
 	"brand_kit.bundle.js",
-	# Adds "Theme Studio" and "Sound Settings" to the avatar dropdown on
-	# Frappe v16's Desk. That Desk hides the classic navbar, so the Navbar
-	# Settings items registered by install.py never render there and the app
-	# would otherwise have no entry point in the UI.
-	"desktop_menu.bundle.js",
 	# Shared factory behind the /app/theme-studio and /app/sound-studio
 	# launcher pages, which is how the two dialogs reach the Workspace —
 	# a workspace link cannot call a function.

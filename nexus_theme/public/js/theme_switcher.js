@@ -816,11 +816,10 @@
   }
 
   function boot() {
-    // Frappe v16 replaced the top navbar with the left sidebar, so none of
-    // the selectors below exist any more and this quietly does nothing —
-    // Theme Studio is reached through the Navbar Item registered by
-    // install.ensure_navbar_items() instead. Kept for v15 and earlier,
-    // where the navbar icon is still the only entry point.
+    // Frappe 15 has the classic top navbar, so this puts a Theme Studio icon
+    // in it. install.ensure_navbar_items() separately adds Theme Studio and
+    // Sound Settings to the avatar dropdown, so there are two ways in; if a
+    // site ever renders without a navbar this simply does nothing.
     if (!document.querySelector(".navbar-nav")) return;
     let attempts = 0;
     const tryInject = () => {
