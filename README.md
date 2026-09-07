@@ -83,7 +83,7 @@ Uninstalling (`bench --site yoursite.com uninstall-app nexus_theme`) removes the
 | **Nexus Theme workspace** (`/app/nexus-theme`) | Shortcuts to Theme Studio, Sound Studio, Themes, Theme Settings and Permission Inspector, plus cards for every record type the app owns |
 | **Search bar** (Ctrl+K / Cmd+K) | Type `Theme Studio`, `Sound Studio`, `Permission Inspector` or `Theme Settings` |
 | **Frappe's own Switch Theme dialog** (avatar menu, Toggle Theme) | Every Nexus theme is listed there too, next to Frappe Light and Timeless Night |
-| Direct links | `/app/theme-studio`, `/app/sound-studio`, `/app/permission-inspector`, `/app/theme-settings` |
+| Direct links | `/app/theme-studio`, `/app/sound-studio`, `/app/nexus-permission-inspector`, `/app/theme-settings` |
 
 ---
 
@@ -232,7 +232,9 @@ All 36 bundled sounds are synthesised from scratch by `tools/generate_sounds.py`
 
 ## 6. Permission Inspector: Who Can Do What
 
-For **System Managers**. Open **Nexus Theme → Permission Inspector** or go to `/app/permission-inspector`.
+For **System Managers**. Open **Nexus Theme → Permission Inspector** or go to `/app/nexus-permission-inspector`.
+
+> Frappe has a small built-in form that is also called *Permission Inspector* (under **Users → Permission Inspector**, at `/app/permission-inspector`). It checks one document for one person at a time. The Nexus Theme inspector is a different tool with its own address, so the two never get in each other's way.
 
 ### 6.1 The idea in three sentences
 
@@ -520,7 +522,7 @@ An administrator may have turned off Allow Public Sharing, or the theme has Rest
 Check the Enable sounds switch in Sound Settings, then the browser's site permissions, then ask an administrator whether Allow User Sounds is off in Theme Settings. Refresh once and click anywhere on the page; browsers block audio before the first interaction.
 
 **The Permission Inspector page is missing or shows "not permitted".**
-Only System Managers can open it. Ask one to open `/app/permission-inspector`.
+Only System Managers can open it. Ask one to open `/app/nexus-permission-inspector`.
 
 **I changed a permission and the person still cannot do it.**
 Open the record type in the inspector and read **What can they do here?**; it is checked live. If it says Yes, ask the person to reload the page. If it says No, another rule or a User Permission is limiting them; the **Why?** and **Which records?** sections show which.

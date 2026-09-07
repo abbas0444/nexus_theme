@@ -117,13 +117,13 @@
    "is_query_report": 0,
    "label": "Permission Inspector",
    "link_count": 0,
-   "link_to": "permission-inspector",
+   "link_to": "nexus-permission-inspector",
    "link_type": "Page",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2026-09-03 22:00:00.000000",
+ "modified": "2026-09-07 18:30:00.000000",
  "modified_by": "Administrator",
  "module": "Nexus Theme",
  "name": "Nexus Theme",
@@ -167,7 +167,7 @@
    "color": "Orange",
    "doc_view": "",
    "label": "Permission Inspector",
-   "link_to": "permission-inspector",
+   "link_to": "nexus-permission-inspector",
    "type": "Page"
   }
  ],

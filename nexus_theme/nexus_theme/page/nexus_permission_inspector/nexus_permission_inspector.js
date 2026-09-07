@@ -1,4 +1,4 @@
-// Permission Inspector — /app/permission-inspector
+// Permission Inspector — /app/nexus-permission-inspector
 //
 // A plain-language window onto Frappe's own role-permission records for one
 // person or one role. The backend (nexus_theme/permission_inspector/api.py)
@@ -11,7 +11,7 @@
 /* global nexus_theme */
 frappe.provide("nexus_theme.permission_inspector");
 
-frappe.pages["permission-inspector"].on_page_load = function (wrapper) {
+frappe.pages["nexus-permission-inspector"].on_page_load = function (wrapper) {
 	const page = frappe.ui.make_app_page({
 		parent: wrapper,
 		title: __("Permission Inspector"),
@@ -20,7 +20,7 @@ frappe.pages["permission-inspector"].on_page_load = function (wrapper) {
 	wrapper.inspector = new nexus_theme.permission_inspector.Inspector(wrapper, page);
 };
 
-frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
+frappe.pages["nexus-permission-inspector"].on_page_show = function (wrapper) {
 	if (wrapper.inspector) {
 		wrapper.inspector.apply_route_options();
 	}
@@ -72,7 +72,7 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 		constructor(wrapper, page) {
 			this.wrapper = wrapper;
 			this.page = page;
-			this.$root = $(frappe.render_template("permission_inspector", {}));
+			this.$root = $(frappe.render_template("nexus_permission_inspector", {}));
 			$(page.main).addClass("nxpi-page").empty().append(this.$root);
 
 			this.options = null;
@@ -134,12 +134,10 @@ frappe.pages["permission-inspector"].on_page_show = function (wrapper) {
 					options: "User",
 					fieldname: "nxpi_user",
 					placeholder: __("Type a name or email"),
-					get_query: () => ({
-						filters: [
-							["User", "name", "!=", "Guest"],
-							["User", "user_type", "=", "System User"],
-						],
-					}),
+					// User has its own search (frappe.core.doctype.user.user.user_query),
+					// which only accepts filters as an object and already leaves out
+					// Guest, Administrator, disabled and website users.
+					get_query: () => ({ filters: { user_type: "System User" } }),
 					change: () => this.on_pick("user"),
 				},
 				parent: this.$root.find('[data-control="user"]'),
