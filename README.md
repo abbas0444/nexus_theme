@@ -37,13 +37,14 @@ Every screenshot below is the app running on a real ERPNext 16 site.
 5. [Sound Studio: Choose Your Sounds](#5-sound-studio-choose-your-sounds)
 6. [Permission Inspector: Who Can Do What](#6-permission-inspector-who-can-do-what)
 7. [Administrator Guide: Theme Settings](#7-administrator-guide-theme-settings)
-8. [Who Can Use What (Roles)](#8-who-can-use-what-roles)
-9. [Everyday Recipes](#9-everyday-recipes)
-10. [How It Works Under the Hood](#10-how-it-works-under-the-hood)
-11. [For Developers](#11-for-developers)
-12. [Things to Know](#12-things-to-know)
-13. [Troubleshooting and FAQ](#13-troubleshooting-and-faq)
-14. [Requirements and License](#14-requirements-and-license)
+8. [The Record Types Behind It All](#8-the-record-types-behind-it-all)
+9. [Who Can Use What (Roles)](#9-who-can-use-what-roles)
+10. [Everyday Recipes](#10-everyday-recipes)
+11. [How It Works Under the Hood](#11-how-it-works-under-the-hood)
+12. [For Developers](#12-for-developers)
+13. [Things to Know](#13-things-to-know)
+14. [Troubleshooting and FAQ](#14-troubleshooting-and-faq)
+15. [Requirements and License](#15-requirements-and-license)
 
 ---
 
@@ -58,6 +59,7 @@ Nexus Theme is one Frappe app with three tools inside it. Install it once and ev
 | **Permission Inspector** | System Managers | Pick a person or a role and see, record type by record type, what they may View, Edit, Create, Delete, Submit and Cancel, which role gives them that, and change it safely from the same screen. |
 | **Theme Settings** | System Managers | Site-wide controls: a default theme for everyone, an allowed list, whether people may build or share themes, the company logo and favicon, and a master switch for sounds. |
 | **Login Page** | System Managers switch it on; everyone sees it | A two-column sign-in screen painted in the site's theme colours, with your logo, your headline and bullet points on a coloured panel. Off by default; Frappe's own login page stays until you turn it on. |
+| **Three record types** | Nobody has to open them | *Theme Definition*, *User Theme Preference* and *User Sound Preference* are where the studios store everything. They are listed in the workspace so you can look, fix or pre-build a company theme — see [section 8](#8-the-record-types-behind-it-all). |
 
 Everything is per user. Your theme and sounds are yours; nobody else sees them unless you share a theme on purpose.
 
@@ -106,6 +108,10 @@ Uninstalling (`bench --site yoursite.com uninstall-app nexus_theme`) removes the
 ![The Nexus Theme workspace on the Desk](docs/images/workspace.png)
 
 *The workspace at `/app/nexus-theme`: shortcuts on top, record types underneath. The three pages sit in the sidebar on the left.*
+
+The apps screen carries a **Nexus Theme** tile, and the avatar menu in the corner opens either studio from wherever you are:
+
+![The apps screen and the avatar menu](docs/images/desk-avatar-menu.png)
 
 ---
 
@@ -163,6 +169,10 @@ Click **Customize** on any theme. The editor shows a **Live Preview** card and a
 | Corner Radius | How rounded cards, buttons and inputs are |
 | Hover Lift | Cards rise slightly when you hover over them |
 
+![The Basic tab of the theme editor](docs/images/studio-editor-basic.png)
+
+*The Basic tab. The green bar at the bottom is the readability check — it recalculates on every change, so you always know whether the theme is legible before you save it.*
+
 **Advanced** adds the rest of the 11 colours and the finer settings:
 
 | Control | What it changes |
@@ -176,11 +186,15 @@ Click **Customize** on any theme. The editor shows a **Live Preview** card and a
 | Font Weight | Lighter or bolder text overall |
 | Animation Speed | How fast hover and fade effects run |
 
+![The Advanced tab of the theme editor](docs/images/studio-editor-advanced.png)
+
 ### 4.4 Palettes: fill all 11 colours at once
 
 Open the **Palettes** tab and click a set. Every colour in the editor is filled together, and each set is checked for readability before it ships:
 
 Indigo Mist · Forest Paper · Rose Quartz · Graphite Amber · Midnight Violet · Carbon Teal · Obsidian Rose · Nordic Frost
+
+![The Palettes tab](docs/images/studio-palettes.png)
 
 Use a palette as a starting point, adjust anything you like, then save.
 
@@ -193,6 +207,8 @@ Open the **Generate** tab, enter your brand colour, choose **Light** or **Dark**
 | **Neutral Canvas** | A grey backdrop with your colour only on accents. Calm and focused. |
 | **Tinted Canvas** | The backdrop carries a hint of your colour. Feels branded. |
 | **High Contrast** | Stronger text and borders. Best for accessibility. |
+
+![Generating a theme from one brand colour](docs/images/studio-generate.png)
 
 Each card shows its contrast numbers and a **Passes WCAG AA** badge. The generator solves for readability rather than fixed lightness steps, so it works whether your brand is yellow, navy or anything in between. Click a variant to fill the editor, then fine-tune and save.
 
@@ -210,7 +226,13 @@ If a check fails you get a clear message naming the pair of colours to fix. You 
 
 Click **Auto Light/Dark** in Theme Studio, choose a light theme and a dark theme, set the mode to **Automatic** and save. The Desk now follows your operating system: switch your computer to dark mode and the dark theme appears by itself.
 
+![Pairing a light theme with a dark one](docs/images/studio-auto-light-dark.png)
+
 ### 4.8 Share, export, import, delete
+
+![Saving a theme of your own](docs/images/studio-save-custom.png)
+
+*Save as Custom… asks for a name and offers one tick box: share it, or keep it to yourself.*
 
 - **Share:** tick **Share with other users** when saving. The theme appears in everyone's Public Themes list. Untick it by saving again without the tick.
 - **Export:** select a theme and click **Export** to download it as a `.json` file.
@@ -378,6 +400,8 @@ Press **Which records can they see?** in the summary to open the User Permission
 
 Open **Nexus Theme → Theme Settings** or `/app/theme-settings`. Every option is off by default.
 
+![Theme Settings](docs/images/dt-theme-settings.png)
+
 | Setting | What it does |
 |---|---|
 | **Site Default Theme** | Applied to everyone who has not chosen a theme. Leave blank to keep Frappe's stock look. People who chose Frappe's own look on purpose are left alone. |
@@ -414,6 +438,10 @@ Tick **Use the Nexus Login Page** and `/login` becomes a two-column screen: your
 
 The name and logo above the form come from **Login Brand Name** and **Login Brand Logo**; left empty they fall back to **Navbar Logo** and the site's own app name and logo. The picture behind the panel comes from **Login Background**.
 
+All of the wording lives in one place, in the **Login Page** section of Theme Settings:
+
+![The Login Page section of Theme Settings](docs/images/dt-theme-settings-login.png)
+
 **Seeing it without signing out.** Open Theme Studio, pick a theme, and press **View Login**. A preview of the sign-in screen opens, drawn with the theme you have selected and the words you have written, so you can judge it before anyone else sees it. It also works when the page is switched off, so you can look first and decide after. There is a picture of it in [section 4.1](#41-the-five-minute-flow).
 
 **Typical setups**
@@ -424,7 +452,104 @@ The name and logo above the form come from **Login Brand Name** and **Login Bran
 
 ---
 
-## 8. Who Can Use What (Roles)
+## 8. The Record Types Behind It All
+
+Everything the two studios do is stored in three ordinary Frappe record types, listed in the **Nexus Theme** workspace sidebar. **You do not have to open any of them.** Theme Studio and Sound Studio create and update these records for you. They are here so you can see what is stored, fix something by hand, or set a theme up for the whole company.
+
+| Record type | Holds | Who owns a row | Do you create these by hand? |
+|---|---|---|---|
+| **Theme Definition** | One theme: its colours, fonts and corner radius | The app (the 17 defaults) or the person who saved it | Rarely — see below |
+| **User Theme Preference** | Which theme one person is using | One row per person, named after them | No |
+| **User Sound Preference** | Which sound one person hears for each event | One row per person, named after them | No |
+
+### 8.1 Theme Definition
+
+One row is one theme. The 17 that ship with the app are here, and so is every theme anyone saved with **Save as Custom…**.
+
+![The Theme Definition list](docs/images/dt-theme-definition-list.png)
+
+Open one and you see exactly the values Theme Studio edits, in four groups: **Identity**, **Colors**, **Buttons** and **Typography**.
+
+![A Theme Definition record](docs/images/dt-theme-definition-form.png)
+
+| Field | What it means |
+|---|---|
+| **Theme Name** | The name people see in Theme Studio |
+| **Theme Key** | The short id used in the URL and in the stored preference. Lowercase letters, digits and hyphens. |
+| **Is Default** | Ticked on the 17 themes that ship with the app. Those cannot be deleted. |
+| **Is Dark** | Tells the app this is a dark theme, so Auto Light/Dark can pair it and the login page knows its polarity |
+| **Owner** | The person who saved it. Empty on the shipped themes. |
+| **Public** | Ticked means everyone on the site sees it under *Public Themes* |
+| **Restrict to Roles** | Leave empty to show it to everyone. Fill it in and only those roles see the theme. |
+| **Colors / Buttons / Typography** | The eleven colours, the font family, the base size and weight, and the corner radius |
+
+**When to create a new one by hand**
+
+Most people never do — press **Save as Custom…** in Theme Studio instead, which fills every field for you and checks the colours for readability first.
+
+Create one here when you want a **company theme that already exists before anyone opens Theme Studio**: for example, an administrator building "Acme Blue", ticking **Public** so everyone sees it, and then setting it as the **Site Default Theme** in Theme Settings. Doing it here also lets you restrict a theme to certain roles, which Theme Studio does not offer.
+
+![A new Theme Definition](docs/images/dt-theme-definition-new.png)
+
+To create one: **Theme Definition → + Add Theme Definition**, then fill in
+
+1. **Theme Name** and **Theme Key** (both required — the key must be unique)
+2. Every colour under **Colors** and **Buttons**. Leaving one empty gives you a theme with a hole in it, so fill them all.
+3. Tick **Is Dark** if the background is dark, and **Public** if others should see it.
+4. **Save**.
+
+Leave **Is Default** unticked. That flag marks the themes that ship with the app.
+
+> A faster route to the same place: build the theme in Theme Studio, press **Save as Custom…**, then open the row it created and tick **Public** or fill in **Restrict to Roles**.
+
+### 8.2 User Theme Preference
+
+One row per person, named after their account. It is what makes your theme follow you to every device you sign in from.
+
+![The User Theme Preference list](docs/images/dt-user-theme-pref-list.png)
+
+![A User Theme Preference record](docs/images/dt-user-theme-pref-form.png)
+
+| Field | What it means |
+|---|---|
+| **User** | Whose preference this is. It is also the row's name, so there can only ever be one per person. |
+| **Use Frappe Theme** | Ticked means this person turned Nexus off and is back on Frappe's stock look |
+| **Active Theme** | The theme they are using |
+| **Mode** | *Single* uses one theme all the time. *Automatic* follows the computer's light/dark setting. |
+| **Dark Theme** | The theme used after dark when Mode is *Automatic* |
+| **Overrides** | Any colours they changed by hand on top of the theme, stored as JSON |
+
+**When to create a new one:** never, in normal use. The row appears by itself the first time someone presses **Apply** in Theme Studio, and updates every time they change something.
+
+Two reasons an administrator might open one:
+
+- **To see what someone is using** when they ask for help — quicker than asking them to read colours off their screen.
+- **To reset one person** who has painted themselves into an unreadable corner: tick **Use Frappe Theme** and save, or just delete the row. Either way they are back on the site default the next time their Desk loads. Nothing else about their account is touched.
+
+### 8.3 User Sound Preference
+
+One row per person again, holding their master on/off switch and a child table of the sounds they chose.
+
+![The User Sound Preference list](docs/images/dt-user-sound-pref-list.png)
+
+![A User Sound Preference record](docs/images/dt-user-sound-pref-form.png)
+
+| Field | What it means |
+|---|---|
+| **Enabled** | Their own master switch. Unticked means the Desk stays silent for them. |
+| **Sounds** | One row per event they changed: the **Event** key (`save`, `submit`, `login`…), the **Audio File** and the **Volume** |
+
+Only events the person actually changed appear in the table. An event with no row plays the sound that ships with the app.
+
+**When to create a new one:** never, in normal use. Sound Studio writes this row the first time someone picks a sound or moves a slider.
+
+An administrator might open one to **silence one person** (untick **Enabled**) or to **remove a file someone uploaded** by deleting its row. To silence the whole site instead, untick **Allow User Sounds** in Theme Settings — that overrules every row here.
+
+> **Deleting a row is safe.** These two preference records are only preferences. Delete one and that person simply goes back to the site default the next time their Desk loads; no theme, no sound file and no part of their account is lost.
+
+---
+
+## 9. Who Can Use What (Roles)
 
 | Feature | Needs |
 |---|---|
@@ -435,7 +560,7 @@ The name and logo above the form come from **Login Brand Name** and **Login Bran
 
 ---
 
-## 9. Everyday Recipes
+## 10. Everyday Recipes
 
 **I want dark mode at night and light in the day.** Theme Studio → Auto Light/Dark → pick one of each → Mode: Automatic → Save.
 
@@ -453,7 +578,7 @@ The name and logo above the form come from **Login Brand Name** and **Login Bran
 
 ---
 
-## 10. How It Works Under the Hood
+## 11. How It Works Under the Hood
 
 **Record types the app owns**
 
@@ -477,9 +602,9 @@ The name and logo above the form come from **Login Brand Name** and **Login Bran
 
 ---
 
-## 11. For Developers
+## 12. For Developers
 
-### 11.1 Layout of the app
+### 12.1 Layout of the app
 
 ```
 nexus_theme/
@@ -504,7 +629,7 @@ tools/generate_sounds.py        # regenerates every preset sound
 tools/generate_logo.py          # regenerates the logo set in logos/
 ```
 
-### 11.2 Python API
+### 12.2 Python API
 
 All methods live in `nexus_theme.api` and are whitelisted, so they work from `frappe.call`, REST (`/api/method/nexus_theme.api.<name>`) and server scripts. They act for the logged-in user and need the Theme User role.
 
@@ -545,7 +670,7 @@ refresh_cache(target_type="user", target="abbas@example.com")
 
 `save_changes` validates every rule, cascades dependencies the way Frappe requires, saves the batch under a savepoint, clears the permission cache and returns the fresh matrix rows for the affected record types.
 
-### 11.3 JavaScript API
+### 12.3 JavaScript API
 
 ```javascript
 window.openThemeSwitcher();     // open Theme Studio
@@ -558,7 +683,7 @@ SoundManager.applyMapping({ save: { url: "/files/pop.wav", volume: 0.7 } });
 SoundManager.setEnabled(false);
 ```
 
-### 11.4 Tests
+### 12.4 Tests
 
 ```bash
 # Pure unit tests, no site needed
@@ -571,7 +696,7 @@ bench --site yoursite.com run-tests --app nexus_theme --module nexus_theme.tests
 bench --site yoursite.com set-config allow_tests false
 ```
 
-### 11.5 Regenerating assets
+### 12.5 Regenerating assets
 
 ```bash
 python3 tools/generate_sounds.py   # rewrites public/sounds from the recipes in the script
@@ -581,7 +706,7 @@ bench build --app nexus_theme      # rebuild the JS/CSS bundles after editing pu
 
 ---
 
-## 12. Things to Know
+## 13. Things to Know
 
 - **Themes style the Desk, not hard-coded colours.** A third-party app that paints its own fixed colours is not restyled. The built-in Frappe and ERPNext interface is.
 - **Restricting themes never resets anyone.** If an administrator narrows the allowed list, people keep the theme they already have; they just cannot pick others outside the list.
@@ -595,7 +720,7 @@ bench build --app nexus_theme      # rebuild the JS/CSS bundles after editing pu
 
 ---
 
-## 13. Troubleshooting and FAQ
+## 14. Troubleshooting and FAQ
 
 **I do not see Theme Studio in the avatar menu.**
 You may be a Website User rather than a Desk user, or the app was installed before your account and the role has not been granted yet. Ask an administrator to run `bench --site yoursite.com migrate`; it grants the Theme User role to every Desk user.
@@ -636,12 +761,21 @@ It uses the Site Default Theme. If your own browser shows different colours from
 **Can an administrator force one theme for everyone?**
 Set a Site Default Theme and tick Restrict Theme Choice with that single theme in the allowed list. People who chose Frappe's own look keep it; everyone else sees the default.
 
+**Do I have to create Theme Definition, User Theme Preference or User Sound Preference records?**
+No. The studios create and update all three for you. See [section 8](#8-the-record-types-behind-it-all) for what each one holds and the few cases where an administrator would open one by hand.
+
+**Someone made their Desk unreadable and cannot get to Theme Studio.**
+Open **User Theme Preference**, find the row named after them, tick **Use Frappe Theme** and save — or just delete the row. They are back on the site default the next time their Desk loads, and nothing else about their account changes.
+
+**I created a Theme Definition by hand and it looks broken.**
+Every colour under **Colors** and **Buttons** has to be filled in; an empty one leaves a hole in the theme. Open it in Theme Studio instead and press **Save as Custom…**, which fills all of them and checks readability first.
+
 **Does any of this change my data?**
 Themes and sounds change only colours and audio. The Permission Inspector changes permission rules only when you press Save and confirm, using the same records as Frappe's own manager.
 
 ---
 
-## 14. Requirements and License
+## 15. Requirements and License
 
 - **Frappe / ERPNext:** version 16
 - **Python:** as required by your Frappe 16 bench
