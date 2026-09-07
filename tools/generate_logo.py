@@ -110,7 +110,7 @@ def _grad(gid: str) -> str:
 def _stroked(paint: str, gid: str | None = None, indent: str = "  ") -> str:
 	defs = f"{indent}<defs>{_grad(gid)}</defs>\n" if gid else ""
 	return (
-		f"{defs}{indent}<path d=\"{mark_path()}\" fill=\"none\" stroke=\"{paint}\" "
+		f'{defs}{indent}<path d="{mark_path()}" fill="none" stroke="{paint}" '
 		f'stroke-width="{STROKE:g}" stroke-linecap="round" stroke-linejoin="round"/>'
 	)
 
@@ -243,8 +243,7 @@ def svg_lockup() -> str | None:
 		f'width="{W:.0f}" height="{H:.0f}" role="img" aria-label="Nexus Theme">',
 		"  <title>Nexus Theme</title>",
 		f"  <defs>{_grad('nxl')}</defs>",
-		f'  <g transform="translate({cx - mark_w / 2 - x0:.2f} {y_mark - y0:.2f}) '
-		f'scale({scale_m})">',
+		f'  <g transform="translate({cx - mark_w / 2 - x0:.2f} {y_mark - y0:.2f}) scale({scale_m})">',
 		f"  {_stroked('url(#nxl)', indent='  ')}",
 		"  </g>",
 		word.svg(cx - word.width / 2, y_word_base, NAVY),
@@ -284,9 +283,7 @@ def svg_wordmark() -> str | None:
 		f"  <defs>{_grad('nxw')}</defs>\n"
 		f'  <g transform="translate({pad - x0 * s:.2f} {pad - y0 * s:.2f}) scale({s:.5f})">\n'
 		f"  {_stroked('url(#nxw)', indent='  ')}\n"
-		"  </g>\n"
-		+ word.svg(pad + mark_w * s + gap, pad + target_h / 2 + cap / 2, NAVY)
-		+ "\n</svg>\n"
+		"  </g>\n" + word.svg(pad + mark_w * s + gap, pad + target_h / 2 + cap / 2, NAVY) + "\n</svg>\n"
 	)
 
 
@@ -376,9 +373,7 @@ def write_pngs(out_dir: Path) -> list[str]:
 		img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
 		if tile:
 			d = ImageDraw.Draw(img)
-			d.rounded_rectangle(
-				[0, 0, big - 1, big - 1], radius=int(112 * big / SIZE), fill="#0E1220"
-			)
+			d.rounded_rectangle([0, 0, big - 1, big - 1], radius=int(112 * big / SIZE), fill="#0E1220")
 		img.paste(grad, (0, 0), mask)
 		return img.resize((size, size), Image.LANCZOS)
 

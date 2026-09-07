@@ -32,6 +32,9 @@ packages = []
 [tool.ruff]
 line-length = 110
 target-version = "py310"
+# Newer ruff formats Python inside Markdown fences. The API listing in the
+# README lines its comments up in a column on purpose, so keep it out.
+extend-exclude = ["README.md"]
 
 [tool.ruff.lint]
 select = [

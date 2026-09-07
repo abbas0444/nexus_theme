@@ -8,8 +8,11 @@
 
 ![ERPNext 15](https://img.shields.io/badge/ERPNext-15-blue) ![Frappe 15](https://img.shields.io/badge/Frappe-15-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey) ![Version 1.2.0](https://img.shields.io/badge/version-1.2.0-green)
 
-**You are on the `version-15` branch.** Same app, built for Frappe / ERPNext 15.
-For Frappe / ERPNext 16, use [`main`](https://github.com/abbas0444/nexus_theme/tree/main).
+**Two branches, one app.** You are looking at the build for Frappe / ERPNext **15**
+— branch [`version-15`](https://github.com/abbas0444/nexus_theme/tree/version-15).
+Running Frappe / ERPNext **16**? Use
+[`version-16`](https://github.com/abbas0444/nexus_theme/tree/version-16)
+(the same code as [`main`](https://github.com/abbas0444/nexus_theme/tree/main)).
 
 </div>
 
@@ -17,7 +20,7 @@ For Frappe / ERPNext 16, use [`main`](https://github.com/abbas0444/nexus_theme/t
 
 ## A Look at It
 
-Every screenshot below is the app running on a real ERPNext 16 site.
+Every screenshot below is the app running on a real ERPNext site. The screens are the same on 15 and on 16.
 
 | Theme Studio | Permission Inspector |
 |---|---|
@@ -72,16 +75,18 @@ Everything is per user. Your theme and sounds are yours; nobody else sees them u
 
 **On Frappe Cloud:** open your site, choose *Apps → Install App*, and pick **Nexus Theme** from the Marketplace. Nothing else to do.
 
-### Which branch do I need?
+### Which version do I need?
 
-| Your bench | Branch | Install with |
+Run `bench version` first and read the **frappe** line.
+
+| Your bench | Branch to install | Install with |
 |---|---|---|
 | Frappe / ERPNext **15** | `version-15` | `bench get-app --branch version-15 https://github.com/abbas0444/nexus_theme.git` |
-| Frappe / ERPNext **16** | `main` | `bench get-app https://github.com/abbas0444/nexus_theme.git` |
+| Frappe / ERPNext **16** | `version-16` (same code as `main`) | `bench get-app --branch version-16 https://github.com/abbas0444/nexus_theme.git` |
 
-Check yours with `bench version` before you start. The two branches hold the same
-features; they differ only where the two frameworks differ. Installing the wrong
-one will not damage anything, but the app will not work properly.
+Both branches hold the same features; they differ only where the two frameworks
+differ. Installing the wrong one damages nothing, but the app will not work
+properly — switch branches and run `bench --site yoursite.com migrate` again.
 
 **On your own bench:** run these commands. Replace `yoursite.com` with your site name.
 
@@ -441,6 +446,10 @@ Tick **Use the Nexus Login Page** and `/login` becomes a two-column screen: your
 | On a computer | On a phone |
 |---|---|
 | ![The Nexus login page](docs/images/login-page.png) | ![The Nexus login page on a phone](docs/images/login-phone.png) |
+
+*Every word on that panel is yours to write. The screenshots show a site that filled
+the Panel Headline in with its own name; a fresh install shows a plain "Welcome back"
+until you type something else.*
 
 **It follows the theme.** The page is painted from the **Site Default Theme**: background, text, inputs, the accent, the button and the corner radius all come from that theme, and the panel's gradient is mixed from its accent colour. Set a light theme and the page is light; set a dark one and it is dark. Someone who has already applied a theme of their own on the Desk sees the login page in *their* theme, because the browser remembers it; the page repaints before it is shown, so there is no flash of the wrong colours. With no site default theme set, the page uses a neutral light palette.
 
