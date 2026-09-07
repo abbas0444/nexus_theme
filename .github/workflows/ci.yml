@@ -86,7 +86,7 @@ jobs:
       - name: Setup
         run: |
           pip install frappe-bench
-          bench init --skip-redis-config-generation --skip-assets --python "$(which python)" ~/frappe-bench
+          bench init --skip-redis-config-generation --skip-assets --python "$(which python)" --frappe-branch version-16 ~/frappe-bench
 
       - name: Install
         working-directory: /home/runner/frappe-bench
@@ -98,6 +98,12 @@ jobs:
           bench build
         env:
           CI: 'Yes'
+
+      - name: Confirm the framework really is 16
+        working-directory: /home/runner/frappe-bench
+        run: |
+          bench version
+          ./env/bin/python -c "import frappe, sys; v = frappe.__version__; print('frappe', v); sys.exit(0 if v.startswith('16.') else 1)"
 
       - name: Run Tests
         working-directory: /home/runner/frappe-bench
