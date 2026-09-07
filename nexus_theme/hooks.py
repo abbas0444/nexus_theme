@@ -4,6 +4,8 @@ app_publisher = "Abbas Raza"
 app_description = "Per-user theme and sound personalization for the Frappe & ERPNext Desk — a live color editor with WCAG contrast validation, 17 bundled themes, 8 curated accessible palettes, and a Sound Studio for customizing audio on save, submit, login, notifications and more."
 app_email = "abbasraza0444@gmail.com"
 app_license = "MIT"
+# Shown next to the app wherever Frappe lists installed apps.
+app_logo_url = "/assets/nexus_theme/images/logo.svg"
 
 # Apps
 # ------------------
@@ -333,4 +335,3 @@ fixtures = [
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
-

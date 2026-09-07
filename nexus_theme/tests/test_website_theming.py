@@ -70,12 +70,7 @@ class TestThemeStyleBlock(unittest.TestCase):
 		# token and the website does not, branding silently diverges.
 		from pathlib import Path
 
-		js = (
-			Path(__file__).resolve().parent.parent
-			/ "public"
-			/ "js"
-			/ "theme_manager.js"
-		).read_text()
+		js = (Path(__file__).resolve().parent.parent / "public" / "js" / "theme_manager.js").read_text()
 		for field, css_var in VAR_MAP.items():
 			self.assertIn(field, js, f"{field} missing from theme_manager.js")
 			self.assertIn(css_var, js, f"{css_var} missing from theme_manager.js")

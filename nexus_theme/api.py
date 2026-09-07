@@ -19,6 +19,7 @@ def _invalidate_bootinfo(user: str | None = None) -> None:
 		except Exception:
 			frappe.log_error(title="theme: failed to invalidate bootinfo cache")
 
+
 THEME_FIELDS = [
 	"name",
 	"theme_name",
@@ -74,11 +75,7 @@ def _visible_to_user(theme_names: list[str], user: str | None = None) -> set[str
 		restricted.setdefault(row.parent, set()).add(row.role)
 
 	user_roles = set(frappe.get_roles(user or frappe.session.user))
-	return {
-		name
-		for name in theme_names
-		if name not in restricted or (restricted[name] & user_roles)
-	}
+	return {name for name in theme_names if name not in restricted or (restricted[name] & user_roles)}
 
 
 def _apply_visibility(themes: list[dict], user: str | None = None) -> list[dict]:
@@ -109,9 +106,7 @@ def _assert_theme_applicable(theme_name: str, user: str | None = None) -> None:
 	if theme_name not in _visible_to_user([theme_name], user):
 		frappe.throw(_("Theme {0} is not available to your roles").format(theme_name))
 	settings = _settings()
-	if settings["restrict_theme_choice"] and theme_name not in set(
-		settings["allowed_themes"] or []
-	):
+	if settings["restrict_theme_choice"] and theme_name not in set(settings["allowed_themes"] or []):
 		frappe.throw(_("Theme {0} is not on this site's allowed list").format(theme_name))
 
 
@@ -194,9 +189,7 @@ def get_active_theme():
 		# undo clear_active_theme() on the next page load.
 		default_name = _settings()["site_default_theme"]
 		if default_name:
-			theme = frappe.db.get_value(
-				"Theme Definition", default_name, THEME_FIELDS, as_dict=True
-			)
+			theme = frappe.db.get_value("Theme Definition", default_name, THEME_FIELDS, as_dict=True)
 			if theme:
 				return {
 					"theme": theme,
@@ -220,9 +213,7 @@ def get_active_theme():
 			"source": "frappe",
 		}
 
-	theme = frappe.db.get_value(
-		"Theme Definition", pref.active_theme, THEME_FIELDS, as_dict=True
-	)
+	theme = frappe.db.get_value("Theme Definition", pref.active_theme, THEME_FIELDS, as_dict=True)
 	try:
 		overrides = json.loads(pref.overrides_json or "{}")
 	except Exception:
@@ -233,9 +224,7 @@ def get_active_theme():
 	mode = pref.get("theme_mode") or "Single"
 	dark_theme = None
 	if mode == "Automatic" and pref.get("dark_theme"):
-		dark_theme = frappe.db.get_value(
-			"Theme Definition", pref.dark_theme, THEME_FIELDS, as_dict=True
-		)
+		dark_theme = frappe.db.get_value("Theme Definition", pref.dark_theme, THEME_FIELDS, as_dict=True)
 	if not dark_theme:
 		# A mode of Automatic with no usable dark theme behaves as Single
 		# rather than leaving the client to guess.
@@ -407,6 +396,7 @@ def get_recommended_palettes():
 	Importing inside the function keeps `bench start` fast — palettes only
 	load when a user actually opens the Theme Studio."""
 	from nexus_theme.utils.palettes import get_palettes
+
 	return get_palettes()
 
 
@@ -447,15 +437,11 @@ def delete_custom_theme(theme_name: str):
 	settings = _settings()
 	if theme_name == settings["site_default_theme"]:
 		frappe.throw(
-			_("{0} is the site default theme. Change that in Theme Settings first.").format(
-				doc.theme_name
-			)
+			_("{0} is the site default theme. Change that in Theme Settings first.").format(doc.theme_name)
 		)
 	if theme_name in set(settings["allowed_themes"] or []):
 		frappe.throw(
-			_("{0} is on the allowed themes list. Remove it in Theme Settings first.").format(
-				doc.theme_name
-			)
+			_("{0} is on the allowed themes list. Remove it in Theme Settings first.").format(doc.theme_name)
 		)
 
 	_detach_theme_from_preferences(theme_name)
@@ -473,15 +459,11 @@ def _detach_theme_from_preferences(theme_name: str) -> None:
 	back to "never chose" (the site default, or Frappe's own theme); whoever
 	paired it as the dark half of an automatic pair drops to a single theme.
 	"""
-	using = frappe.get_all(
-		"User Theme Preference", filters={"active_theme": theme_name}, pluck="user"
-	)
+	using = frappe.get_all("User Theme Preference", filters={"active_theme": theme_name}, pluck="user")
 	if using:
 		frappe.db.delete("User Theme Preference", {"active_theme": theme_name})
 
-	pairing = frappe.get_all(
-		"User Theme Preference", filters={"dark_theme": theme_name}, pluck="user"
-	)
+	pairing = frappe.get_all("User Theme Preference", filters={"dark_theme": theme_name}, pluck="user")
 	if pairing:
 		frappe.db.set_value(
 			"User Theme Preference",
@@ -685,7 +667,7 @@ def set_user_sound(event_key: str, file_url: str, volume: float | str | None = 0
 	_assert_sound_url(file_url)
 	try:
 		vol = float(volume) if volume is not None else 0.5
-	except (TypeError, ValueError):
+	except TypeError, ValueError:
 		vol = 0.5
 	vol = max(0.0, min(1.0, vol))
 

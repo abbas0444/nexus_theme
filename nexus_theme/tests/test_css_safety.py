@@ -78,9 +78,7 @@ class TestSanitizeOverrides(unittest.TestCase):
 			"unknown_key": "anything",
 		}
 		clean = sanitize_overrides(dirty)
-		self.assertEqual(
-			clean, {"bg_primary": "#101820", "font_family": '"Inter", sans-serif'}
-		)
+		self.assertEqual(clean, {"bg_primary": "#101820", "font_family": '"Inter", sans-serif'})
 
 	def test_non_dict_input_yields_empty(self):
 		self.assertEqual(sanitize_overrides(None), {})

@@ -11,9 +11,7 @@ def execute():
 	Frappe's native theme by default; they can still create custom themes
 	via Theme Studio if they want to override.
 	"""
-	users_reverted = frappe.db.count(
-		"User Theme Preference", {"active_theme": "light-default"}
-	)
+	users_reverted = frappe.db.count("User Theme Preference", {"active_theme": "light-default"})
 	if users_reverted:
 		frappe.db.delete("User Theme Preference", {"active_theme": "light-default"})
 

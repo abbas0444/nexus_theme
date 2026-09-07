@@ -41,9 +41,7 @@ class TestThemeDefinition(FrappeTestCase):
 		self.assertRaises(frappe.ValidationError, doc.insert)
 
 	def test_default_theme_cannot_be_deleted(self):
-		default = frappe.get_all(
-			"Theme Definition", filters={"is_default": 1}, limit=1
-		)
+		default = frappe.get_all("Theme Definition", filters={"is_default": 1}, limit=1)
 		if not default:
 			self.skipTest("no default themes present in this site")
 		self.assertRaises(

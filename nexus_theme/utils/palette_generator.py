@@ -95,9 +95,7 @@ def _luminance_of(hex_color: str) -> float:
 	return contrast_ratio(hex_color, "#000000") * 0.05 - 0.05
 
 
-def _solve_lightness(
-	hue: float, sat: float, bg_hex: str, target: float, lighter: bool
-) -> str:
+def _solve_lightness(hue: float, sat: float, bg_hex: str, target: float, lighter: bool) -> str:
 	"""Lightness that puts (hue, sat) at `target` contrast against `bg_hex`.
 
 	`lighter` selects which side of the background to search. Contrast rises
@@ -125,9 +123,7 @@ def _solve_lightness(
 	return _hls_to_hex(hue, (lo + hi) / 2, sat)
 
 
-def _solve_with_desaturation(
-	hue: float, sat: float, bg_hex: str, target: float, lighter: bool
-) -> str:
+def _solve_with_desaturation(hue: float, sat: float, bg_hex: str, target: float, lighter: bool) -> str:
 	"""As `_solve_lightness`, but drop saturation until the target is met.
 
 	Saturated hues have a bounded luminance range — pure yellow cannot get
@@ -236,9 +232,7 @@ def generate(seed: str, is_dark: bool = False, variant: str = "neutral") -> dict
 	accent_sat = seed_sat
 	ink_sat = spec["ink_sat"] * chromatic
 	canvas_light = spec["dark_canvas_light"] if is_dark else spec["canvas_light"]
-	canvas_sat = (
-		spec["dark_canvas_sat"] if is_dark else spec["canvas_sat"]
-	) * chromatic
+	canvas_sat = (spec["dark_canvas_sat"] if is_dark else spec["canvas_sat"]) * chromatic
 
 	if is_dark:
 		bg_primary = _hls_to_hex(hue, canvas_light, canvas_sat)
@@ -249,9 +243,7 @@ def generate(seed: str, is_dark: bool = False, variant: str = "neutral") -> dict
 		text_primary = _solve_with_desaturation(
 			hue, ink_sat, bg_primary, min(spec["text_target"], 14.5), lighter=True
 		)
-		text_muted = _solve_with_desaturation(
-			hue, ink_sat, bg_primary, spec["muted_target"], lighter=True
-		)
+		text_muted = _solve_with_desaturation(hue, ink_sat, bg_primary, spec["muted_target"], lighter=True)
 		accent = _solve_with_desaturation(hue, accent_sat, bg_primary, 5.0, lighter=True)
 		accent_hover = _shift_lightness(accent, 0.08)
 		# The button is a filled block, so it wants a mid-tone that still
@@ -265,12 +257,8 @@ def generate(seed: str, is_dark: bool = False, variant: str = "neutral") -> dict
 		# lightest surface on the page rather than matching a tinted canvas.
 		bg_input = _hls_to_hex(hue, min(1.0, canvas_light + 0.03), canvas_sat * 0.35)
 		border = _solve_lightness(hue, canvas_sat, bg_primary, spec["border_ratio"], lighter=False)
-		text_primary = _solve_with_desaturation(
-			hue, ink_sat, bg_primary, spec["text_target"], lighter=False
-		)
-		text_muted = _solve_with_desaturation(
-			hue, ink_sat, bg_primary, spec["muted_target"], lighter=False
-		)
+		text_primary = _solve_with_desaturation(hue, ink_sat, bg_primary, spec["text_target"], lighter=False)
+		text_muted = _solve_with_desaturation(hue, ink_sat, bg_primary, spec["muted_target"], lighter=False)
 		accent = _solve_with_desaturation(hue, accent_sat, bg_primary, 4.8, lighter=False)
 		accent_hover = _shift_lightness(accent, -0.07)
 		button_bg = accent
@@ -306,26 +294,18 @@ def _enforce(colors: dict) -> dict:
 	text_surface = contrast_ratio(colors["text_primary"], colors["bg_surface"])
 	if min(text_bg, text_surface) < 4.5:
 		# Push the ink to whichever pole the canvas is not.
-		worst_bg = (
-			colors["bg_primary"] if text_bg <= text_surface else colors["bg_surface"]
-		)
+		worst_bg = colors["bg_primary"] if text_bg <= text_surface else colors["bg_surface"]
 		hue, _l, sat = _hex_to_hls(colors["text_primary"])
 		lighter = _luminance_of(worst_bg) < 0.5
-		colors["text_primary"] = _solve_with_desaturation(
-			hue, sat, worst_bg, 4.6, lighter=lighter
-		)
+		colors["text_primary"] = _solve_with_desaturation(hue, sat, worst_bg, 4.6, lighter=lighter)
 
 	if contrast_ratio(colors["text_muted"], colors["bg_surface"]) < 4.5:
 		hue, _l, sat = _hex_to_hls(colors["text_muted"])
 		lighter = _luminance_of(colors["bg_surface"]) < 0.5
-		colors["text_muted"] = _solve_with_desaturation(
-			hue, sat, colors["bg_surface"], 4.6, lighter=lighter
-		)
+		colors["text_muted"] = _solve_with_desaturation(hue, sat, colors["bg_surface"], 4.6, lighter=lighter)
 
 	if contrast_ratio(colors["button_text"], colors["button_bg"]) < 4.5:
-		colors["button_text"] = _best_foreground(
-			colors["button_bg"], "#000000", "#ffffff"
-		)
+		colors["button_text"] = _best_foreground(colors["button_bg"], "#000000", "#ffffff")
 	return colors
 
 

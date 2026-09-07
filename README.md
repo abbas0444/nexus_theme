@@ -48,7 +48,9 @@ Everything is per user. Your theme and sounds are yours; nobody else sees them u
 
 ## 2. Install It
 
-Run these on your bench. Replace `yoursite.com` with your site name.
+**On Frappe Cloud:** open your site, choose *Apps → Install App*, and pick **Nexus Theme** from the Marketplace. Nothing else to do.
+
+**On your own bench:** run these commands. Replace `yoursite.com` with your site name.
 
 ```bash
 cd /path/to/your/bench
@@ -244,7 +246,7 @@ The **How does this work?** button on the page shows the same three points.
 
 Choose **A person** or **A role** and type a name. The page shows a summary in plain words, for example:
 
-> *Ali Khan can view **120** types of records, edit **80**, create **62** and delete **12**.*
+> *Abbas can view **120** types of records, edit **80**, create **62** and delete **12**.*
 
 Under it you see the person's roles, warnings that matter (the account is disabled, a role is switched off, the Administrator cannot be limited), six counters, and three buttons: **Which records can they see?**, **Open this user**, and **Open Frappe's Role Permission Manager**.
 
@@ -274,7 +276,7 @@ Filters above the table:
 
 A panel opens on the right with:
 
-- **What can Ali do here?** Every applicable action with a Yes or No, checked live with Frappe so it is exactly what the system enforces right now.
+- **What can Abbas do here?** Every applicable action with a Yes or No, checked live with Frappe so it is exactly what the system enforces right now.
 - **Why?** Each role's rule in words: *Role Accounts User allows: View, Edit, Create, Submit…*
 - **Which records?** Any User Permission that narrows this record type, such as *Only where Company is Acme Ltd*.
 - The **standard rules before they were customised**, if someone changed them.
@@ -356,7 +358,7 @@ A theme can also be limited to certain roles: open the theme record (Themes list
 
 **Everything went silent.** Sound Settings → check the Enable sounds switch. If it is on, ask an administrator whether Allow User Sounds is off in Theme Settings.
 
-**Why can Ali delete invoices?** Permission Inspector → A person → Ali → search *Sales Invoice* → the Delete cell says Yes and the Because of column names the role. Click the row for the full reasons.
+**Why can Abbas delete invoices?** Permission Inspector → A person → Abbas → search *Sales Invoice* → the Delete cell says Yes and the Because of column names the role. Click the row for the full reasons.
 
 **Stop the Sales User role from cancelling invoices.** Permission Inspector → A role → Sales User → Change permissions → search *Sales Invoice* → click Cancel to make it No → Save changes → confirm.
 
@@ -441,12 +443,12 @@ Permission Inspector methods live in `nexus_theme.permission_inspector.api` and 
 
 ```python
 get_options()
-get_matrix(target_type="user", target="ali@example.com", include_child=0)
+get_matrix(target_type="user", target="abbas@example.com", include_child=0)
 get_matrix(target_type="role", target="Accounts User")
-get_doctype_detail("user", "ali@example.com", "Sales Invoice")   # rules, live check, user permissions
-get_user_permissions("ali@example.com")
+get_doctype_detail("user", "abbas@example.com", "Sales Invoice")   # rules, live check, user permissions
+get_user_permissions("abbas@example.com")
 save_changes([{"doctype": "Sales Invoice", "role": "Accounts User", "ptype": "write", "value": 0}])
-refresh_cache(target_type="user", target="ali@example.com")
+refresh_cache(target_type="user", target="abbas@example.com")
 ```
 
 `save_changes` validates every rule, cascades dependencies the way Frappe requires, saves the batch under a savepoint, clears the permission cache and returns the fresh matrix rows for the affected record types.

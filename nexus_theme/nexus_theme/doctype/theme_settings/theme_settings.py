@@ -32,9 +32,7 @@ DEFAULTS = {
 class ThemeSettings(Document):
 	def validate(self):
 		if self.restrict_theme_choice and not self.allowed_themes:
-			frappe.throw(
-				_("Add at least one theme to Allowed Themes, or turn off Restrict Theme Choice.")
-			)
+			frappe.throw(_("Add at least one theme to Allowed Themes, or turn off Restrict Theme Choice."))
 		if (
 			self.restrict_theme_choice
 			and self.site_default_theme

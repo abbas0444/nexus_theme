@@ -21,9 +21,7 @@ SOUND = "/assets/nexus_theme/sounds/save-2.wav"
 
 
 def _bundled(is_dark: int) -> str | None:
-	return frappe.db.get_value(
-		"Theme Definition", {"is_default": 1, "is_dark": is_dark}, "name"
-	)
+	return frappe.db.get_value("Theme Definition", {"is_default": 1, "is_dark": is_dark}, "name")
 
 
 def _portable(theme_name: str) -> dict:
@@ -52,9 +50,7 @@ class TestThemeApi(FrappeTestCase):
 		for name in self._made:
 			if frappe.db.exists("Theme Definition", name):
 				frappe.db.delete("User Theme Preference", {"active_theme": name})
-				frappe.delete_doc(
-					"Theme Definition", name, force=True, ignore_permissions=True
-				)
+				frappe.delete_doc("Theme Definition", name, force=True, ignore_permissions=True)
 
 	def _govern(self, site_default, restrict, allowed, sounds):
 		doc = frappe.get_doc("Theme Settings")
@@ -68,9 +64,7 @@ class TestThemeApi(FrappeTestCase):
 	def _drop_pref(self, user):
 		name = frappe.db.exists("User Theme Preference", {"user": user})
 		if name:
-			frappe.delete_doc(
-				"User Theme Preference", name, force=True, ignore_permissions=True
-			)
+			frappe.delete_doc("User Theme Preference", name, force=True, ignore_permissions=True)
 
 	def _save_custom(self, key: str, base: str | None = None) -> str:
 		payload = dict(

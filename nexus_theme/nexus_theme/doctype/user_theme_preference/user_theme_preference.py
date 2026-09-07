@@ -25,7 +25,7 @@ class UserThemePreference(Document):
 		if self.overrides_json:
 			try:
 				parsed = json.loads(self.overrides_json)
-			except (TypeError, ValueError):
+			except TypeError, ValueError:
 				frappe.throw(_("Overrides must be valid JSON."))
 			if not isinstance(parsed, dict):
 				frappe.throw(_("Overrides JSON must be an object."))

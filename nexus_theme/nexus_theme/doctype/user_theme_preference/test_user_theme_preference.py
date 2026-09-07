@@ -10,9 +10,7 @@ USER = "Administrator"
 
 
 def _bundled(is_dark: int) -> str | None:
-	return frappe.db.get_value(
-		"Theme Definition", {"is_default": 1, "is_dark": is_dark}, "name"
-	)
+	return frappe.db.get_value("Theme Definition", {"is_default": 1, "is_dark": is_dark}, "name")
 
 
 class TestUserThemePreference(FrappeTestCase):
@@ -43,9 +41,7 @@ class TestUserThemePreference(FrappeTestCase):
 	def _drop_pref(self):
 		name = frappe.db.exists("User Theme Preference", {"user": USER})
 		if name:
-			frappe.delete_doc(
-				"User Theme Preference", name, force=True, ignore_permissions=True
-			)
+			frappe.delete_doc("User Theme Preference", name, force=True, ignore_permissions=True)
 
 	# ------------------------------------------------------------------
 	# validate()
@@ -132,11 +128,7 @@ class TestUserThemePreference(FrappeTestCase):
 		got = get_active_theme()
 		self.assertEqual(got["source"], "user")
 		self.assertEqual(got["theme"]["name"], light)
-		self.assertFalse(
-			frappe.db.get_value(
-				"User Theme Preference", {"user": USER}, "use_frappe_theme"
-			)
-		)
+		self.assertFalse(frappe.db.get_value("User Theme Preference", {"user": USER}, "use_frappe_theme"))
 
 	# ------------------------------------------------------------------
 	# set_active_theme honours the same rules as the gallery
@@ -167,6 +159,4 @@ class TestUserThemePreference(FrappeTestCase):
 		try:
 			self.assertRaises(frappe.ValidationError, set_active_theme, private.name)
 		finally:
-			frappe.delete_doc(
-				"Theme Definition", private.name, force=True, ignore_permissions=True
-			)
+			frappe.delete_doc("Theme Definition", private.name, force=True, ignore_permissions=True)

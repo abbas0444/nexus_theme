@@ -7,7 +7,7 @@
   //
   // website.py injects the theme as CSS custom properties, which covers
   // anything reading --theme-*. But a lot of website CSS — Frappe's own,
-  // and app stylesheets such as gkhair_custumization's login logo mask —
+  // and stylesheets from other apps (a login logo mask, for example) —
   // is keyed off [data-theme="dark"] instead. The Desk sets that attribute
   // from the theme's is_dark flag; without the same thing here, a dark site
   // theme renders with light-mode patches on top of it.

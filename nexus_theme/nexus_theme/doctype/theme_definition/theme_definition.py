@@ -71,9 +71,9 @@ class ThemeDefinition(Document):
 				# Report the threshold this pair was actually judged against —
 				# button surfaces use AA Large (3:1), everything else AA (4.5:1).
 				minimum = "3.0:1" if large else "4.5:1"
-				msg = _(
-					"{0} on {1}: contrast ratio is {2} (WCAG minimum is {3})."
-				).format(fg_field, bg_field, f"{ratio:.2f}", minimum)
+				msg = _("{0} on {1}: contrast ratio is {2} (WCAG minimum is {3}).").format(
+					fg_field, bg_field, f"{ratio:.2f}", minimum
+				)
 				if self.is_default:
 					frappe.throw(msg)
 				else:

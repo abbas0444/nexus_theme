@@ -146,9 +146,7 @@ class TestCssSafety(unittest.TestCase):
 		for seed in ALL_SEEDS:
 			for is_dark in (False, True):
 				for field, value in generate(seed, is_dark=is_dark).items():
-					self.assertTrue(
-						is_safe_value(field, value), f"{field}={value!r}"
-					)
+					self.assertTrue(is_safe_value(field, value), f"{field}={value!r}")
 
 
 class TestDesignRules(unittest.TestCase):
@@ -160,16 +158,12 @@ class TestDesignRules(unittest.TestCase):
 	def test_dark_surfaces_sit_above_the_canvas(self):
 		for seed in ALL_SEEDS:
 			c = generate(seed, is_dark=True)
-			self.assertGreater(
-				self._lum(c["bg_surface"]), self._lum(c["bg_primary"]), seed
-			)
+			self.assertGreater(self._lum(c["bg_surface"]), self._lum(c["bg_primary"]), seed)
 
 	def test_light_surfaces_sit_below_the_canvas(self):
 		for seed in ALL_SEEDS:
 			c = generate(seed, is_dark=False)
-			self.assertLess(
-				self._lum(c["bg_surface"]), self._lum(c["bg_primary"]), seed
-			)
+			self.assertLess(self._lum(c["bg_surface"]), self._lum(c["bg_primary"]), seed)
 
 	def test_greyscale_seed_produces_greyscale_canvas(self):
 		"""A grey brand colour must not have a hue invented for it."""
@@ -183,10 +177,7 @@ class TestDesignRules(unittest.TestCase):
 	def test_variants_are_actually_different(self):
 		"""Three identical cards would be a worse UI than one."""
 		for is_dark in (False, True):
-			canvases = {
-				generate("#4f46e5", is_dark=is_dark, variant=v)["bg_primary"]
-				for v in VARIANT_ORDER
-			}
+			canvases = {generate("#4f46e5", is_dark=is_dark, variant=v)["bg_primary"] for v in VARIANT_ORDER}
 			self.assertEqual(len(canvases), len(VARIANT_ORDER), canvases)
 
 

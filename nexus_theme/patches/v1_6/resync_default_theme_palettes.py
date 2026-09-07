@@ -42,9 +42,7 @@ SYNCED_FIELDS = (
 
 
 def execute():
-	fixture_path = frappe.get_app_path(
-		"nexus_theme", "fixtures", "theme_definition.json"
-	)
+	fixture_path = frappe.get_app_path("nexus_theme", "fixtures", "theme_definition.json")
 	if not os.path.exists(fixture_path):
 		return
 

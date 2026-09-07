@@ -22,9 +22,7 @@ from nexus_theme.utils.css_safety import (
 	is_safe_value,
 )
 
-FIXTURE = (
-	Path(__file__).resolve().parent.parent / "fixtures" / "theme_definition.json"
-)
+FIXTURE = Path(__file__).resolve().parent.parent / "fixtures" / "theme_definition.json"
 
 # Fonts Frappe actually ships, plus stacks the OS is guaranteed to resolve.
 # Naming anything else (e.g. "JetBrains Mono") silently falls back to a
@@ -96,9 +94,7 @@ class TestFixtureThemes(unittest.TestCase):
 		"""WCAG 1.4.11: UI components and graphics need 3:1."""
 		for t in self.themes:
 			ratio = contrast_ratio(t["accent"], t["bg_primary"])
-			self.assertGreaterEqual(
-				ratio, 3.0, f"{t['theme_name']}: accent is {ratio:.2f}"
-			)
+			self.assertGreaterEqual(ratio, 3.0, f"{t['theme_name']}: accent is {ratio:.2f}")
 
 	def test_font_stacks_start_with_a_resolvable_family(self):
 		for t in self.themes:

@@ -12,6 +12,7 @@ wired to both `after_insert` and `on_update`). Website users are never granted
 it.
 """
 
+import os
 import shutil
 from pathlib import Path
 
@@ -57,9 +58,7 @@ def provision_theme_user_role() -> None:
 	users were created before the app never caught up.
 	"""
 	ensure_theme_user_role()
-	system_users = set(
-		frappe.get_all("User", filters={"user_type": "System User"}, pluck="name")
-	)
+	system_users = set(frappe.get_all("User", filters={"user_type": "System User"}, pluck="name"))
 	holders = set(
 		frappe.get_all(
 			"Has Role",
@@ -72,36 +71,43 @@ def provision_theme_user_role() -> None:
 
 
 def sync_public_assets() -> None:
-	"""Copy the app's public assets into the bench's shared sites/assets tree.
+	"""Make sure `/assets/nexus_theme/...` is served.
 
-	Frappe 16 will then serve the files from `/assets/nexus_theme/...`
-	even when the app's public files are not already copied by the default
-	build pipeline.
+	`bench build` links `sites/assets/nexus_theme` to this app's public folder,
+	and a Frappe Cloud deploy does the same. `bench install-app` on its own
+	does not, so when the link is missing this creates exactly that link. A
+	real directory left behind by an older version is refreshed in place.
+	Any filesystem problem is ignored: a missing link only affects the look,
+	and must never stop an install or a migrate.
 	"""
 	source_dir = Path(__file__).resolve().parent / "public"
 	if not source_dir.exists():
 		return
 
-	bench_root = Path(__file__).resolve().parents[3]
-	target_dir = bench_root / "sites" / "assets" / "nexus_theme"
+	sites_path = getattr(frappe.local, "sites_path", None)
+	assets_root = (
+		Path(sites_path).resolve() / "assets"
+		if sites_path
+		else Path(__file__).resolve().parents[3] / "sites" / "assets"
+	)
+	target_dir = assets_root / "nexus_theme"
 
 	try:
-		if target_dir.resolve() == source_dir.resolve():
+		if target_dir.is_symlink() or target_dir.exists():
+			if target_dir.resolve() == source_dir.resolve():
+				return
+			if target_dir.is_dir() and not target_dir.is_symlink():
+				for path in source_dir.rglob("*"):
+					if path.is_file():
+						target_path = target_dir / path.relative_to(source_dir)
+						target_path.parent.mkdir(parents=True, exist_ok=True)
+						shutil.copy2(path, target_path)
 			return
-	except FileNotFoundError:
-		pass
 
-	target_dir.mkdir(parents=True, exist_ok=True)
-
-	for path in source_dir.rglob("*"):
-		if not path.is_file():
-			continue
-		rel_path = path.relative_to(source_dir)
-		target_path = target_dir / rel_path
-		if target_path.resolve() == path.resolve():
-			continue
-		target_path.parent.mkdir(parents=True, exist_ok=True)
-		shutil.copy2(path, target_path)
+		assets_root.mkdir(parents=True, exist_ok=True)
+		os.symlink(source_dir, target_dir)
+	except OSError:
+		return
 
 
 # Entries added to the sidebar's settings dropdown. Frappe v16 replaced the
