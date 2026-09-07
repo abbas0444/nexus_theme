@@ -12,6 +12,22 @@
 
 ---
 
+## A Look at It
+
+Every screenshot below is the app running on a real ERPNext 16 site.
+
+| Theme Studio | Permission Inspector |
+|---|---|
+| ![Theme Studio](docs/images/theme-studio.png) | ![Permission Inspector](docs/images/inspector-role.png) |
+| Pick a theme and watch a miniature Desk repaint as you go. | See what a role or a person may do, record type by record type. |
+
+| Sign-in screen | Sound Studio |
+|---|---|
+| ![The Nexus login page](docs/images/login-page.png) | ![Sound Studio](docs/images/sound-studio-top.png) |
+| Optional two-column login page, painted in your theme. | Choose the sound the Desk plays for each event. |
+
+---
+
 ## Table of Contents
 
 1. [What Nexus Theme Gives You](#1-what-nexus-theme-gives-you)
@@ -87,6 +103,10 @@ Uninstalling (`bench --site yoursite.com uninstall-app nexus_theme`) removes the
 | Direct links | `/app/theme-studio`, `/app/sound-studio`, `/app/nexus-permission-inspector`, `/app/theme-settings` |
 | **Login page** (`/login`) | Frappe's own sign-in screen, or the Nexus login page once an administrator switches it on in Theme Settings |
 
+![The Nexus Theme workspace on the Desk](docs/images/workspace.png)
+
+*The workspace at `/app/nexus-theme`: shortcuts on top, record types underneath. The three pages sit in the sidebar on the left.*
+
 ---
 
 ## 4. Theme Studio: Pick and Build Themes
@@ -101,6 +121,18 @@ Uninstalling (`bench --site yoursite.com uninstall-app nexus_theme`) removes the
 5. Want to keep your tweaks? Click **Save as Custom…**, give it a name and, if you like, tick **Share with other users**.
 
 Your choice is remembered on every device you log in from.
+
+![Theme Studio with the live preview and the theme cards](docs/images/theme-studio.png)
+
+*Theme Studio. The Live Preview at the top is a miniature Desk — navbar, sidebar, table, buttons — so you can judge a theme before applying it. The buttons along the bottom are always in reach.*
+
+Click a different card and only the preview changes. The Desk behind it stays as it was until you press **Apply**:
+
+![A dark theme selected; the Desk behind is still light](docs/images/theme-studio-dark.png)
+
+**View Login** opens the sign-in screen in whichever theme is selected, without signing out:
+
+![The View Login preview inside Theme Studio](docs/images/view-login.png)
 
 ### 4.2 The three theme lists
 
@@ -201,6 +233,10 @@ Click **Reset to Default** at the bottom of Theme Studio, or choose Frappe Light
 4. Drag the **volume** slider for that event.
 5. Everything saves as you go. Close the dialog when you are done.
 
+![Sound Studio, one row per Desk event](docs/images/sound-studio.png)
+
+*One row per event. **Using default** means the row is untouched; upload a file and it says so instead.*
+
 ### 5.2 The events
 
 | Event | Plays when | Presets |
@@ -253,18 +289,28 @@ Choose **A person** or **A role** and type a name. The page shows a summary in p
 
 > *Abbas can view **120** types of records, edit **80**, create **62** and delete **12**.*
 
-Under it you see the person's roles, warnings that matter (the account is disabled, a role is switched off, the Administrator cannot be limited), six counters, and three buttons: **Which records can they see?**, **Open this user**, and **Open Frappe's Role Permission Manager**.
+Under it you see the person's roles, warnings that matter (the account is disabled, a role is switched off, the Administrator cannot be limited), six counters, and three buttons: **Which records can they see?**, **Open this user**, and **Open Frappe's Role Permission Manager**. A long role list folds after the first twelve; press **N more** to see the rest.
+
+![The Permission Inspector before anything is picked](docs/images/inspector-start.png)
+
+*Step 1. Choose **A person** or **A role**, then type a name. **How does this work?** explains roles and permissions in three short paragraphs.*
+
+![The Permission Inspector showing one person](docs/images/inspector-person.png)
+
+*Looking at a person: their roles as chips, one plain-English sentence, and six counters. The counters follow every edit you make below, before anything is saved.*
 
 ### 6.3 Step 2: read the table
 
-Each row is one **record type** (Frappe calls it a DocType), grouped under its module. Each cell shows one of four pills:
+Each row is one **record type** (Frappe calls it a DocType), grouped under its module. Each cell is a tick box, so a whole column reads at a glance:
 
-| Pill | Meaning |
+| Box | Meaning |
 |---|---|
-| **Yes** | Allowed |
-| **No** | Not allowed |
-| **Own only** | Allowed only on records they created themselves |
-| – | Does not apply to this record type (for example Submit on a record type that never uses submission) |
+| Ticked (green) | Allowed |
+| Empty | Not allowed |
+| Amber, with a bar instead of a tick | Allowed only on records they created themselves |
+| – (no box) | Does not apply to this record type (for example Submit on a record type that never uses submission) |
+
+A small amber dot on the corner of a ticked box means the role also has a separate *own records only* rule on top. Hover any box for the same thing in words. The legend above the table repeats all of this.
 
 By default the six **main actions** are shown: View, Edit, Create, Delete, Submit, Cancel. Switch the **Main actions** drop-down to **All actions** to add Amend, Print, Email, Reports, Import, Export, Share, Pick in lists, See masked values and any custom permission types on your site. Hover a column heading for a one-line explanation of that action.
 
@@ -277,24 +323,36 @@ Filters above the table:
 - **Show everything / Only what they can access / Only what they cannot access / Only record types with customised rules / Only my unsaved changes**
 - **Include child tables** adds the rows inside other records (such as the items on an invoice); they follow their parent and cannot be changed on their own
 
+![The permission table for one role](docs/images/inspector-matrix.png)
+
+*Every box is the same size, so a column reads top to bottom at a glance. Rows are grouped by module; the record-type column stays put while the rest scrolls sideways.*
+
 ### 6.4 Click a record type for the reasons
 
 A panel opens on the right with:
 
-- **What can Abbas do here?** Every applicable action with a Yes or No, checked live with Frappe so it is exactly what the system enforces right now.
+- **What can Abbas do here?** Every applicable action with a Yes or No in words, checked live with Frappe so it is exactly what the system enforces right now.
 - **Why?** Each role's rule in words: *Role Accounts User allows: View, Edit, Create, Submit…*
 - **Which records?** Any User Permission that narrows this record type, such as *Only where Company is Acme Ltd*.
 - The **standard rules before they were customised**, if someone changed them.
 - Buttons to open the same record type in Frappe's Role Permission Manager or to manage User Permissions.
 
+![The detail panel for one record type](docs/images/inspector-drawer.png)
+
+*Click any record type and the reasons open beside the table, without losing your place in it.*
+
 ### 6.5 Changing a permission
 
 1. Press **Change permissions**. An orange banner confirms you are in editing mode and reminds you that nothing is saved until you press Save.
-2. **Looking at a role:** click any Yes or No to switch it.
-   **Looking at a person:** click a Yes or No and a small dialog lists that person's roles. Tick the role that should allow the action, or untick the roles that currently allow it. The dialog reminds you that the change applies to everyone with that role.
+2. **Looking at a role:** click any box to tick or untick it.
+   **Looking at a person:** click a box and a small dialog lists that person's roles. Tick the role that should allow the action, or untick the roles that currently allow it. The dialog reminds you that the change applies to everyone with that role.
 3. Related actions follow Frappe's own rules automatically, and the page tells you when they do: turning **Edit** off also turns off Submit, Cancel and Amend; turning **Cancel** on also turns on Submit and Edit; **Import** needs Create.
 4. Changed cells get an orange outline and a bar at the bottom counts your unsaved changes. Use **Only my unsaved changes** in the Show drop-down to review them.
 5. Press **Save changes**. A confirmation spells out every change in a sentence, for example *Everyone with the role Accounts User will no longer be able to Edit on Sales Invoice.* Confirm, and Frappe enforces it immediately. **Discard** throws the edits away.
+
+![Editing mode in the permission table](docs/images/inspector-edit.png)
+
+*Editing mode. The banner reminds you nothing is saved yet, changed boxes get an outline, and the counters above update as you go so you can see the effect before committing to it.*
 
 What you cannot change here, and why:
 
@@ -333,7 +391,7 @@ Open **Nexus Theme → Theme Settings** or `/app/theme-settings`. Every option i
 | **Login Background** | A background image for the login page. On the Nexus login page it sits behind the coloured panel. |
 | **Use the Nexus Login Page** | Replaces Frappe's sign-in screen with the app's own two-column page (see 7.1). Off by default. |
 | **Login Brand Name**, **Login Brand Logo** | The name and logo above the sign-in form. Empty means the site's own app name and logo. |
-| **Sign-in Subtitle**, **Footer Line** | The small line under *Sign In*, and a line at the bottom of the form, such as a copyright notice. |
+| **Sign-in Subtitle**, **Footer Line** | The small line under *Sign In*, and a line at the bottom of the form. Leave the footer line empty and it reads ©, this year and the Login Brand Name. |
 | **Panel Headline**, **Panel Text**, **Panel Points**, **Panel Figure**, **Panel Figure Note** | The words on the coloured panel: a large heading, a paragraph, up to six points shown with ticks, and an optional figure such as *300+* with a note. |
 
 A theme can also be limited to certain roles: open the theme record (Themes list) and fill **Restrict to Roles**. People without one of those roles will not see it.
@@ -341,6 +399,10 @@ A theme can also be limited to certain roles: open the theme record (Themes list
 ### 7.1 The Nexus login page
 
 Tick **Use the Nexus Login Page** and `/login` becomes a two-column screen: your logo and the sign-in form on the left, a coloured panel with your headline, your points and an optional figure on the right. On phones the panel steps aside and the form fills the screen.
+
+| On a computer | On a phone |
+|---|---|
+| ![The Nexus login page](docs/images/login-page.png) | ![The Nexus login page on a phone](docs/images/login-phone.png) |
 
 **It follows the theme.** The page is painted from the **Site Default Theme**: background, text, inputs, the accent, the button and the corner radius all come from that theme, and the panel's gradient is mixed from its accent colour. Set a light theme and the page is light; set a dark one and it is dark. Someone who has already applied a theme of their own on the Desk sees the login page in *their* theme, because the browser remembers it; the page repaints before it is shown, so there is no flash of the wrong colours. With no site default theme set, the page uses a neutral light palette.
 
@@ -352,7 +414,7 @@ Tick **Use the Nexus Login Page** and `/login` becomes a two-column screen: your
 
 The name and logo above the form come from **Login Brand Name** and **Login Brand Logo**; left empty they fall back to **Navbar Logo** and the site's own app name and logo. The picture behind the panel comes from **Login Background**.
 
-**Seeing it without signing out.** Open Theme Studio, pick a theme, and press **View Login**. A preview of the sign-in screen opens, drawn with the theme you have selected and the words you have written, so you can judge it before anyone else sees it. It also works when the page is switched off, so you can look first and decide after.
+**Seeing it without signing out.** Open Theme Studio, pick a theme, and press **View Login**. A preview of the sign-in screen opens, drawn with the theme you have selected and the words you have written, so you can judge it before anyone else sees it. It also works when the page is switched off, so you can look first and decide after. There is a picture of it in [section 4.1](#41-the-five-minute-flow).
 
 **Typical setups**
 
