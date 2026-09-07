@@ -7,7 +7,7 @@ app_publisher = "Abbas Raza"
 # changed. See "Which branch do I need?" in the README.
 # ---------------------------------------------------------------------------
 
-app_description = "Per-user theme and sound personalization for the Frappe & ERPNext Desk — a live color editor with WCAG contrast validation, 17 bundled themes, 8 curated accessible palettes, and a Sound Studio for customizing audio on save, submit, login, notifications and more."
+app_description = "Theme Studio, Sound Studio and a Permission Inspector for the Frappe & ERPNext Desk — 17 bundled themes with a live colour editor and WCAG contrast checks, per-user sounds for save, submit and alerts, an optional themed sign-in page, and a plain-language view of who can do what."
 app_email = "abbasraza0444@gmail.com"
 app_license = "MIT"
 # Shown next to the app wherever Frappe lists installed apps.

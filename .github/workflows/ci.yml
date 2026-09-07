@@ -9,7 +9,9 @@ on:
       - version-15
 
 concurrency:
-  group: version-15-nexus_theme-${{ github.event.number }}
+  # github.event.number is empty on a push, so naming the group after it put
+  # every branch in the same group and a push to one cancelled another's run.
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
