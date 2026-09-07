@@ -6,7 +6,7 @@
 
 **Make your workspace yours.** Colours, sounds, a themed sign-in screen and a clear view of who can do what, all inside your ERPNext / Frappe Desk. Pick one of 17 ready-made themes or build your own, choose the sounds the Desk plays, give the login page your own look, and let administrators see and change permissions in plain language.
 
-![ERPNext 16](https://img.shields.io/badge/ERPNext-16-blue) ![Frappe 16](https://img.shields.io/badge/Frappe-16-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey) ![Version 1.1.0](https://img.shields.io/badge/version-1.1.0-green)
+![ERPNext 16](https://img.shields.io/badge/ERPNext-16-blue) ![Frappe 16](https://img.shields.io/badge/Frappe-16-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey) ![Version 1.2.0](https://img.shields.io/badge/version-1.2.0-green)
 
 </div>
 
@@ -97,6 +97,7 @@ Uninstalling (`bench --site yoursite.com uninstall-app nexus_theme`) removes the
 2. Click any theme card. The **Live Preview** inside the dialog, a small mock-up of the Desk, shows how it looks.
 3. Happy? Click **Apply** and the whole Desk changes at once. Not sure? Click another card. Nothing is stored until you press Apply.
 4. Want to tweak it? Click **Customize** and adjust colours; the preview follows every change.
+   Press **View Login** at any point to see the sign-in screen in the same theme.
 5. Want to keep your tweaks? Click **Save as Custom…**, give it a name and, if you like, tick **Share with other users**.
 
 Your choice is remembered on every device you log in from.
@@ -331,6 +332,7 @@ Open **Nexus Theme → Theme Settings** or `/app/theme-settings`. Every option i
 | **Favicon** | The browser-tab icon on the Desk and the website. |
 | **Login Background** | A background image for the login page. On the Nexus login page it sits behind the coloured panel. |
 | **Use the Nexus Login Page** | Replaces Frappe's sign-in screen with the app's own two-column page (see 7.1). Off by default. |
+| **Login Brand Name**, **Login Brand Logo** | The name and logo above the sign-in form. Empty means the site's own app name and logo. |
 | **Sign-in Subtitle**, **Footer Line** | The small line under *Sign In*, and a line at the bottom of the form, such as a copyright notice. |
 | **Panel Headline**, **Panel Text**, **Panel Points**, **Panel Figure**, **Panel Figure Note** | The words on the coloured panel: a large heading, a paragraph, up to six points shown with ticks, and an optional figure such as *300+* with a note. |
 
@@ -348,7 +350,9 @@ Tick **Use the Nexus Login Page** and `/login` becomes a two-column screen: your
 
 **It cannot lock you out.** Untick the switch and Frappe's own page is back at once. If anything about the page ever fails to render, Frappe's own page is served instead, automatically. No file in Frappe, ERPNext or any other app is changed by turning it on.
 
-The logo comes from **Navbar Logo** (or the site's app logo), the brand name from the site's app name, and the picture behind the panel from **Login Background**.
+The name and logo above the form come from **Login Brand Name** and **Login Brand Logo**; left empty they fall back to **Navbar Logo** and the site's own app name and logo. The picture behind the panel comes from **Login Background**.
+
+**Seeing it without signing out.** Open Theme Studio, pick a theme, and press **View Login**. A preview of the sign-in screen opens, drawn with the theme you have selected and the words you have written, so you can judge it before anyone else sees it. It also works when the page is switched off, so you can look first and decide after.
 
 **Typical setups**
 
@@ -454,6 +458,7 @@ delete_custom_theme(theme_name)
 export_theme(theme_name)                     # portable JSON
 import_theme(payload, share_public=0)
 get_recommended_palettes()                   # the 8 curated palettes
+get_login_preview()                          # brand + words for the login preview
 generate_palette(seed="#8c6f3f", is_dark=0)  # 3 accessible variants from one colour
 
 # Sounds
@@ -556,6 +561,9 @@ Change it back in the inspector, or open the record type in Frappe's Role Permis
 
 **Can I use my company logo?**
 Yes. Theme Settings → Navbar Logo, Favicon and Login Background.
+
+**How do I see the login page without signing out?**
+Theme Studio → **View Login**.
 
 **I switched the Nexus login page on but still see Frappe's.**
 Reload once; if your bench runs under a process manager, restart it (`bench restart`) so the web server picks up the change. The page also falls back to Frappe's own when the site has not been migrated since the update.

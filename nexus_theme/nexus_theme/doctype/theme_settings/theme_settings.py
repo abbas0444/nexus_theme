@@ -28,6 +28,8 @@ DEFAULTS = {
 	"login_background": None,
 	# Login page. Off means Frappe's own sign-in screen, untouched.
 	"use_nexus_login": 0,
+	"login_brand_name": None,
+	"login_brand_logo": None,
 	"login_subtitle": None,
 	"login_footnote": None,
 	"login_headline": None,

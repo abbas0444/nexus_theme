@@ -168,6 +168,74 @@ class TestNexusLoginPage(FrappeTestCase):
 		renderer.get_html()
 		self.assertTrue(renderer.context.no_cache)
 
+	# -- brand --------------------------------------------------------------
+
+	def test_brand_falls_back_to_the_site_name_and_logo(self):
+		marks = login_page.brand({}, fallback_logo="/assets/frappe/images/frappe-favicon.svg")
+		self.assertEqual(marks["name"], login_page.app_name())
+		self.assertEqual(marks["logo"], "/assets/frappe/images/frappe-favicon.svg")
+
+	def test_brand_prefers_what_the_admin_set(self):
+		marks = login_page.brand(
+			{
+				"login_brand_name": "  Acme  ",
+				"login_brand_logo": "/files/acme.svg",
+				"navbar_logo": "/files/other.svg",
+			},
+			fallback_logo="/assets/frappe/images/frappe-favicon.svg",
+		)
+		self.assertEqual(marks["name"], "Acme")
+		self.assertEqual(marks["logo"], "/files/acme.svg")
+
+	def test_brand_skips_a_private_logo_and_keeps_looking(self):
+		marks = login_page.brand(
+			{"login_brand_logo": "/private/files/secret.png", "navbar_logo": "/files/public.png"}
+		)
+		self.assertEqual(marks["logo"], "/files/public.png")
+
+	def test_brand_name_reaches_the_page(self):
+		self._switch(True, login_brand_name="Acme Industries")
+		html = _render_login()
+		self.assertIn("Acme Industries", html)
+
+	# -- the Theme Studio preview -------------------------------------------
+
+	def test_preview_payload_matches_what_the_page_renders(self):
+		# The studio preview and the real page must never drift apart.
+		self._switch(
+			True,
+			login_brand_name="Acme",
+			login_headline="One place for everything",
+			login_points="First\nSecond",
+			login_footnote="(c) Acme",
+		)
+		payload = login_page.preview_payload()
+		context = login_page.get_login_context()
+		self.assertEqual(payload["enabled"], 1)
+		self.assertEqual(payload["brand_name"], context["nxlogin_brand_name"])
+		self.assertEqual(payload["headline"], context["nxlogin_headline"])
+		self.assertEqual(payload["points"], context["nxlogin_points"])
+		self.assertEqual(payload["footnote"], context["nxlogin_footnote"])
+		self.assertEqual(payload["points"], ["First", "Second"])
+
+	def test_preview_payload_reports_the_switch_being_off(self):
+		self._switch(False)
+		self.assertEqual(login_page.preview_payload()["enabled"], 0)
+		# Still describable, so the studio can show what it would look like.
+		self.assertTrue(login_page.preview_payload()["headline"])
+
+	def test_preview_endpoint_is_callable_by_a_desk_user(self):
+		from nexus_theme.api import get_login_preview
+
+		self._switch(True)
+		frappe.set_user("Administrator")
+		try:
+			payload = get_login_preview()
+		finally:
+			frappe.set_user("Guest")
+		self.assertIn("brand_name", payload)
+		self.assertIn("points", payload)
+
 	# -- context helpers ----------------------------------------------------
 
 	def test_panel_points_are_one_per_line_and_capped(self):

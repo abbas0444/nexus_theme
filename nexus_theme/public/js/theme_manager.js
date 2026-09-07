@@ -3,7 +3,7 @@
 
   // We deliberately use a different attribute than Frappe's `data-theme`
   // (which Frappe sets to "light"/"dark") so the two systems never clobber
-  // each other. CSS in theme_variables.css scopes everything under
+  // each other. CSS in theme_variables.bundle.css scopes everything under
   // html[data-app-theme].
   const STORAGE_KEY = "theme:active";
   const APP_ATTR = "data-app-theme";
@@ -271,7 +271,7 @@
 
     // Brief opacity dip on the body while we swap CSS variables. Only used
     // for committed changes (setActive, reset) — live preview is silent.
-    // Honors prefers-reduced-motion via the CSS guard in theme_variables.css.
+    // Honors prefers-reduced-motion via the CSS guard in theme_variables.bundle.css.
     _crossfade(applyFn) {
       const body = document.body;
       if (!body || typeof applyFn !== "function") {
@@ -296,7 +296,7 @@
       this.overrides = overrides || {};
       // Theme variables live on <html> only. The Theme Studio dialog
       // carries the `theme-studio-isolated` class, and CSS in
-      // theme_switcher.css redeclares every themed variable inside that
+      // theme_switcher.bundle.css redeclares every themed variable inside that
       // subtree — so the dialog never picks up the active theme even
       // though it inherits from <html>. We do NOT touch any element
       // tagged `theme-studio-isolated` here, ever.

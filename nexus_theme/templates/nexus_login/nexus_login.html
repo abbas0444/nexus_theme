@@ -137,12 +137,10 @@
 	<div class="nxlogin-form-col">
 		<div class="nxlogin-form-inner">
 			<div class="nxlogin-brand">
-				{% if nxlogin_logo %}
-				<img class="nxlogin-brand-logo" src="{{ nxlogin_logo | e }}" alt="">
-				{% elif logo %}
-				<img class="nxlogin-brand-logo" src="{{ logo | e }}" alt="">
+				{% if nxlogin_logo or logo %}
+				<img class="nxlogin-brand-logo" src="{{ (nxlogin_logo or logo) | e }}" alt="">
 				{% endif %}
-				<span class="nxlogin-brand-name">{{ app_name | e }}</span>
+				<span class="nxlogin-brand-name">{{ nxlogin_brand_name | e }}</span>
 			</div>
 
 			<section class="for-login">

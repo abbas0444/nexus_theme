@@ -123,6 +123,77 @@ class NexusLoginPage(TemplatePage):
 		self.context.update(get_login_context())
 
 
+def app_name() -> str:
+	"""The site's own name, resolved the way Frappe's login page resolves it."""
+	from frappe import _
+
+	try:
+		return (
+			frappe.get_website_settings("app_name") or frappe.get_system_settings("app_name") or _("Frappe")
+		)
+	except Exception:
+		return "Frappe"
+
+
+def brand(settings: dict, fallback_logo: str | None = None) -> dict:
+	"""The name and logo shown above the sign-in form.
+
+	An admin can name the sign-in screen whatever they like; left empty it is
+	the site's own app name and logo, so the page looks like the site rather
+	than like this app.
+	"""
+	return {
+		"name": (settings.get("login_brand_name") or "").strip() or app_name(),
+		"logo": public_file(settings.get("login_brand_logo"))
+		or public_file(settings.get("navbar_logo"))
+		or fallback_logo,
+	}
+
+
+def copy_for(settings: dict) -> dict:
+	"""The words on the page. Shared by the live page and the Theme Studio
+	preview, so the two can never drift apart."""
+	return {
+		"subtitle": (settings.get("login_subtitle") or "").strip(),
+		"headline": (settings.get("login_headline") or "").strip() or DEFAULT_HEADLINE,
+		"subheadline": (settings.get("login_subheadline") or "").strip() or DEFAULT_SUBHEADLINE,
+		"points": panel_points(settings.get("login_points")),
+		"stat": (settings.get("login_stat") or "").strip(),
+		"stat_note": (settings.get("login_stat_note") or "").strip(),
+		"footnote": (settings.get("login_footnote") or "").strip(),
+		"image": public_file(settings.get("login_background")),
+	}
+
+
+def preview_payload() -> dict:
+	"""Everything Theme Studio needs to draw the sign-in screen.
+
+	None of it is private: every value is rendered on a page served to
+	anonymous visitors.
+	"""
+	try:
+		settings = _settings()
+	except Exception:
+		settings = {}
+
+	fallback_logo = None
+	try:
+		from frappe.core.doctype.navbar_settings.navbar_settings import get_app_logo
+
+		fallback_logo = get_app_logo()
+	except Exception:
+		pass
+
+	marks = brand(settings, fallback_logo)
+	payload = {
+		"enabled": 1 if settings.get("use_nexus_login") else 0,
+		"brand_name": marks["name"],
+		"brand_logo": marks["logo"],
+	}
+	payload.update(copy_for(settings))
+	return payload
+
+
 def get_login_context() -> dict:
 	"""The extra values our template needs, on top of Frappe's own."""
 	try:
@@ -131,6 +202,8 @@ def get_login_context() -> dict:
 		settings = {}
 
 	theme = _resolve_theme(settings)
+	words = copy_for(settings)
+	marks = brand(settings)
 
 	return {
 		# base.html renders this on <body>; the stylesheet uses it to clear the
@@ -139,15 +212,16 @@ def get_login_context() -> dict:
 		"nxlogin_theme_css": theme_css_rules(theme) if theme else "",
 		"nxlogin_theme_js": remembered_theme_script(),
 		"nxlogin_is_dark": 1 if (theme or {}).get("is_dark") else 0,
-		"nxlogin_logo": public_file(settings.get("navbar_logo")),
-		"nxlogin_image": public_file(settings.get("login_background")),
-		"nxlogin_headline": (settings.get("login_headline") or "").strip() or DEFAULT_HEADLINE,
-		"nxlogin_subheadline": (settings.get("login_subheadline") or "").strip() or DEFAULT_SUBHEADLINE,
-		"nxlogin_points": panel_points(settings.get("login_points")),
-		"nxlogin_stat": (settings.get("login_stat") or "").strip(),
-		"nxlogin_stat_note": (settings.get("login_stat_note") or "").strip(),
-		"nxlogin_footnote": (settings.get("login_footnote") or "").strip(),
-		"nxlogin_subtitle": (settings.get("login_subtitle") or "").strip(),
+		"nxlogin_brand_name": marks["name"],
+		"nxlogin_logo": marks["logo"],
+		"nxlogin_image": words["image"],
+		"nxlogin_headline": words["headline"],
+		"nxlogin_subheadline": words["subheadline"],
+		"nxlogin_points": words["points"],
+		"nxlogin_stat": words["stat"],
+		"nxlogin_stat_note": words["stat_note"],
+		"nxlogin_footnote": words["footnote"],
+		"nxlogin_subtitle": words["subtitle"],
 	}
 
 

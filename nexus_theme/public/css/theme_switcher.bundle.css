@@ -1098,3 +1098,258 @@
   font-size: var(--text-sm, 12px);
   color: var(--text-light, var(--text-muted));
 }
+
+/* ==================================================================
+   Login page preview (Theme Studio → View Login)
+   ------------------------------------------------------------------
+   A scaled drawing of the real sign-in screen, painted from the theme
+   the user has selected in the studio. Colours are declared with
+   !important for the same reason the Desk mockup does it: the studio
+   dialog isolates itself from the active theme with
+   `.theme-studio-isolated *`, and the preview has to opt back in.
+   ================================================================== */
+
+.nxlp-wrap {
+  padding: 2px;
+}
+
+/* The studio isolation block sets colour and font on `.theme-studio-isolated *`
+   with !important, which lands directly on every element inside the preview,
+   inheritance included. These two rules have the same specificity and come
+   later in the file, so the preview shows the theme's own font, and text
+   nested in a span keeps the colour of the surface it sits on. */
+.nxlp,
+.nxlp * {
+  font-family: var(--nxlp-font) !important;
+}
+
+.nxlp-brand span {
+  color: var(--nxlp-text) !important;
+}
+
+.nxlp-points li span {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.nxlp {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  min-height: 340px;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  background: var(--nxlp-bg) !important;
+  color: var(--nxlp-text) !important;
+  font-family: var(--nxlp-font) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.nxlp-form {
+  padding: 26px 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.nxlp-brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 22px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--nxlp-text) !important;
+}
+
+.nxlp-logo {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  border-radius: 5px;
+}
+
+.nxlp-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--nxlp-text) !important;
+}
+
+.nxlp-sub {
+  margin: 3px 0 18px;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--nxlp-muted) !important;
+}
+
+.nxlp-label {
+  margin-bottom: 4px;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--nxlp-text) !important;
+}
+
+.nxlp-input {
+  height: 30px;
+  margin-bottom: 11px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  font-size: 10.5px;
+  color: var(--nxlp-muted) !important;
+  background: var(--nxlp-input) !important;
+  border: 1px solid var(--nxlp-border) !important;
+  border-radius: var(--nxlp-radius) !important;
+}
+
+.nxlp-input-dots {
+  letter-spacing: 2px;
+}
+
+.nxlp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 2px 0 14px;
+  font-size: 9.5px;
+  color: var(--nxlp-muted) !important;
+}
+
+.nxlp-remember {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.nxlp-box {
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--nxlp-border) !important;
+  border-radius: 3px;
+  background: var(--nxlp-input) !important;
+}
+
+.nxlp-link {
+  color: var(--nxlp-accent) !important;
+  font-weight: 500;
+}
+
+.nxlp-btn {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--nxlp-btn-text) !important;
+  background-image: linear-gradient(180deg, var(--nxlp-btn-bg), var(--nxlp-btn-hover)) !important;
+  background-color: var(--nxlp-btn-bg) !important;
+  border-radius: var(--nxlp-radius) !important;
+}
+
+.nxlp-foot {
+  margin-top: 20px;
+  font-size: 9px;
+  color: var(--nxlp-muted) !important;
+  opacity: 0.85;
+}
+
+.nxlp-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 10px 10px 10px 0;
+  padding: 30px 32px;
+  border-radius: 14px;
+  color: #ffffff !important;
+  background-color: color-mix(in srgb, var(--nxlp-accent) 30%, #0a0a12) !important;
+  background-image: radial-gradient(
+      115% 85% at 88% 8%,
+      color-mix(in srgb, var(--nxlp-accent) 55%, transparent),
+      transparent 62%
+    ),
+    linear-gradient(
+      152deg,
+      color-mix(in srgb, var(--nxlp-accent) 46%, #0b0b14) 0%,
+      color-mix(in srgb, var(--nxlp-accent) 10%, #07070d) 100%
+    ) !important;
+}
+
+.nxlp-headline {
+  font-size: 24px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #ffffff !important;
+}
+
+.nxlp-panel-sub {
+  margin-top: 10px;
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.74) !important;
+  max-width: 40ch;
+}
+
+.nxlp-points {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.nxlp-points li {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.nxlp-points svg {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  margin-top: 1px;
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.nxlp-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16) !important;
+  flex-wrap: wrap;
+}
+
+.nxlp-stat b {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff !important;
+}
+
+.nxlp-stat span {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+
+.nxlp-note {
+  margin: 12px 2px 0;
+  font-size: 12px;
+  color: var(--text-muted, #6b7280);
+}
+
+@media (max-width: 700px) {
+  .nxlp {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nxlp-panel {
+    display: none;
+  }
+}

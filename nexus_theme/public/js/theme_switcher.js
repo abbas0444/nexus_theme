@@ -104,7 +104,7 @@
     const dialog = new frappe.ui.Dialog({
       title: __("Theme Studio"),
       size: "large",
-      // Tag the wrapper so CSS in theme_switcher.css can opt-out of the
+      // Tag the wrapper so CSS in theme_switcher.bundle.css can opt-out of the
       // currently-active theme's variables — we want the studio itself to
       // stay legible no matter what theme the user is previewing.
       custom_cls: "theme-studio-isolated",
@@ -341,6 +341,53 @@
       input.click();
     };
 
+    // ---- Login page preview ----
+    // One dialog, reused: frappe.ui.Dialog leaves its markup in the DOM after
+    // hide(), so building a new one per click would stack copies of the
+    // preview behind the studio.
+    let loginInfo = null;
+    let loginPreviewDialog = null;
+    const handleViewLogin = async () => {
+      if (!loginInfo) {
+        try {
+          const r = await frappe.call({ method: "nexus_theme.api.get_login_preview" });
+          loginInfo = (r && r.message) || {};
+        } catch (_err) {
+          loginInfo = {};
+        }
+      }
+      const overrides = editor ? editor.getOverrides() : {};
+      const note = loginInfo.enabled
+        ? __("This is your sign-in screen with the theme selected above.")
+        : __(
+            "This is how your sign-in screen would look. It is not switched on yet: a System Manager turns it on in Theme Settings."
+          );
+
+      if (!loginPreviewDialog) {
+        loginPreviewDialog = new frappe.ui.Dialog({
+          title: __("Login Page"),
+          size: "large",
+          custom_cls: "theme-studio-isolated",
+          fields: [{ fieldtype: "HTML", fieldname: "login_preview" }],
+          primary_action_label: __("Close"),
+          primary_action: () => loginPreviewDialog.hide(),
+        });
+        loginPreviewDialog.$wrapper.addClass("theme-studio-isolated");
+        loginPreviewDialog.$wrapper
+          .find(".modal-dialog, .modal-content")
+          .addClass("theme-studio-isolated");
+      }
+
+      // Rebuilt on every open so it always shows the theme selected right now.
+      loginPreviewDialog.fields_dict.login_preview.$wrapper.html(
+        `<div class="nxlp-wrap">
+          ${buildLoginPreviewHTML(selectedTheme, overrides, loginInfo)}
+          <p class="nxlp-note">${escapeHtml(note)}</p>
+        </div>`
+      );
+      loginPreviewDialog.show();
+    };
+
     const injectFooterButtons = () => {
       const $footer = dialog.$wrapper.find(".modal-footer").first();
       if (!$footer.length) return;
@@ -359,6 +406,7 @@
         place($btn);
       };
 
+      add("btn-view-login", __("View Login"), handleViewLogin);
       add("btn-auto-pair", __("Auto Light/Dark"), handleAutoPair);
       add("btn-export-theme", __("Export"), handleExport);
       if (gov.allow_custom_themes) {
@@ -468,7 +516,7 @@
   // will feel — navbar + sidebar + form + table + button — without ever
   // touching the live page. Theme colors flow through `--mock-*` CSS
   // custom properties on the wrapper, then `.theme-preview-mockup` rules
-  // in theme_switcher.css use them, which lets `:hover` work.
+  // in theme_switcher.bundle.css use them, which lets `:hover` work.
   function buildPreviewHTML(theme, overrides) {
     const t = Object.assign({}, theme || {}, overrides || {});
     const v = (key, fallback) => {
@@ -548,6 +596,84 @@
               )}</div>
             </div>
           </div>
+        </div>
+      </div>`;
+  }
+
+  // ------------------------------------------------------------------
+  // Login page preview
+  // ------------------------------------------------------------------
+  // The sign-in screen is the one part of the theme a signed-in user cannot
+  // see without signing out. This draws it from the same theme tokens the
+  // real page consumes, and from the same words, so what it shows is what
+  // the visitor gets.
+  // ------------------------------------------------------------------
+  function buildLoginPreviewHTML(theme, overrides, info) {
+    const t = Object.assign({}, theme || {}, overrides || {});
+    const v = (key, fallback) => {
+      const x = t[key];
+      return x == null || x === "" ? fallback : x;
+    };
+
+    const style = [
+      `--nxlp-bg:${escapeHtml(v("bg_primary", "#ffffff"))}`,
+      `--nxlp-input:${escapeHtml(v("bg_input", "#ffffff"))}`,
+      `--nxlp-text:${escapeHtml(v("text_primary", "#16181d"))}`,
+      `--nxlp-muted:${escapeHtml(v("text_muted", "#6b7280"))}`,
+      `--nxlp-accent:${escapeHtml(v("accent", "#7c3aed"))}`,
+      `--nxlp-accent-hover:${escapeHtml(v("accent_hover", "#6d28d9"))}`,
+      `--nxlp-btn-bg:${escapeHtml(v("button_bg", v("accent", "#7c3aed")))}`,
+      `--nxlp-btn-text:${escapeHtml(v("button_text", "#ffffff"))}`,
+      `--nxlp-btn-hover:${escapeHtml(v("button_hover_bg", v("accent_hover", "#6d28d9")))}`,
+      `--nxlp-border:${escapeHtml(v("border", "#e3e6ea"))}`,
+      `--nxlp-radius:${escapeHtml(v("border_radius", "10px"))}`,
+      `--nxlp-font:${escapeHtml(v("font_family", '"Inter", system-ui, sans-serif'))}`,
+    ].join(";");
+
+    const tick = `<svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/><path d="m6.4 10.2 2.4 2.4 4.8-4.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+    const logo = info.brand_logo
+      ? `<img class="nxlp-logo" src="${escapeHtml(info.brand_logo)}" alt="">`
+      : "";
+    const points = (info.points || [])
+      .map((point) => `<li>${tick}<span>${escapeHtml(point)}</span></li>`)
+      .join("");
+    const stat =
+      info.stat || info.stat_note
+        ? `<div class="nxlp-stat">${
+            info.stat ? `<b>${escapeHtml(info.stat)}</b>` : ""
+          }<span>${escapeHtml(info.stat_note || "")}</span></div>`
+        : "";
+    const footnote = info.footnote
+      ? `<div class="nxlp-foot">${escapeHtml(info.footnote)}</div>`
+      : "";
+
+    return `
+      <div class="nxlp" style="${style}">
+        <div class="nxlp-form">
+          <div class="nxlp-brand">${logo}<span>${escapeHtml(info.brand_name || "")}</span></div>
+          <div class="nxlp-title">${escapeHtml(__("Sign In"))}</div>
+          <div class="nxlp-sub">${escapeHtml(
+            info.subtitle || __("Welcome back. Please sign in to continue.")
+          )}</div>
+          <div class="nxlp-label">${escapeHtml(__("Email"))}</div>
+          <div class="nxlp-input">${escapeHtml(__("Enter your username or email"))}</div>
+          <div class="nxlp-label">${escapeHtml(__("Password"))}</div>
+          <div class="nxlp-input nxlp-input-dots">••••••••</div>
+          <div class="nxlp-row">
+            <span class="nxlp-remember"><span class="nxlp-box"></span>${escapeHtml(
+              __("Remember me")
+            )}</span>
+            <span class="nxlp-link">${escapeHtml(__("Forgot Password?"))}</span>
+          </div>
+          <div class="nxlp-btn">${escapeHtml(__("Sign In"))}</div>
+          ${footnote}
+        </div>
+        <div class="nxlp-panel">
+          <div class="nxlp-headline">${escapeHtml(info.headline || "")}</div>
+          <div class="nxlp-panel-sub">${escapeHtml(info.subheadline || "")}</div>
+          ${points ? `<ul class="nxlp-points">${points}</ul>` : ""}
+          ${stat}
         </div>
       </div>`;
   }

@@ -727,6 +727,19 @@ def clear_all_user_sounds():
 	return {"ok": True}
 
 
+@frappe.whitelist()
+def get_login_preview():
+	"""The sign-in screen's brand and words, for Theme Studio's preview.
+
+	Every value here is already shown to anonymous visitors on the login page,
+	so this adds no exposure; it saves a Desk user from signing out to see
+	what their theme does to the sign-in screen.
+	"""
+	from nexus_theme.login_page import preview_payload
+
+	return preview_payload()
+
+
 def check_app_permission() -> bool:
 	"""Gate the app's tile on the Desk apps screen.
 

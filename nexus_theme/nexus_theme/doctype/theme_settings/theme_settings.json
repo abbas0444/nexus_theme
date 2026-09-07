@@ -25,6 +25,8 @@
   "login_background",
   "login_page_section",
   "use_nexus_login",
+  "login_brand_name",
+  "login_brand_logo",
   "login_subtitle",
   "login_footnote",
   "column_break_login",
@@ -196,12 +198,26 @@
    "fieldtype": "Data",
    "label": "Panel Figure Note",
    "depends_on": "use_nexus_login"
+  },
+  {
+   "fieldname": "login_brand_name",
+   "fieldtype": "Data",
+   "label": "Login Brand Name",
+   "depends_on": "use_nexus_login",
+   "description": "The name beside the logo on the sign-in screen. Empty means the site's own app name."
+  },
+  {
+   "fieldname": "login_brand_logo",
+   "fieldtype": "Attach Image",
+   "label": "Login Brand Logo",
+   "depends_on": "use_nexus_login",
+   "description": "Empty falls back to Navbar Logo, then the site's app logo. Upload it as a public file: nobody is signed in on the login page, so a private file cannot be shown there."
   }
  ],
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-09-07 20:15:00.000000",
+ "modified": "2026-09-07 21:40:00.000000",
  "modified_by": "Administrator",
  "module": "Nexus Theme",
  "name": "Theme Settings",
