@@ -861,8 +861,12 @@
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", Arial, sans-serif !important;
 }
 
-/* Modal surfaces. */
-.theme-studio-isolated.modal,
+/* Modal surfaces.
+   `.theme-studio-isolated` sits on the `.modal` element itself, which
+   Bootstrap stretches over the whole viewport as the scroll container.
+   Painting THAT opaque would hide the Desk — sidebar, backdrop dim and
+   all — behind a blank sheet, so it is deliberately left out of this
+   list; only the dialog's own surfaces are painted. */
 .theme-studio-isolated .modal-dialog,
 .theme-studio-isolated .modal-content,
 .theme-studio-isolated .modal-header,

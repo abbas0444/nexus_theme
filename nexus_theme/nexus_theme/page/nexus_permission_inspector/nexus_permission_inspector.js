@@ -52,6 +52,9 @@ frappe.pages["nexus-permission-inspector"].on_page_show = function (wrapper) {
 		mask: [__("See masked values"), __("See the real value of fields that show as asterisks to others.")],
 	};
 	const ESSENTIAL = ["read", "write", "create", "delete", "submit", "cancel"];
+	// Roles shown before the list folds. Administrator carries around fifty,
+	// which would push the table itself off the screen.
+	const ROLES_SHOWN = 12;
 	const STATE_TEXT = { 1: __("Yes"), 0: __("No"), 2: __("Own only"), na: "–" };
 
 	// Frappe's rule dependencies. Ticking a flag pulls in what it needs;
@@ -163,6 +166,11 @@ frappe.pages["nexus-permission-inspector"].on_page_show = function (wrapper) {
 			this.$root.on("click", ".nxpi-seg", (e) => this.set_kind($(e.currentTarget).data("kind")));
 			this.$clear.on("click", () => this.clear());
 			this.$root.on("click", ".nxpi-help-btn", () => this.$help.prop("hidden", !this.$help.prop("hidden")));
+			this.$root.on("click", ".nxpi-roles-toggle", (e) => {
+				const $b = $(e.currentTarget);
+				const open = $b.closest(".nxpi-chips").toggleClass("is-open").hasClass("is-open");
+				$b.text(open ? $b.data("less") : $b.data("more"));
+			});
 
 			const debounced = frappe.utils.debounce(() => {
 				this.filters.search = (this.$search.val() || "").trim().toLowerCase();
@@ -472,21 +480,28 @@ frappe.pages["nexus-permission-inspector"].on_page_show = function (wrapper) {
 					badges.push(`<span class="indicator-pill blue" title="${esc(__("Can manage users and permissions"))}">${__("System Manager")}</span>`);
 				}
 				const chips = t.roles
-					.map((r) => {
+					.map((r, i) => {
 						const cls = ["nxpi-chip"];
 						let title = "";
 						if (t.disabled_roles.includes(r)) {
 							cls.push("is-disabled");
 							title = __("This role is switched off, so it gives nothing");
 						}
+						if (i >= ROLES_SHOWN) cls.push("is-extra");
 						return `<span class="${cls.join(" ")}" title="${esc(title)}">${esc(r)}</span>`;
 					})
 					.join("");
+				const hidden_roles = Math.max(0, t.roles.length - ROLES_SHOWN);
+				const roles_toggle = hidden_roles
+					? `<button type="button" class="nxpi-roles-toggle" data-more="${esc(
+							__("{0} more", [hidden_roles])
+						)}" data-less="${esc(__("Show fewer"))}">${__("{0} more", [hidden_roles])}</button>`
+					: "";
 
 				let notes = "";
 				if (t.is_admin) {
 					notes += `<div class="nxpi-note is-warn">${__(
-						"The Administrator account is above the permission system. Every row below shows Yes, and editing is switched off."
+						"The Administrator account is above the permission system. Every box below is ticked, and editing is switched off."
 					)}</div>`;
 				}
 				if (!t.enabled) {
@@ -506,7 +521,7 @@ frappe.pages["nexus-permission-inspector"].on_page_show = function (wrapper) {
 						<div class="nxpi-summary-sentence">${this.sentence(s)}</div>
 						<div class="nxpi-chips"><span class="nxpi-roles-label">${__("Roles")}:</span>${
 							chips || `<span class="nxpi-summary-id">${__("none")}</span>`
-						}</div>
+						}${roles_toggle}</div>
 						${notes}
 					</div>
 					${this.stats_html(s)}
@@ -803,7 +818,7 @@ frappe.pages["nexus-permission-inspector"].on_page_show = function (wrapper) {
 				}
 			}
 			if (this.editing && this.is_cell_editable(row, ptype)) {
-				text += `\n${this.data.target.type === "user" ? __("Click to choose which role should change") : __("Click to switch between Yes and No")}`;
+				text += `\n${this.data.target.type === "user" ? __("Click to choose which role should change") : __("Click to tick or untick this")}`;
 			}
 			if (row.lock) text += `\n${row.lock}`;
 			return text;
@@ -817,6 +832,11 @@ frappe.pages["nexus-permission-inspector"].on_page_show = function (wrapper) {
 			return !this.locked_roles.has(t.name);
 		}
 
+		// One cell = one tick box, so a whole column reads at a glance:
+		// filled+tick = allowed, empty = not allowed, filled+square = own
+		// records only, dash = the action does not exist here. The box is a
+		// fixed size, which is what keeps every column in line; the words
+		// live in the cell's tooltip and in the legend above the table.
 		cell_html(row, ptype, ev) {
 			const state = this.cell_state(row, ptype, ev);
 			const editable = this.is_cell_editable(row, ptype);
@@ -824,16 +844,25 @@ frappe.pages["nexus-permission-inspector"].on_page_show = function (wrapper) {
 			if (editable) cls.push("is-editable");
 			const pending = this.scope_roles().some((role) => this.pending_value(row.n, role, ptype) !== null);
 			if (pending) cls.push("is-pending");
-			let own_mark = "";
-			if (this.data.target.type === "role" && state !== "na") {
+
+			// A role can also carry a separate "only on their own records"
+			// rule on top of a plain Yes. Marked with a corner dot rather
+			// than a second line of text, which would make this row taller
+			// than its neighbours and break the grid.
+			let own = false;
+			if (this.data.target.type === "role" && state !== "na" && state !== 2) {
 				const role = this.data.target.name;
-				if (row.o && row.o[role] && row.o[role].includes(ptype) && state !== 2) {
-					own_mark = `<span class="nxpi-own-mark" title="${esc(__("Also allowed on their own records by a separate rule"))}">${__("+ own")}</span>`;
-				}
+				own = !!(row.o && row.o[role] && row.o[role].includes(ptype));
 			}
+
+			let title = this.cell_title(row, ptype, state, ev);
+			if (own) title += `\n${__("Also allowed on their own records by a separate rule")}`;
+
+			const mark = ["nxpi-mark", `is-${state}`];
+			if (own) mark.push("has-own");
 			return `<td class="${cls.join(" ")}" data-dt="${esc(row.n)}" data-pt="${esc(ptype)}" title="${esc(
-				this.cell_title(row, ptype, state, ev)
-			)}"><span class="nxpi-pill is-${state}">${STATE_TEXT[state]}</span>${own_mark}</td>`;
+				title
+			)}"><span class="${mark.join(" ")}" role="img" aria-label="${esc(STATE_TEXT[state])}"></span></td>`;
 		}
 
 		source_html(row, ev) {
@@ -883,8 +912,8 @@ frappe.pages["nexus-permission-inspector"].on_page_show = function (wrapper) {
 			if (this.editing) {
 				this.$editbar_text.text(
 					t.type === "user"
-						? __("Click any Yes or No. You will be asked which of this person's roles should change. Nothing is saved until you press Save changes.")
-						: __("Click any Yes or No to switch it. Nothing is saved until you press Save changes.")
+						? __("Click any box to tick or untick it. You will be asked which of this person's roles should change. Nothing is saved until you press Save changes.")
+						: __("Click any box to tick or untick it. Nothing is saved until you press Save changes.")
 				);
 			}
 		}

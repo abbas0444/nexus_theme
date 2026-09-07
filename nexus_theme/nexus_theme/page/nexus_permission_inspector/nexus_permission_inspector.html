@@ -18,7 +18,7 @@
 			</div>
 			<div class="nxpi-pick-control" data-control="user"></div>
 			<div class="nxpi-pick-control" data-control="role" hidden></div>
-			<button class="btn btn-default btn-sm nxpi-clear" type="button" hidden>{{ __("Start over") }}</button>
+			<button class="btn btn-default btn-sm nxpi-clear" type="button" hidden title="{{ __("Empty the box and start again") }}">{{ __("Reset") }}</button>
 		</div>
 
 		<div class="nxpi-help" hidden>
@@ -83,10 +83,10 @@
 			</div>
 
 			<div class="nxpi-legend">
-				<span class="nxpi-pill is-1">{{ __("Yes") }}</span><span>{{ __("allowed") }}</span>
-				<span class="nxpi-pill is-0">{{ __("No") }}</span><span>{{ __("not allowed") }}</span>
-				<span class="nxpi-pill is-2">{{ __("Own only") }}</span><span>{{ __("only on records they created") }}</span>
-				<span class="nxpi-pill is-na">&ndash;</span><span>{{ __("does not apply to this record type") }}</span>
+				<span class="nxpi-legend-item"><span class="nxpi-mark is-1" aria-hidden="true"></span>{{ __("allowed") }}</span>
+				<span class="nxpi-legend-item"><span class="nxpi-mark is-0" aria-hidden="true"></span>{{ __("not allowed") }}</span>
+				<span class="nxpi-legend-item"><span class="nxpi-mark is-2" aria-hidden="true"></span>{{ __("only on records they created") }}</span>
+				<span class="nxpi-legend-item"><span class="nxpi-mark is-na" aria-hidden="true"></span>{{ __("does not apply") }}</span>
 				<span class="nxpi-legend-tip">{{ __("Click a record type for details and reasons.") }}</span>
 			</div>
 

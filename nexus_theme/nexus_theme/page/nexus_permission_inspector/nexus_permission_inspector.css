@@ -22,6 +22,11 @@
   --nxpi-muted: var(--text-muted, #6b7280);
   --nxpi-text: var(--text-color, #1f2937);
   --nxpi-radius: var(--border-radius-md, 10px);
+  /* One height for every control on a row — segmented buttons, inputs,
+     selects and small buttons all come from different Frappe defaults,
+     so they are pinned here instead of being left to line up by luck. */
+  --nxpi-ctl-h: 32px;
+  --nxpi-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -35,6 +40,7 @@
   border: 1px solid var(--nxpi-border);
   border-radius: var(--nxpi-radius);
   padding: 16px 18px;
+  box-shadow: var(--nxpi-shadow);
 }
 
 /* ---------- Steps ---------- */
@@ -82,36 +88,54 @@
   max-width: 70ch;
 }
 
-/* ---------- Picker ---------- */
+/* ---------- Picker ----------
+   Segmented control, search box and Reset button share one height and one
+   centre line, so the row reads as a single instrument rather than three
+   controls that happen to sit next to each other. */
 .nxpi-pick-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
   padding-left: 40px;
 }
 
 .nxpi-segment {
   display: inline-flex;
+  align-items: stretch;
+  height: var(--nxpi-ctl-h);
   border: 1px solid var(--nxpi-border);
   border-radius: 999px;
   overflow: hidden;
   background: var(--nxpi-soft);
+  flex: 0 0 auto;
 }
 
 .nxpi-seg {
   border: 0;
   background: transparent;
-  padding: 6px 16px;
+  padding: 0 16px;
   font-size: 13px;
+  line-height: 1;
   color: var(--nxpi-muted);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.nxpi-seg:hover {
+  color: var(--nxpi-text);
 }
 
 .nxpi-seg.is-active {
   background: var(--nxpi-accent);
   color: #fff;
   font-weight: 600;
+}
+
+.nxpi-seg.is-active:hover {
+  color: #fff;
 }
 
 .nxpi-pick-control {
@@ -122,6 +146,29 @@
 .nxpi-pick-control .frappe-control,
 .nxpi-pick-control .form-group {
   margin-bottom: 0;
+}
+
+/* Frappe's control always renders a label row, even with no label to put
+   in it: 21px of empty space that would push the input below the pills and
+   the button beside it. */
+.nxpi-pick-control .clearfix,
+.nxpi-pick-control .help-box {
+  display: none;
+}
+
+/* Frappe's Link control brings its own control height; override it so the
+   input matches the pills and the button beside it exactly. */
+.nxpi-pick-control .form-control,
+.nxpi-pick-control input {
+  height: var(--nxpi-ctl-h);
+  font-size: 13px;
+}
+
+.nxpi-pick-row .nxpi-clear {
+  height: var(--nxpi-ctl-h);
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
 }
 
 /* ---------- Help ---------- */
@@ -219,6 +266,26 @@
   color: var(--nxpi-muted);
 }
 
+/* A long role list folds after the first dozen, so the table below stays
+   on screen. The toggle reads "12 more" / "Show fewer". */
+.nxpi-chips .nxpi-chip.is-extra {
+  display: none;
+}
+
+.nxpi-chips.is-open .nxpi-chip.is-extra {
+  display: inline-flex;
+}
+
+.nxpi-roles-toggle {
+  border: 0;
+  background: transparent;
+  padding: 2px 4px;
+  font-size: 12px;
+  color: var(--nxpi-accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 .nxpi-note {
   font-size: 13px;
   line-height: 1.5;
@@ -289,9 +356,15 @@
 }
 
 .nxpi-filters .form-control {
-  height: 30px;
+  height: var(--nxpi-ctl-h);
   font-size: 12.5px;
   width: auto;
+}
+
+.nxpi-toolbar .btn {
+  height: var(--nxpi-ctl-h);
+  display: inline-flex;
+  align-items: center;
 }
 
 .nxpi-search {
@@ -313,6 +386,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-left: auto; /* stays on the right after the filters wrap */
 }
 
 .nxpi-count {
@@ -332,8 +406,11 @@
   border-bottom: 1px solid var(--nxpi-border);
 }
 
-.nxpi-legend > span:not(.nxpi-pill) {
-  margin-right: 8px;
+.nxpi-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-right: 10px;
 }
 
 .nxpi-legend-tip {
@@ -351,7 +428,103 @@
   border-bottom: 1px solid var(--nxpi-border);
 }
 
-/* ---------- Pills ---------- */
+/* ---------- Tick boxes ----------
+   The matrix says one thing per cell, so it says it with a box rather than
+   a word: filled with a tick = allowed, empty = not allowed, filled with a
+   square = allowed only on their own records, a dash = the action does not
+   exist for this record type. Every box is the same 18px, which is what
+   holds the columns in line whatever the row says. The words are in the
+   legend above the table and in each cell's tooltip. */
+.nxpi-mark {
+  display: inline-block;
+  position: relative;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid var(--nxpi-no);
+  background: transparent;
+  vertical-align: middle;
+  box-sizing: border-box;
+  transition: box-shadow 120ms ease;
+}
+
+/* Allowed — a ticked box. */
+.nxpi-mark.is-1 {
+  background: var(--nxpi-yes);
+  border-color: var(--nxpi-yes);
+}
+
+.nxpi-mark.is-1::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 1.5px;
+  width: 4px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Not allowed — the same box, left empty. */
+.nxpi-mark.is-0 {
+  border-color: var(--nxpi-border);
+  background: var(--nxpi-no-bg);
+  opacity: 0.9;
+}
+
+/* Own records only — deliberately not a tick, because it is not a plain
+   yes; the inner bar is the same shape a half-ticked checkbox uses. */
+.nxpi-mark.is-2 {
+  background: var(--nxpi-own);
+  border-color: var(--nxpi-own);
+}
+
+.nxpi-mark.is-2::after {
+  content: "";
+  position: absolute;
+  left: 3.5px;
+  right: 3.5px;
+  top: 6px;
+  height: 3px;
+  border-radius: 1px;
+  background: #fff;
+}
+
+/* Does not apply — no box at all, so an empty box always means "no". */
+.nxpi-mark.is-na {
+  border: 0;
+  background: transparent;
+}
+
+.nxpi-mark.is-na::after {
+  content: "\2013";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--nxpi-muted);
+  opacity: 0.5;
+  font-size: 13px;
+}
+
+/* A role that also has a separate "own records" rule on top of a plain
+   yes: a corner dot, so the row keeps its height. */
+.nxpi-mark.has-own::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--nxpi-own);
+  border: 1.5px solid var(--nxpi-surface);
+  box-sizing: content-box;
+}
+
+/* ---------- Pills (drawer and summary, where they sit beside a label) ---------- */
 .nxpi-pill {
   display: inline-block;
   min-width: 42px;
@@ -396,7 +569,8 @@
 
 .nxpi-table th,
 .nxpi-table td {
-  padding: 7px 10px;
+  padding: 0 12px;
+  height: 38px;
   border-bottom: 1px solid var(--nxpi-border);
   white-space: nowrap;
   vertical-align: middle;
@@ -406,15 +580,34 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  background: var(--nxpi-surface);
-  font-size: 11.5px;
+  background: var(--nxpi-soft);
+  height: 34px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   color: var(--nxpi-muted);
   text-align: center;
-  border-bottom: 2px solid var(--nxpi-border);
+  border-bottom: 1px solid var(--nxpi-border);
   cursor: default;
+}
+
+/* Every action column is the same width, so the header label sits
+   directly over its own stack of boxes. */
+.nxpi-table th:not(.nxpi-h-dt):not(.nxpi-h-src) {
+  width: 80px;
+}
+
+.nxpi-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.nxpi-row:hover td {
+  background: var(--nxpi-soft);
+}
+
+.nxpi-row:hover .nxpi-dt {
+  background: var(--nxpi-soft);
 }
 
 .nxpi-table thead th.nxpi-h-dt,
@@ -428,10 +621,16 @@
   left: 0;
   z-index: 1;
   background: var(--nxpi-surface);
-  min-width: 240px;
+  min-width: 260px;
   max-width: 340px;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* Marks the edge the rest of the table scrolls under. */
+  border-right: 1px solid var(--nxpi-border);
+}
+
+.nxpi-table .nxpi-h-dt {
+  background: var(--nxpi-soft);
 }
 
 .nxpi-table thead th.nxpi-h-dt {
@@ -442,12 +641,14 @@
   position: sticky;
   left: 0;
   background: var(--nxpi-soft);
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
+  height: 30px;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   color: var(--nxpi-muted);
-  padding: 6px 10px;
+  padding: 0 12px;
+  box-shadow: inset 3px 0 0 var(--nxpi-accent);
 }
 
 .nxpi-dt-link {
@@ -479,28 +680,21 @@
 
 .nxpi-cell {
   text-align: center;
-  min-width: 64px;
+  width: 80px;
+  padding: 0;
   user-select: none;
 }
 
-.nxpi-cell.is-editable .nxpi-pill {
+.nxpi-cell.is-editable {
   cursor: pointer;
-  box-shadow: 0 0 0 1px var(--nxpi-border);
 }
 
-.nxpi-cell.is-editable:hover .nxpi-pill {
-  box-shadow: 0 0 0 2px var(--nxpi-accent);
+.nxpi-cell.is-editable:hover .nxpi-mark {
+  box-shadow: 0 0 0 3px var(--nxpi-accent);
 }
 
-.nxpi-cell.is-pending .nxpi-pill {
-  box-shadow: 0 0 0 2px var(--nxpi-own);
-}
-
-.nxpi-cell .nxpi-own-mark {
-  display: block;
-  font-size: 10px;
-  color: var(--nxpi-own);
-  margin-top: 2px;
+.nxpi-cell.is-pending .nxpi-mark {
+  box-shadow: 0 0 0 3px var(--nxpi-own);
 }
 
 .nxpi-row.is-changed td {

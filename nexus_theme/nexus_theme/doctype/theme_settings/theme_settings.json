@@ -142,76 +142,76 @@
    "label": "Login Page"
   },
   {
+   "default": "0",
+   "description": "Replaces the sign-in screen with the app's own two-column page. Off means Frappe's standard login page, untouched.",
    "fieldname": "use_nexus_login",
    "fieldtype": "Check",
-   "label": "Use the Nexus Login Page",
-   "default": "0",
-   "description": "Replaces the sign-in screen with the app's own two-column page. Off means Frappe's standard login page, untouched."
+   "label": "Use the Nexus Login Page"
   },
   {
+   "depends_on": "use_nexus_login",
+   "description": "The small line under the Sign In heading.",
    "fieldname": "login_subtitle",
    "fieldtype": "Data",
-   "label": "Sign-in Subtitle",
-   "depends_on": "use_nexus_login",
-   "description": "The small line under the Sign In heading."
+   "label": "Sign-in Subtitle"
   },
   {
+   "depends_on": "use_nexus_login",
+   "description": "Shown at the bottom of the form. Leave it empty and it reads ©, this year and the Login Brand Name.",
    "fieldname": "login_footnote",
    "fieldtype": "Data",
-   "label": "Footer Line",
-   "depends_on": "use_nexus_login",
-   "description": "Shown at the bottom of the form, e.g. a copyright line."
+   "label": "Footer Line"
   },
   {
    "fieldname": "column_break_login",
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "use_nexus_login",
+   "description": "The large heading on the coloured panel.",
    "fieldname": "login_headline",
    "fieldtype": "Data",
-   "label": "Panel Headline",
-   "depends_on": "use_nexus_login",
-   "description": "The large heading on the coloured panel."
+   "label": "Panel Headline"
   },
   {
+   "depends_on": "use_nexus_login",
    "fieldname": "login_subheadline",
    "fieldtype": "Small Text",
-   "label": "Panel Text",
-   "depends_on": "use_nexus_login"
+   "label": "Panel Text"
   },
   {
+   "depends_on": "use_nexus_login",
+   "description": "One per line, up to six. Each is shown with a tick.",
    "fieldname": "login_points",
    "fieldtype": "Small Text",
-   "label": "Panel Points",
-   "depends_on": "use_nexus_login",
-   "description": "One per line, up to six. Each is shown with a tick."
+   "label": "Panel Points"
   },
   {
+   "depends_on": "use_nexus_login",
+   "description": "A short figure such as 300+. Leave both this and the note empty to hide the row.",
    "fieldname": "login_stat",
    "fieldtype": "Data",
-   "label": "Panel Figure",
-   "depends_on": "use_nexus_login",
-   "description": "A short figure such as 300+. Leave both this and the note empty to hide the row."
+   "label": "Panel Figure"
   },
   {
+   "depends_on": "use_nexus_login",
    "fieldname": "login_stat_note",
    "fieldtype": "Data",
-   "label": "Panel Figure Note",
-   "depends_on": "use_nexus_login"
+   "label": "Panel Figure Note"
   },
   {
+   "depends_on": "use_nexus_login",
+   "description": "The name beside the logo on the sign-in screen. Empty means the site's own app name.",
    "fieldname": "login_brand_name",
    "fieldtype": "Data",
-   "label": "Login Brand Name",
-   "depends_on": "use_nexus_login",
-   "description": "The name beside the logo on the sign-in screen. Empty means the site's own app name."
+   "label": "Login Brand Name"
   },
   {
+   "depends_on": "use_nexus_login",
+   "description": "Empty falls back to Navbar Logo, then the site's app logo. Upload it as a public file: nobody is signed in on the login page, so a private file cannot be shown there.",
    "fieldname": "login_brand_logo",
    "fieldtype": "Attach Image",
-   "label": "Login Brand Logo",
-   "depends_on": "use_nexus_login",
-   "description": "Empty falls back to Navbar Logo, then the site's app logo. Upload it as a public file: nobody is signed in on the login page, so a private file cannot be shown there."
+   "label": "Login Brand Logo"
   }
  ],
  "index_web_pages_for_search": 0,

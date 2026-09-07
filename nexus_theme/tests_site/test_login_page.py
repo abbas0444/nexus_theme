@@ -218,6 +218,21 @@ class TestNexusLoginPage(FrappeTestCase):
 		self.assertEqual(payload["footnote"], context["nxlogin_footnote"])
 		self.assertEqual(payload["points"], ["First", "Second"])
 
+	def test_footer_line_falls_back_to_the_brand_and_this_year(self):
+		# Nobody should have to retype a copyright line every January, and it
+		# must never name a site the admin has since rebranded.
+		from datetime import date
+
+		self._switch(True, login_brand_name="Acme Industries", login_footnote="")
+		expected = f"\u00a9 {date.today().year} Acme Industries"
+		self.assertEqual(login_page.preview_payload()["footnote"], expected)
+		self.assertEqual(login_page.get_login_context()["nxlogin_footnote"], expected)
+		self.assertIn(expected, _render_login())
+
+	def test_footer_line_typed_by_the_admin_wins(self):
+		self._switch(True, login_brand_name="Acme Industries", login_footnote="All rights reserved")
+		self.assertEqual(login_page.preview_payload()["footnote"], "All rights reserved")
+
 	def test_preview_payload_reports_the_switch_being_off(self):
 		self._switch(False)
 		self.assertEqual(login_page.preview_payload()["enabled"], 0)

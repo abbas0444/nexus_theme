@@ -150,7 +150,19 @@ def brand(settings: dict, fallback_logo: str | None = None) -> dict:
 	}
 
 
-def copy_for(settings: dict) -> dict:
+def default_footnote(brand_name: str) -> str:
+	"""The small print under the sign-in button, when nobody has typed any.
+
+	Built from the brand name and this year so it never names the wrong
+	company and never goes stale on the first of January.
+	"""
+	from datetime import date
+
+	name = (brand_name or "").strip()
+	return f"\u00a9 {date.today().year} {name}".strip() if name else ""
+
+
+def copy_for(settings: dict, brand_name: str | None = None) -> dict:
 	"""The words on the page. Shared by the live page and the Theme Studio
 	preview, so the two can never drift apart."""
 	return {
@@ -160,7 +172,7 @@ def copy_for(settings: dict) -> dict:
 		"points": panel_points(settings.get("login_points")),
 		"stat": (settings.get("login_stat") or "").strip(),
 		"stat_note": (settings.get("login_stat_note") or "").strip(),
-		"footnote": (settings.get("login_footnote") or "").strip(),
+		"footnote": (settings.get("login_footnote") or "").strip() or default_footnote(brand_name),
 		"image": public_file(settings.get("login_background")),
 	}
 
@@ -190,7 +202,7 @@ def preview_payload() -> dict:
 		"brand_name": marks["name"],
 		"brand_logo": marks["logo"],
 	}
-	payload.update(copy_for(settings))
+	payload.update(copy_for(settings, marks["name"]))
 	return payload
 
 
@@ -202,8 +214,8 @@ def get_login_context() -> dict:
 		settings = {}
 
 	theme = _resolve_theme(settings)
-	words = copy_for(settings)
 	marks = brand(settings)
+	words = copy_for(settings, marks["name"])
 
 	return {
 		# base.html renders this on <body>; the stylesheet uses it to clear the
