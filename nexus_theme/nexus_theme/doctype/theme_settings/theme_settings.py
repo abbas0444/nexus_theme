@@ -26,6 +26,15 @@ DEFAULTS = {
 	"navbar_logo": None,
 	"favicon": None,
 	"login_background": None,
+	# Login page. Off means Frappe's own sign-in screen, untouched.
+	"use_nexus_login": 0,
+	"login_subtitle": None,
+	"login_footnote": None,
+	"login_headline": None,
+	"login_subheadline": None,
+	"login_points": None,
+	"login_stat": None,
+	"login_stat_note": None,
 }
 
 

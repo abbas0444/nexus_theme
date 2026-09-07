@@ -1,0 +1,560 @@
+/* ==================================================================
+   Nexus Theme login page
+   ------------------------------------------------------------------
+   Loaded by nexus_theme/templates/nexus_login/nexus_login.html only,
+   so it reaches no other page on the site and no other app.
+
+   Every colour comes from the --theme-* custom properties the app
+   injects for the site default theme, or from the visitor's own
+   remembered theme. Each one carries a fallback, so the page is still
+   complete and readable when no theme has been set at all.
+   ================================================================== */
+
+.nxlogin {
+	--nx-bg: var(--theme-bg-primary, #ffffff);
+	--nx-surface: var(--theme-bg-surface, #f7f8fa);
+	--nx-input: var(--theme-bg-input, #ffffff);
+	--nx-text: var(--theme-text-primary, #16181d);
+	--nx-muted: var(--theme-text-muted, #6b7280);
+	--nx-accent: var(--theme-accent, #7c3aed);
+	--nx-accent-hover: var(--theme-accent-hover, #6d28d9);
+	--nx-btn-bg: var(--theme-button-bg, var(--nx-accent));
+	--nx-btn-text: var(--theme-button-text, #ffffff);
+	--nx-btn-hover: var(--theme-button-hover-bg, var(--nx-accent-hover));
+	--nx-border: var(--theme-border, #e3e6ea);
+	--nx-radius: var(--theme-border-radius, 10px);
+	--nx-font: var(--theme-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif);
+	--nx-danger: #e5484d;
+
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+	min-height: 100vh;
+	min-height: 100dvh;
+	background: var(--nx-bg);
+	color: var(--nx-text);
+	font-family: var(--nx-font);
+}
+
+body.nxlogin-body {
+	margin: 0;
+	padding: 0;
+	background: var(--theme-bg-primary, #ffffff);
+}
+
+/* ---------- left column: the form ---------- */
+
+.nxlogin-form-col {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 40px 32px;
+	min-width: 0;
+}
+
+.nxlogin-form-inner {
+	width: 100%;
+	max-width: 380px;
+}
+
+.nxlogin-brand {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 44px;
+}
+
+.nxlogin-brand-logo {
+	width: 26px;
+	height: 26px;
+	object-fit: contain;
+	border-radius: 7px;
+}
+
+.nxlogin-brand-name {
+	font-size: 15px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	color: var(--nx-text);
+}
+
+/* Frappe's own login stylesheet is not loaded here, and the app's website
+   sheet paints .login-content as a card. In this layout the column is the
+   card, so the section itself carries no chrome of its own. */
+.nxlogin .login-content,
+.nxlogin .page-card {
+	background: transparent;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	padding: 0;
+	margin: 0;
+	width: auto;
+	max-width: none;
+}
+
+/* Only one section is on screen at a time; login.js toggles them. */
+.nxlogin section {
+	display: none;
+}
+
+.nxlogin section.for-login {
+	display: block;
+}
+
+.nxlogin-title {
+	margin: 0 0 6px;
+	font-size: 30px;
+	line-height: 1.15;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	color: var(--nx-text);
+}
+
+.nxlogin-subtitle {
+	margin: 0 0 26px;
+	font-size: 13.5px;
+	line-height: 1.5;
+	color: var(--nx-muted);
+}
+
+.nxlogin .form-group {
+	margin-bottom: 16px;
+}
+
+.nxlogin .form-label {
+	display: block;
+	margin-bottom: 6px;
+	font-size: 12.5px;
+	font-weight: 600;
+	color: var(--nx-text);
+}
+
+.nxlogin-required {
+	color: var(--nx-danger);
+}
+
+.nxlogin-field {
+	position: relative;
+	display: block;
+}
+
+.nxlogin-field .nxlogin-icon {
+	position: absolute;
+	left: 13px;
+	top: 50%;
+	width: 17px;
+	height: 17px;
+	margin-top: -8.5px;
+	color: var(--nx-muted);
+	opacity: 0.85;
+	pointer-events: none;
+}
+
+.nxlogin .form-control {
+	width: 100%;
+	height: 46px;
+	padding: 0 14px 0 40px;
+	font-size: 14px;
+	color: var(--nx-text);
+	background: var(--nx-input);
+	border: 1px solid var(--nx-border);
+	border-radius: var(--nx-radius);
+	box-shadow: none;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+	appearance: none;
+}
+
+.nxlogin .form-control::placeholder {
+	color: var(--nx-muted);
+	opacity: 0.75;
+}
+
+.nxlogin .form-control:focus {
+	outline: none;
+	border-color: var(--nx-accent);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--nx-accent) 22%, transparent);
+}
+
+.nxlogin .form-group.invalid .form-control {
+	border-color: var(--nx-danger);
+}
+
+.nxlogin-eye {
+	position: absolute;
+	right: 8px;
+	top: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	margin-top: -15px;
+	padding: 0;
+	color: var(--nx-muted);
+	background: none;
+	border: 0;
+	border-radius: 6px;
+	cursor: pointer;
+}
+
+.nxlogin-eye:hover {
+	color: var(--nx-text);
+}
+
+.nxlogin-eye svg {
+	width: 18px;
+	height: 18px;
+}
+
+.nxlogin-eye .nxlogin-eye-shut,
+.nxlogin-eye.is-shown .nxlogin-eye-open {
+	display: none;
+}
+
+.nxlogin-eye.is-shown .nxlogin-eye-shut {
+	display: block;
+}
+
+.nxlogin .field-error {
+	margin: 6px 0 0;
+	font-size: 12px;
+	color: var(--nx-danger);
+	min-height: 0;
+}
+
+.nxlogin .field-error:empty {
+	display: none;
+}
+
+.nxlogin .login-error-banner,
+.nxlogin .login-success-banner {
+	display: none;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 16px;
+	padding: 10px 12px;
+	font-size: 12.5px;
+	line-height: 1.4;
+	border-radius: var(--nx-radius);
+	background: color-mix(in srgb, var(--nx-danger) 12%, transparent);
+	border: 1px solid color-mix(in srgb, var(--nx-danger) 35%, transparent);
+	color: var(--nx-danger);
+}
+
+.nxlogin .login-success-banner {
+	background: color-mix(in srgb, var(--nx-accent) 12%, transparent);
+	border-color: color-mix(in srgb, var(--nx-accent) 35%, transparent);
+	color: var(--nx-accent);
+}
+
+.nxlogin .login-error-banner svg,
+.nxlogin .login-success-banner svg {
+	flex: 0 0 auto;
+	width: 15px;
+	height: 15px;
+}
+
+.nxlogin-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin: 4px 0 22px;
+	font-size: 12.5px;
+}
+
+.nxlogin-remember {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	margin: 0;
+	font-weight: 400;
+	color: var(--nx-muted);
+	cursor: pointer;
+	user-select: none;
+}
+
+.nxlogin-remember input {
+	width: 14px;
+	height: 14px;
+	margin: 0;
+	accent-color: var(--nx-accent);
+	cursor: pointer;
+}
+
+.nxlogin-forgot {
+	color: var(--nx-accent);
+	font-weight: 500;
+	text-decoration: none;
+}
+
+.nxlogin-forgot:hover {
+	color: var(--nx-accent-hover);
+	text-decoration: underline;
+}
+
+/* ---------- buttons ---------- */
+
+.nxlogin .btn {
+	display: block;
+	width: 100%;
+	height: 46px;
+	padding: 0 16px;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 46px;
+	text-align: center;
+	border-radius: var(--nx-radius);
+	border: 1px solid transparent;
+	cursor: pointer;
+	transition: filter 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.nxlogin .nxlogin-submit,
+.nxlogin .btn-primary {
+	color: var(--nx-btn-text);
+	background-image: linear-gradient(180deg, var(--nx-btn-bg), var(--nx-btn-hover));
+	background-color: var(--nx-btn-bg);
+	border-color: transparent;
+	box-shadow: 0 8px 22px -10px color-mix(in srgb, var(--nx-accent) 75%, transparent);
+}
+
+.nxlogin .nxlogin-submit:hover,
+.nxlogin .btn-primary:hover {
+	filter: brightness(1.06);
+	color: var(--nx-btn-text);
+}
+
+.nxlogin .btn[disabled] {
+	opacity: 0.55;
+	cursor: not-allowed;
+	box-shadow: none;
+}
+
+.nxlogin .nxlogin-alt {
+	margin-top: 10px;
+	color: var(--nx-text);
+	background: transparent;
+	border-color: var(--nx-border);
+	text-decoration: none;
+}
+
+.nxlogin .nxlogin-alt:hover {
+	color: var(--nx-text);
+	border-color: var(--nx-accent);
+	background: color-mix(in srgb, var(--nx-accent) 7%, transparent);
+}
+
+.nxlogin .nxlogin-alt img,
+.nxlogin .nxlogin-alt svg {
+	width: 16px;
+	height: 16px;
+	vertical-align: -3px;
+	margin-right: 8px;
+}
+
+.nxlogin-divider {
+	position: relative;
+	margin: 18px 0 12px;
+	text-align: center;
+	font-size: 12px;
+	color: var(--nx-muted);
+}
+
+.nxlogin-divider::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 0;
+	right: 0;
+	height: 1px;
+	background: var(--nx-border);
+}
+
+.nxlogin-divider span {
+	position: relative;
+	padding: 0 10px;
+	background: var(--nx-bg);
+}
+
+.nxlogin .sign-up-message {
+	margin-top: 20px;
+	font-size: 12.5px;
+	text-align: center;
+	color: var(--nx-muted);
+}
+
+.nxlogin .sign-up-message a {
+	color: var(--nx-accent);
+	font-weight: 500;
+	text-decoration: none;
+}
+
+.nxlogin .sign-up-message a:hover {
+	text-decoration: underline;
+}
+
+.nxlogin .resend-link {
+	display: none;
+	justify-content: center;
+	gap: 5px;
+	margin: 0 0 10px;
+	font-size: 12.5px;
+	color: var(--nx-muted);
+}
+
+.nxlogin .resend-link a {
+	color: var(--nx-accent);
+}
+
+.nxlogin-footnote {
+	margin: 40px 0 0;
+	font-size: 11.5px;
+	color: var(--nx-muted);
+	opacity: 0.8;
+}
+
+.nxlogin-noscript {
+	padding: 16px;
+	text-align: center;
+	color: var(--nx-text);
+}
+
+/* Frappe's login.js adds this class for half a second on a failed sign-in. */
+.nxlogin .login-content.invalid-login {
+	animation: nxlogin-shake 0.4s ease;
+}
+
+@keyframes nxlogin-shake {
+	0%, 100% { transform: translateX(0); }
+	20% { transform: translateX(-7px); }
+	40% { transform: translateX(6px); }
+	60% { transform: translateX(-4px); }
+	80% { transform: translateX(2px); }
+}
+
+/* ---------- right column: the panel ---------- */
+
+.nxlogin-panel {
+	position: relative;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	margin: 18px 18px 18px 0;
+	padding: 64px;
+	border-radius: 26px;
+	color: #ffffff;
+	background-color: color-mix(in srgb, var(--nx-accent) 30%, #0a0a12);
+	background-image:
+		radial-gradient(115% 85% at 88% 8%, color-mix(in srgb, var(--nx-accent) 55%, transparent), transparent 62%),
+		linear-gradient(152deg, color-mix(in srgb, var(--nx-accent) 46%, #0b0b14) 0%, color-mix(in srgb, var(--nx-accent) 10%, #07070d) 100%);
+}
+
+.nxlogin-panel-image {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	opacity: 0.28;
+	mix-blend-mode: luminosity;
+}
+
+.nxlogin-panel-inner {
+	position: relative;
+	max-width: 480px;
+}
+
+.nxlogin-panel-headline {
+	margin: 0 0 18px;
+	font-size: 46px;
+	line-height: 1.08;
+	font-weight: 700;
+	letter-spacing: -0.03em;
+	text-wrap: balance;
+	color: #ffffff;
+}
+
+.nxlogin-panel-sub {
+	margin: 0;
+	font-size: 15px;
+	line-height: 1.6;
+	color: rgba(255, 255, 255, 0.74);
+	max-width: 42ch;
+}
+
+.nxlogin-points {
+	list-style: none;
+	margin: 30px 0 0;
+	padding: 0;
+	display: grid;
+	gap: 13px;
+}
+
+.nxlogin-points li {
+	display: flex;
+	align-items: flex-start;
+	gap: 11px;
+	font-size: 14px;
+	line-height: 1.45;
+	color: rgba(255, 255, 255, 0.9);
+}
+
+.nxlogin-points svg {
+	flex: 0 0 auto;
+	width: 19px;
+	height: 19px;
+	margin-top: 1px;
+	color: rgba(255, 255, 255, 0.92);
+}
+
+.nxlogin-stat {
+	display: flex;
+	align-items: baseline;
+	gap: 12px;
+	margin-top: 38px;
+	padding-top: 26px;
+	border-top: 1px solid rgba(255, 255, 255, 0.16);
+	flex-wrap: wrap;
+}
+
+.nxlogin-stat strong {
+	font-size: 34px;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	color: #ffffff;
+}
+
+.nxlogin-stat span {
+	font-size: 13.5px;
+	line-height: 1.5;
+	color: rgba(255, 255, 255, 0.72);
+}
+
+/* ---------- narrow screens ---------- */
+
+@media (max-width: 1024px) {
+	.nxlogin {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.nxlogin-panel {
+		display: none;
+	}
+
+	.nxlogin-form-col {
+		padding: 32px 20px;
+	}
+
+	.nxlogin-brand {
+		margin-bottom: 32px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.nxlogin *,
+	.nxlogin .login-content.invalid-login {
+		animation: none !important;
+		transition: none !important;
+	}
+}

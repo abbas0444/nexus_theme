@@ -46,7 +46,10 @@ def update_website_context(context):
 		context.favicon = favicon
 
 	login_bg = settings.get("login_background")
-	if login_bg and _is_login_route():
+	# The Nexus login page places this image in its own side panel, so the
+	# blanket background rule below would double it up behind the form.
+	on_nexus_login = bool(getattr(frappe.local, "flags", {}).get("nexus_login_page"))
+	if login_bg and _is_login_route() and not on_nexus_login:
 		# Only the login route; a background image behind every web page
 		# would be a surprise, not a brand.
 		safe = frappe.utils.escape_html(login_bg)

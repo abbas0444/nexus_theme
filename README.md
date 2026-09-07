@@ -4,9 +4,9 @@
 
 # Nexus Theme
 
-**Make your workspace yours.** Colours, sounds and a clear view of who can do what, all inside your ERPNext / Frappe Desk. Pick one of 17 ready-made themes or build your own, choose the sounds the Desk plays, and let administrators see and change permissions in plain language.
+**Make your workspace yours.** Colours, sounds, a themed sign-in screen and a clear view of who can do what, all inside your ERPNext / Frappe Desk. Pick one of 17 ready-made themes or build your own, choose the sounds the Desk plays, give the login page your own look, and let administrators see and change permissions in plain language.
 
-![ERPNext 16](https://img.shields.io/badge/ERPNext-16-blue) ![Frappe 16](https://img.shields.io/badge/Frappe-16-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey) ![Version 1.0.0](https://img.shields.io/badge/version-1.0.0-green)
+![ERPNext 16](https://img.shields.io/badge/ERPNext-16-blue) ![Frappe 16](https://img.shields.io/badge/Frappe-16-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey) ![Version 1.1.0](https://img.shields.io/badge/version-1.1.0-green)
 
 </div>
 
@@ -41,6 +41,7 @@ Nexus Theme is one Frappe app with three tools inside it. Install it once and ev
 | **Sound Studio** | Everyone who uses the Desk | Choose the sound the Desk plays on login, save, submit, cancel, delete, errors, email, alerts and notifications. Use a bundled preset or upload your own, set the volume, or mute everything. |
 | **Permission Inspector** | System Managers | Pick a person or a role and see, record type by record type, what they may View, Edit, Create, Delete, Submit and Cancel, which role gives them that, and change it safely from the same screen. |
 | **Theme Settings** | System Managers | Site-wide controls: a default theme for everyone, an allowed list, whether people may build or share themes, the company logo and favicon, and a master switch for sounds. |
+| **Login Page** | System Managers switch it on; everyone sees it | A two-column sign-in screen painted in the site's theme colours, with your logo, your headline and bullet points on a coloured panel. Off by default; Frappe's own login page stays until you turn it on. |
 
 Everything is per user. Your theme and sounds are yours; nobody else sees them unless you share a theme on purpose.
 
@@ -84,6 +85,7 @@ Uninstalling (`bench --site yoursite.com uninstall-app nexus_theme`) removes the
 | **Search bar** (Ctrl+K / Cmd+K) | Type `Theme Studio`, `Sound Studio`, `Permission Inspector` or `Theme Settings` |
 | **Frappe's own Switch Theme dialog** (avatar menu, Toggle Theme) | Every Nexus theme is listed there too, next to Frappe Light and Timeless Night |
 | Direct links | `/app/theme-studio`, `/app/sound-studio`, `/app/nexus-permission-inspector`, `/app/theme-settings` |
+| **Login page** (`/login`) | Frappe's own sign-in screen, or the Nexus login page once an administrator switches it on in Theme Settings |
 
 ---
 
@@ -327,9 +329,26 @@ Open **Nexus Theme → Theme Settings** or `/app/theme-settings`. Every option i
 | **Allow User Sounds** | Turn off to switch Sound Studio off for everyone. Their choices are kept for when it is switched on again. |
 | **Navbar Logo** | Replaces the Frappe logo in the navbar. |
 | **Favicon** | The browser-tab icon on the Desk and the website. |
-| **Login Background** | A background image for the login page. |
+| **Login Background** | A background image for the login page. On the Nexus login page it sits behind the coloured panel. |
+| **Use the Nexus Login Page** | Replaces Frappe's sign-in screen with the app's own two-column page (see 7.1). Off by default. |
+| **Sign-in Subtitle**, **Footer Line** | The small line under *Sign In*, and a line at the bottom of the form, such as a copyright notice. |
+| **Panel Headline**, **Panel Text**, **Panel Points**, **Panel Figure**, **Panel Figure Note** | The words on the coloured panel: a large heading, a paragraph, up to six points shown with ticks, and an optional figure such as *300+* with a note. |
 
 A theme can also be limited to certain roles: open the theme record (Themes list) and fill **Restrict to Roles**. People without one of those roles will not see it.
+
+### 7.1 The Nexus login page
+
+Tick **Use the Nexus Login Page** and `/login` becomes a two-column screen: your logo and the sign-in form on the left, a coloured panel with your headline, your points and an optional figure on the right. On phones the panel steps aside and the form fills the screen.
+
+**It follows the theme.** The page is painted from the **Site Default Theme**: background, text, inputs, the accent, the button and the corner radius all come from that theme, and the panel's gradient is mixed from its accent colour. Set a light theme and the page is light; set a dark one and it is dark. Someone who has already applied a theme of their own on the Desk sees the login page in *their* theme, because the browser remembers it; the page repaints before it is shown, so there is no flash of the wrong colours. With no site default theme set, the page uses a neutral light palette.
+
+**It keeps everything Frappe's login does.** Password sign-in, the error banner, forgot password, sign-up, login with an email link, social logins, LDAP and two-factor all work exactly as before, because the page loads Frappe's own login script and keeps every element that script uses. Only the layout and the styling are the app's.
+
+**Remember me** remembers your username on that device. It does not change how long you stay signed in; that is Frappe's session setting, and the checkbox will not pretend otherwise.
+
+**It cannot lock you out.** Untick the switch and Frappe's own page is back at once. If anything about the page ever fails to render, Frappe's own page is served instead, automatically. No file in Frappe, ERPNext or any other app is changed by turning it on.
+
+The logo comes from **Navbar Logo** (or the site's app logo), the brand name from the site's app name, and the picture behind the panel from **Login Background**.
 
 **Typical setups**
 
@@ -386,7 +405,9 @@ A theme can also be limited to certain roles: open the theme record (Themes list
 
 **How the Permission Inspector reads and writes.** It reads through Frappe's own helpers (`get_valid_perms`, `get_all_perms`, `get_roles`, `has_permission`) and writes through `Custom DocPerm`, the same mechanism the stock Role Permission Manager uses. It has no tables and no permission logic of its own; if it were removed, nothing about your permissions would change.
 
-**Safety checks on saved data.** Colour and style values are validated before they are stored (no CSS can be injected through a theme), sound URLs must point at files this site serves, and imported theme files are validated field by field.
+**How the login page takes over `/login`.** Frappe asks every registered page renderer whether it can serve a route, and an app's own renderers are asked first. The app registers one that answers yes only for `/login`, only while the switch in Theme Settings is on, and only if its template is present; otherwise it declines and Frappe's own login page renders. It reuses Frappe's login context (social logins, LDAP, sign-up, the already-signed-in redirect) and Frappe's login script, and adds the layout, the theme variables and a small head script that repaints the page in the visitor's remembered theme.
+
+**Safety checks on saved data.** Colour and style values are validated before they are stored (no CSS can be injected through a theme), sound URLs must point at files this site serves, imported theme files are validated field by field, and the words an administrator types for the login panel are escaped before they reach the page.
 
 ---
 
@@ -400,6 +421,8 @@ nexus_theme/
 ├── hooks.py                    # includes, apps-screen tile, doc events, boot session
 ├── install.py / uninstall.py   # Theme User role, menu items, desktop icon, assets
 ├── website.py                  # login page and website theming
+├── login_page.py               # the Nexus login page (page_renderer hook, opt-in)
+├── templates/nexus_login/      # its template
 ├── permission_inspector/api.py # Permission Inspector API (System Manager only)
 ├── nexus_theme/doctype/…       # Theme Definition, preferences, Theme Settings
 ├── nexus_theme/page/           # theme_studio, sound_studio, permission_inspector
@@ -500,6 +523,7 @@ bench build --app nexus_theme      # rebuild the JS/CSS bundles after editing pu
 - **Choosing Frappe's own look opts you out of the site default** until you pick a Nexus theme again.
 - **Deleting a theme in use is allowed** for your own themes; users of it fall back to the site default. A theme that is the site default or on the allowed list must be taken out of Theme Settings first.
 - **Permission changes are site-wide.** The Permission Inspector edits roles, and a role is shared by everyone who holds it. The confirmation dialog states this before every save.
+- **The Nexus login page is a switch, not a default.** Installing the app changes nothing about `/login`. An administrator turns the page on in Theme Settings, and can turn it off again the same way; if it ever cannot render, Frappe's own page is served.
 - **"Set User Permissions" is not a flag in Frappe v16.** It was removed in an earlier version. The inspector shows the flags v16 actually has, including Mask and custom permission types.
 
 ---
@@ -532,6 +556,12 @@ Change it back in the inspector, or open the record type in Frappe's Role Permis
 
 **Can I use my company logo?**
 Yes. Theme Settings → Navbar Logo, Favicon and Login Background.
+
+**I switched the Nexus login page on but still see Frappe's.**
+Reload once; if your bench runs under a process manager, restart it (`bench restart`) so the web server picks up the change. The page also falls back to Frappe's own when the site has not been migrated since the update.
+
+**The login page is in the wrong colours.**
+It uses the Site Default Theme. If your own browser shows different colours from a colleague's, that is your remembered Desk theme; pick a theme in Theme Studio, or choose Frappe's own look, and the login page follows.
 
 **Can an administrator force one theme for everyone?**
 Set a Site Default Theme and tick Restrict Theme Choice with that single theme in the allowed list. People who chose Frappe's own look keep it; everyone else sees the default.

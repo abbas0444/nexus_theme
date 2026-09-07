@@ -317,6 +317,12 @@ boot_session = "nexus_theme.api.extend_boot_session"
 # Theme the login page and public web pages from the site default theme.
 update_website_context = "nexus_theme.website.update_website_context"
 
+# Takes over /login with this app's own two-column sign-in page, but only when
+# an admin ticks "Use the Nexus Login Page" in Theme Settings. The renderer
+# declines every other route and, with the switch off or on any error, hands
+# the request straight back to Frappe's standard login page.
+page_renderer = ["nexus_theme.login_page.NexusLoginPage"]
+
 # Fixtures
 # --------
 # Ship 10 default themes with the app; exported/imported via bench migrate.

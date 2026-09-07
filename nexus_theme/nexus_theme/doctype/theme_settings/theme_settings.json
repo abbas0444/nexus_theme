@@ -22,7 +22,17 @@
   "navbar_logo",
   "favicon",
   "column_break_brand",
-  "login_background"
+  "login_background",
+  "login_page_section",
+  "use_nexus_login",
+  "login_subtitle",
+  "login_footnote",
+  "column_break_login",
+  "login_headline",
+  "login_subheadline",
+  "login_points",
+  "login_stat",
+  "login_stat_note"
  ],
  "fields": [
   {
@@ -123,12 +133,75 @@
    "fieldname": "login_background",
    "fieldtype": "Attach Image",
    "label": "Login Background"
+  },
+  {
+   "fieldname": "login_page_section",
+   "fieldtype": "Section Break",
+   "label": "Login Page"
+  },
+  {
+   "fieldname": "use_nexus_login",
+   "fieldtype": "Check",
+   "label": "Use the Nexus Login Page",
+   "default": "0",
+   "description": "Replaces the sign-in screen with the app's own two-column page. Off means Frappe's standard login page, untouched."
+  },
+  {
+   "fieldname": "login_subtitle",
+   "fieldtype": "Data",
+   "label": "Sign-in Subtitle",
+   "depends_on": "use_nexus_login",
+   "description": "The small line under the Sign In heading."
+  },
+  {
+   "fieldname": "login_footnote",
+   "fieldtype": "Data",
+   "label": "Footer Line",
+   "depends_on": "use_nexus_login",
+   "description": "Shown at the bottom of the form, e.g. a copyright line."
+  },
+  {
+   "fieldname": "column_break_login",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "login_headline",
+   "fieldtype": "Data",
+   "label": "Panel Headline",
+   "depends_on": "use_nexus_login",
+   "description": "The large heading on the coloured panel."
+  },
+  {
+   "fieldname": "login_subheadline",
+   "fieldtype": "Small Text",
+   "label": "Panel Text",
+   "depends_on": "use_nexus_login"
+  },
+  {
+   "fieldname": "login_points",
+   "fieldtype": "Small Text",
+   "label": "Panel Points",
+   "depends_on": "use_nexus_login",
+   "description": "One per line, up to six. Each is shown with a tick."
+  },
+  {
+   "fieldname": "login_stat",
+   "fieldtype": "Data",
+   "label": "Panel Figure",
+   "depends_on": "use_nexus_login",
+   "description": "A short figure such as 300+. Leave both this and the note empty to hide the row."
+  },
+  {
+   "fieldname": "login_stat_note",
+   "fieldtype": "Data",
+   "label": "Panel Figure Note",
+   "depends_on": "use_nexus_login"
   }
  ],
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-08-31 00:00:00",
+ "modified": "2026-09-07 20:15:00.000000",
  "modified_by": "Administrator",
  "module": "Nexus Theme",
  "name": "Theme Settings",
