@@ -8,6 +8,12 @@
 
 ![ERPNext 16](https://img.shields.io/badge/ERPNext-16-blue) ![Frappe 16](https://img.shields.io/badge/Frappe-16-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey) ![Version 1.2.0](https://img.shields.io/badge/version-1.2.0-green)
 
+**Two branches, one app.** You are looking at the build for Frappe / ERPNext **16**
+— branch [`main`](https://github.com/abbas0444/nexus_theme/tree/main), also published
+as [`version-16`](https://github.com/abbas0444/nexus_theme/tree/version-16).
+Running Frappe / ERPNext **15**? Use
+[`version-15`](https://github.com/abbas0444/nexus_theme/tree/version-15).
+
 </div>
 
 ---
@@ -69,11 +75,25 @@ Everything is per user. Your theme and sounds are yours; nobody else sees them u
 
 **On Frappe Cloud:** open your site, choose *Apps → Install App*, and pick **Nexus Theme** from the Marketplace. Nothing else to do.
 
+### Which version do I need?
+
+Run `bench version` first and read the **frappe** line.
+
+| Your bench | Branch to install | Install with |
+|---|---|---|
+| Frappe / ERPNext **16** | `version-16` (same code as `main`) | `bench get-app --branch version-16 https://github.com/abbas0444/nexus_theme.git` |
+| Frappe / ERPNext **15** | `version-15` | `bench get-app --branch version-15 https://github.com/abbas0444/nexus_theme.git` |
+
+Both branches hold the same features; they differ only where the two frameworks
+differ. `main` is the same code as `version-16`, so leaving `--branch` out gets you
+the 16 build. Installing the wrong one damages nothing, but the app will not work
+properly — switch branches and run `bench --site yoursite.com migrate` again.
+
 **On your own bench:** run these commands. Replace `yoursite.com` with your site name.
 
 ```bash
 cd /path/to/your/bench
-bench get-app https://github.com/abbas0444/nexus_theme.git
+bench get-app --branch version-16 https://github.com/abbas0444/nexus_theme.git
 bench --site yoursite.com install-app nexus_theme
 bench --site yoursite.com migrate
 bench restart          # or restart `bench start` in development
@@ -427,6 +447,10 @@ Tick **Use the Nexus Login Page** and `/login` becomes a two-column screen: your
 | On a computer | On a phone |
 |---|---|
 | ![The Nexus login page](docs/images/login-page.png) | ![The Nexus login page on a phone](docs/images/login-phone.png) |
+
+*Every word on that panel is yours to write. The screenshots show a site that filled
+the Panel Headline in with its own name; a fresh install shows a plain "Welcome back"
+until you type something else.*
 
 **It follows the theme.** The page is painted from the **Site Default Theme**: background, text, inputs, the accent, the button and the corner radius all come from that theme, and the panel's gradient is mixed from its accent colour. Set a light theme and the page is light; set a dark one and it is dark. Someone who has already applied a theme of their own on the Desk sees the login page in *their* theme, because the browser remembers it; the page repaints before it is shown, so there is no flash of the wrong colours. With no site default theme set, the page uses a neutral light palette.
 

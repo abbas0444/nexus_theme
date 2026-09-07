@@ -196,7 +196,10 @@ RECIPES = {
 		("Pop", lambda: tone(A5, 0.13, 0.5, "sine", 9.0)),
 	],
 	"alert": [
-		("Chirp", lambda: seq(tone(E6, 0.07, 0.5, "sine", 11.0), silence(0.04), tone(E6, 0.09, 0.5, "sine", 11.0))),
+		(
+			"Chirp",
+			lambda: seq(tone(E6, 0.07, 0.5, "sine", 11.0), silence(0.04), tone(E6, 0.09, 0.5, "sine", 11.0)),
+		),
 		("Pulse", lambda: arp([A5, A5, A5], 0.07, 0.5, "sine", 12.0)),
 		("Ring", lambda: tone(A5, 0.30, 0.55, "bell", 4.0)),
 	],
