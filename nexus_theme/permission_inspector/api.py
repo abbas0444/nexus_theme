@@ -483,7 +483,12 @@ def _live_check(doctype: str, user: str, rights: list[str]) -> dict | None:
 		for ptype in rights:
 			try:
 				out[ptype] = (
-					1 if frappe.permissions.has_permission(doctype, ptype, user=user, print_logs=False) else 0
+					# `raise_exception=False` is Frappe 15's "answer quietly": despite the
+					# name it never raises, it only suppresses the msgprint that would
+					# otherwise explain the refusal. (Frappe 16 renamed it print_logs.)
+					1
+					if frappe.permissions.has_permission(doctype, ptype, user=user, raise_exception=False)
+					else 0
 				)
 			except Exception:
 				out[ptype] = 0

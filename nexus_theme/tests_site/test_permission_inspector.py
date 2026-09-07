@@ -463,18 +463,28 @@ class TestPermissionInspector(FrappeTestCase):
 	# ------------------------------------------------------------------
 
 	def test_only_system_managers_may_read_or_write(self):
+		# Frappe 15's `only_for` returns early when `flags.in_test` is set, so
+		# inside a test run the gate never fires and asserting on it would
+		# prove nothing. Clearing the flag for these calls makes the check run
+		# exactly as it does for a real request. (Frappe 16 dropped the early
+		# return, where this is simply a no-op.)
 		frappe.set_user(PLAIN_USER)
-		self.assertRaises(frappe.PermissionError, api.get_options)
-		self.assertRaises(frappe.PermissionError, api.get_matrix, "user", USER)
-		self.assertRaises(frappe.PermissionError, api.get_doctype_detail, "user", USER, DT)
-		self.assertRaises(frappe.PermissionError, api.get_user_permissions, USER)
-		self.assertRaises(frappe.PermissionError, api.refresh_cache)
-		self.assertRaises(
-			frappe.PermissionError,
-			api.save_changes,
-			[{"doctype": DT, "role": ROLE_A, "ptype": "write", "value": 1}],
-		)
-		frappe.set_user(ADMIN)
+		in_test = frappe.flags.in_test
+		frappe.flags.in_test = False
+		try:
+			self.assertRaises(frappe.PermissionError, api.get_options)
+			self.assertRaises(frappe.PermissionError, api.get_matrix, "user", USER)
+			self.assertRaises(frappe.PermissionError, api.get_doctype_detail, "user", USER, DT)
+			self.assertRaises(frappe.PermissionError, api.get_user_permissions, USER)
+			self.assertRaises(frappe.PermissionError, api.refresh_cache)
+			self.assertRaises(
+				frappe.PermissionError,
+				api.save_changes,
+				[{"doctype": DT, "role": ROLE_A, "ptype": "write", "value": 1}],
+			)
+		finally:
+			frappe.flags.in_test = in_test
+			frappe.set_user(ADMIN)
 		self.assertIsNone(self.role_row(ROLE_A)["p"].get("write"))
 
 	def test_administrator_role_rules_are_locked(self):
