@@ -106,6 +106,46 @@ class TestThemeApi(FrappeTestCase):
 		self.assertEqual(got["mode"], "Single")
 		self.assertEqual(got["theme"]["name"], light)
 
+	def test_turning_pairing_off_works_without_a_theme(self):
+		"""Someone on Frappe's own look must still be able to leave Automatic.
+
+		The guard that stops you *enabling* pairing without a theme used to run
+		for both modes, so "Single" answered "Pick a theme before enabling
+		automatic switching" — advice for the opposite of what was asked, and a
+		dead end in the Auto Light/Dark dialog.
+		"""
+		light, dark_base = _bundled(0), _bundled(1)
+		if not (light and dark_base):
+			self.skipTest("need one bundled light and one dark theme")
+
+		api.set_active_theme(light)
+		api.set_theme_mode("Automatic", dark_theme=dark_base)
+		self.assertEqual(api.get_active_theme()["mode"], "Automatic")
+
+		api.clear_active_theme()  # "use Frappe's own look"
+		api.set_theme_mode("Single")  # must not raise
+
+		self.assertEqual(api.get_active_theme()["mode"], "Single")
+
+	def test_pairing_still_needs_a_theme_to_pair_with(self):
+		dark_base = _bundled(1)
+		if not dark_base:
+			self.skipTest("need one bundled dark theme")
+		api.clear_active_theme()
+		self.assertRaises(frappe.ValidationError, api.set_theme_mode, "Automatic", dark_theme=dark_base)
+
+	def test_single_is_a_no_op_when_nothing_is_stored(self):
+		"""A brand-new user has no preference row at all."""
+		if frappe.db.exists("User Theme Preference", {"user": ADMIN}):
+			frappe.delete_doc(
+				"User Theme Preference",
+				frappe.db.get_value("User Theme Preference", {"user": ADMIN}),
+				force=True,
+				ignore_permissions=True,
+			)
+		self.assertEqual(api.set_theme_mode("Single")["mode"], "Single")
+		self.assertFalse(frappe.db.exists("User Theme Preference", {"user": ADMIN}))
+
 	def test_the_site_default_cannot_be_deleted(self):
 		name = self._save_custom("nxt-test-site-default")
 		self._govern(name, 0, [], 1)

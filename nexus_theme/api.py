@@ -252,9 +252,18 @@ def set_theme_mode(mode: str, dark_theme: str | None = None):
 	user = frappe.session.user
 	pref_name = frappe.db.exists("User Theme Preference", {"user": user})
 	pref = frappe.get_doc("User Theme Preference", pref_name) if pref_name else None
-	if not pref or not pref.active_theme:
-		# No row, or an opt-out row — either way there is no theme to pair.
+
+	if mode == "Automatic" and (not pref or not pref.active_theme):
+		# No row, or an opt-out row — either way there is no light half to pair.
+		# This only blocks turning pairing ON: someone on Frappe's own look must
+		# still be able to turn it off, which is what "Single" means.
 		frappe.throw(_("Pick a theme before enabling automatic switching"))
+
+	if not pref:
+		# Nothing is stored, and "nothing stored" already means Single. Saying
+		# so is the honest answer; creating a row to record a default would
+		# leave a preference the person never expressed.
+		return {"ok": True, "mode": mode}
 
 	pref.theme_mode = mode
 	pref.dark_theme = dark_theme if mode == "Automatic" else None
