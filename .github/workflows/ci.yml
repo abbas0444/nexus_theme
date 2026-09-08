@@ -3,9 +3,10 @@ name: CI
 on:
   push:
     branches:
-      - main
       - version-16
   pull_request:
+    branches:
+      - version-16
 
 concurrency:
   # github.event.number is empty on a push, so naming the group after it put

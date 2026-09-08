@@ -8,10 +8,9 @@
 
 ![ERPNext 16](https://img.shields.io/badge/ERPNext-16-blue) ![Frappe 16](https://img.shields.io/badge/Frappe-16-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey) ![Version 1.2.0](https://img.shields.io/badge/version-1.2.0-green)
 
-**Two branches, one app.** You are looking at the build for Frappe / ERPNext **16**
-— branch [`main`](https://github.com/abbas0444/nexus_theme/tree/main), also published
-as [`version-16`](https://github.com/abbas0444/nexus_theme/tree/version-16).
-Running Frappe / ERPNext **15**? Use
+**One branch per framework version.** You are looking at
+[`version-16`](https://github.com/abbas0444/nexus_theme/tree/version-16), the build for
+Frappe / ERPNext **16**. Running Frappe / ERPNext **15**? Use
 [`version-15`](https://github.com/abbas0444/nexus_theme/tree/version-15).
 
 </div>
@@ -87,13 +86,14 @@ Run `bench version` first and read the **frappe** line.
 
 | Your bench | Branch to install | Install with |
 |---|---|---|
-| Frappe / ERPNext **16** | `version-16` (same code as `main`) | `bench get-app --branch version-16 https://github.com/abbas0444/nexus_theme.git` |
+| Frappe / ERPNext **16** | `version-16` | `bench get-app --branch version-16 https://github.com/abbas0444/nexus_theme.git` |
 | Frappe / ERPNext **15** | `version-15` | `bench get-app --branch version-15 https://github.com/abbas0444/nexus_theme.git` |
 
-Both branches hold the same features; they differ only where the two frameworks
-differ. `main` is the same code as `version-16`, so leaving `--branch` out gets you
-the 16 build. Installing the wrong one damages nothing, but the app will not work
-properly — switch branches and run `bench --site yoursite.com migrate` again.
+There are only these two branches, and `version-16` is the default, so leaving
+`--branch` out also gets you the 16 build. Both hold the same features; they differ
+only where the two frameworks differ. Installing the wrong one damages nothing, but
+the app will not work properly — switch branches and run
+`bench --site yoursite.com migrate` again.
 
 **On your own bench:** run these commands. Replace `yoursite.com` with your site name.
 
