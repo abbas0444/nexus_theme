@@ -32,6 +32,12 @@ Every screenshot below is the app running on a real ERPNext 16 site.
 | ![The Nexus login page](docs/images/login-page.png) | ![Sound Studio](docs/images/sound-studio-top.png) |
 | Optional two-column login page, painted in your theme. | Choose the sound the Desk plays for each event. |
 
+And it is not only the app's own screens. A theme repaints the whole Desk — here is
+ERPNext's own Selling workspace, charts, number cards and sidebar included, with
+nothing configured beyond picking a theme:
+
+![ERPNext's Selling workspace in a Nexus theme](docs/images/selling-dashboard.png)
+
 ---
 
 ## Table of Contents
