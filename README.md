@@ -8,11 +8,10 @@
 
 ![ERPNext 15](https://img.shields.io/badge/ERPNext-15-blue) ![Frappe 15](https://img.shields.io/badge/Frappe-15-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey) ![Version 1.2.0](https://img.shields.io/badge/version-1.2.0-green)
 
-**Two branches, one app.** You are looking at the build for Frappe / ERPNext **15**
-— branch [`version-15`](https://github.com/abbas0444/nexus_theme/tree/version-15).
-Running Frappe / ERPNext **16**? Use
-[`version-16`](https://github.com/abbas0444/nexus_theme/tree/version-16)
-(the same code as [`main`](https://github.com/abbas0444/nexus_theme/tree/main)).
+**One branch per framework version.** You are looking at
+[`version-15`](https://github.com/abbas0444/nexus_theme/tree/version-15), the build for
+Frappe / ERPNext **15**. Running Frappe / ERPNext **16**? Use
+[`version-16`](https://github.com/abbas0444/nexus_theme/tree/version-16).
 
 </div>
 
@@ -88,11 +87,13 @@ Run `bench version` first and read the **frappe** line.
 | Your bench | Branch to install | Install with |
 |---|---|---|
 | Frappe / ERPNext **15** | `version-15` | `bench get-app --branch version-15 https://github.com/abbas0444/nexus_theme.git` |
-| Frappe / ERPNext **16** | `version-16` (same code as `main`) | `bench get-app --branch version-16 https://github.com/abbas0444/nexus_theme.git` |
+| Frappe / ERPNext **16** | `version-16` | `bench get-app --branch version-16 https://github.com/abbas0444/nexus_theme.git` |
 
-Both branches hold the same features; they differ only where the two frameworks
-differ. Installing the wrong one damages nothing, but the app will not work
-properly — switch branches and run `bench --site yoursite.com migrate` again.
+There are only these two branches. Both hold the same features; they differ only
+where the two frameworks differ. Installing the wrong one damages nothing, but the
+app will not work properly — switch branches and run
+`bench --site yoursite.com migrate` again. Note that `version-16` is the repository's
+default branch, so a plain `bench get-app` with no `--branch` gets you the 16 build.
 
 **On your own bench:** run these commands. Replace `yoursite.com` with your site name.
 
