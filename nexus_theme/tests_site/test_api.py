@@ -197,6 +197,31 @@ class TestThemeApi(FrappeTestCase):
 		self.assertIn("already have", str(caught.exception))
 
 	# ------------------------------------------------------------------
+	# Import
+	# ------------------------------------------------------------------
+
+	def test_importing_a_theme_you_already_have_makes_a_second_one(self):
+		"""An export of your own theme, imported back, used to be matched on
+		its name by save_custom_theme() and written over the original."""
+		original = self._save_custom("nxt-test-import")
+		before = frappe.db.get_value("Theme Definition", original, ["theme_name", "accent"], as_dict=True)
+
+		payload = api.export_theme(original)
+		payload["theme"]["accent"] = "#123456"
+		imported = api.import_theme(payload, share_public=0)["name"]
+		self._made.append(imported)
+
+		self.assertNotEqual(imported, original)
+		got = frappe.db.get_value("Theme Definition", imported, ["theme_name", "accent"], as_dict=True)
+		self.assertEqual(got.theme_name, f"{before.theme_name} (2)")
+		self.assertEqual(got.accent, "#123456")
+		# The original is exactly as it was.
+		self.assertEqual(
+			frappe.db.get_value("Theme Definition", original, ["theme_name", "accent"], as_dict=True),
+			before,
+		)
+
+	# ------------------------------------------------------------------
 	# Sounds
 	# ------------------------------------------------------------------
 

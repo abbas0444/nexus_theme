@@ -323,6 +323,22 @@ def _unique_theme_key(base_key: str) -> str:
 	return key
 
 
+def _unique_own_theme_name(theme_name: str, user: str | None = None) -> str:
+	"""A theme_name none of this user's own themes holds yet.
+
+	Names only need to be distinct within one person's gallery, so the
+	suffix is chosen against their themes alone: importing "Brand" while a
+	"Brand" of yours exists gives "Brand (2)" and leaves the original be.
+	"""
+	user = user or frappe.session.user
+	base = str(theme_name)[:140]
+	name, suffix = base, 2
+	while frappe.db.exists("Theme Definition", {"owner_user": user, "is_default": 0, "theme_name": name}):
+		name = f"{base} ({suffix})"
+		suffix += 1
+	return name
+
+
 @frappe.whitelist()
 def save_custom_theme(payload, share_public=0):
 	if isinstance(payload, str):
@@ -554,17 +570,13 @@ def import_theme(payload, share_public=0):
 	clean = {f: theme[f] for f in PORTABLE_FIELDS if f in theme}
 	clean["theme_name"] = theme.get("theme_name") or theme["theme_key"]
 
-	# A key that already exists would silently overwrite the user's own
-	# theme of that name, so give the import its own.
-	base_key = str(clean["theme_key"])[:120]
-	key = base_key
-	suffix = 2
-	while frappe.db.exists("Theme Definition", key):
-		key = f"{base_key}-{suffix}"
-		suffix += 1
-	clean["theme_key"] = key
-	if key != base_key:
-		clean["theme_name"] = f"{clean['theme_name']} ({suffix - 1})"
+	# An import is always a new theme. save_custom_theme() updates in place
+	# when either the key or the name matches one of the user's own themes,
+	# and a fresh key alone was not enough: an export of "Brand" imported
+	# back onto the site that has "Brand" got a new key, matched on the name,
+	# and quietly overwrote the original. Both are made unique first.
+	clean["theme_key"] = _unique_theme_key(clean["theme_key"])
+	clean["theme_name"] = _unique_own_theme_name(clean["theme_name"])
 
 	return save_custom_theme(clean, share_public=share_public)
 
