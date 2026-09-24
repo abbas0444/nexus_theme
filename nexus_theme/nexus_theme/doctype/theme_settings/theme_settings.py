@@ -40,6 +40,12 @@ DEFAULTS = {
 }
 
 
+# Images shown to visitors who are not signed in: the favicon and login
+# background on every public page, the brand logo on the Nexus login page,
+# and the navbar logo, which that page falls back to.
+PUBLIC_IMAGE_FIELDS = ("favicon", "navbar_logo", "login_background", "login_brand_logo")
+
+
 class ThemeSettings(Document):
 	def validate(self):
 		if self.restrict_theme_choice and not self.allowed_themes:
@@ -50,6 +56,31 @@ class ThemeSettings(Document):
 			and self.site_default_theme not in [r.theme for r in self.allowed_themes]
 		):
 			frappe.throw(_("The site default theme must be one of the allowed themes."))
+		self._warn_about_private_images()
+
+	def _warn_about_private_images(self):
+		"""Say so when a brand image is a private upload.
+
+		The upload dialog defaults to private, and a private file answers
+		403 to anyone not signed in — so the favicon and login images are
+		silently skipped for visitors (see login_page.public_file). A warning
+		rather than an error: the setting is still valid for the Desk, and
+		the admin may be halfway through swapping the files.
+		"""
+		private = [
+			_(self.meta.get_label(field))
+			for field in PUBLIC_IMAGE_FIELDS
+			if (self.get(field) or "").strip().startswith("/private/")
+		]
+		if private:
+			frappe.msgprint(
+				_(
+					"{0}: private files are not shown to visitors who are not signed in, "
+					"so they will be left off the login page and website. Upload them as public files."
+				).format(", ".join(private)),
+				indicator="orange",
+				title=_("Private Images"),
+			)
 
 	def on_update(self):
 		clear_settings_cache()

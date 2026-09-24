@@ -6,11 +6,19 @@ public page. That is the highest-consequence output in the app, so it must
 be unit-testable without a site.
 """
 
+import re
+
 from nexus_theme.utils.css_safety import (
 	COLOR_FIELDS,
 	STYLE_FIELDS,
 	is_safe_value,
 )
+
+# Characters that must not appear in a URL written into a <style> element:
+# controls (a raw newline ends a CSS string, and the declaration with it)
+# and angle brackets (`</style>` would end the element itself, and the CSS
+# escape for `<` is not something a URL ever needs).
+_URL_UNSAFE_RE = re.compile(r"[\x00-\x1f\x7f<>]")
 
 # Theme Definition field -> the CSS custom property the stylesheets read.
 # Mirrors VAR_MAP in public/js/theme_manager.js; test_website_theming.py
@@ -83,3 +91,23 @@ def theme_style_block(theme: dict) -> str:
 	inject markup rather than CSS."""
 	rules = theme_css_rules(theme)
 	return f"<style id='nexus_theme-web-vars'>{rules}</style>" if rules else ""
+
+
+def css_url(url) -> str | None:
+	"""`url` as a quoted string for a CSS `url(...)`, or None if it cannot be.
+
+	HTML escaping is the wrong tool inside <style>: `&` becomes `&amp;` and
+	a `'` becomes `&#x27;`, so a file name with either loaded nothing. CSS
+	strings have their own rules — a backslash or a quote inside the string
+	is escaped with a backslash, and that is the only escaping needed once
+	the string is quoted. Anything the escape cannot make safe (a newline,
+	`</style>`) is refused rather than mended, so the worst outcome is a
+	missing image.
+	"""
+	if not isinstance(url, str):
+		return None
+	url = url.strip()
+	if not url or _URL_UNSAFE_RE.search(url):
+		return None
+	escaped = url.replace("\\", "\\\\").replace('"', '\\"')
+	return f'"{escaped}"'
