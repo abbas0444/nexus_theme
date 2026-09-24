@@ -189,6 +189,13 @@
 		return true;
 	}
 
+	// The one Sound Studio dialog, built on first open and shown again on
+	// every later one. A Frappe dialog stays in the DOM after hide(), so
+	// building a new one per open — and the launcher page opens it on every
+	// route visit — stacked hidden modals, each with its own delegated
+	// handlers, for the life of the tab.
+	let studio = null;
+
 	async function openSoundStudio() {
 		if (!window.frappe || !frappe.ui || !frappe.ui.Dialog) {
 			console.warn("Sound Studio requires Frappe Desk.");
@@ -202,7 +209,20 @@
 			frappe.show_alert({ message: __("Could not load sound settings"), indicator: "red" });
 			return;
 		}
-		const state = (res && res.message) || { enabled: 1, mapping: {} };
+		const fresh = (res && res.message) || { enabled: 1, mapping: {} };
+
+		if (studio) {
+			// Same state object the handlers closed over — replace its
+			// contents, not the object.
+			studio.state.enabled = fresh.enabled;
+			studio.state.mapping = fresh.mapping || {};
+			studio.refresh();
+			studio.dialog.show();
+			return;
+		}
+
+		const state = fresh;
+		state.mapping = state.mapping || {};
 
 		const dialog = new frappe.ui.Dialog({
 			title: __("Sound Studio"),
@@ -222,6 +242,10 @@
 
 		dialog.fields_dict.enabled.df.onchange = async () => {
 			const enabled = dialog.get_value("enabled") ? 1 : 0;
+			// set_value from refresh() (or from the rollback below) lands here
+			// too; when the box already shows what the server holds there is
+			// nothing to write.
+			if (enabled === (state.enabled ? 1 : 0)) return;
 			try {
 				await frappe.call({
 					method: "nexus_theme.api.toggle_user_sounds",
@@ -230,13 +254,14 @@
 			} catch (_err) {
 				// Refused (site-wide off) or failed: put the checkbox back so it
 				// never shows a state the server did not accept.
-				dialog.set_value("enabled", enabled ? 0 : 1);
+				dialog.set_value("enabled", state.enabled ? 1 : 0);
 				frappe.show_alert({
 					message: __("Could not change sound setting"),
 					indicator: "red",
 				});
 				return;
 			}
+			state.enabled = enabled;
 			if (window.SoundManager) SoundManager.setEnabled(!!enabled);
 		};
 
@@ -248,8 +273,15 @@
 		const render = () => {
 			$table.html(renderTable(state));
 		};
+		// Everything the checkbox and the table show comes from `state`;
+		// refresh() repaints both after state was replaced on a reopen.
+		const refresh = () => {
+			dialog.set_value("enabled", state.enabled ? 1 : 0);
+			render();
+		};
 		bindRowEvents($table, dialog, state, render);
-		render();
+		refresh();
+		studio = { dialog, state, refresh };
 
 		// Custom action: reset all sounds
 		const injectResetAll = () => {
