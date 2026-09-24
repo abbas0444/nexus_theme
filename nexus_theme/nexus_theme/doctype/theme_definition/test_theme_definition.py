@@ -2,9 +2,74 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from nexus_theme.nexus_theme.doctype.theme_definition.theme_definition import _SLUG_RE
+from nexus_theme.nexus_theme.doctype.theme_settings.theme_settings import clear_settings_cache
+
+ADMIN = "Administrator"
+THEME_USER = "nxt-theme-owner@example.com"
+OTHER_USER = "nxt-theme-other@example.com"
+
+
+def _theme_user(email: str):
+	"""A Desk user holding only Theme User."""
+	if frappe.db.exists("User", email):
+		frappe.delete_doc("User", email, force=True, ignore_permissions=True)
+	return frappe.get_doc(
+		{
+			"doctype": "User",
+			"email": email,
+			"first_name": "Theme Test",
+			"send_welcome_email": 0,
+			"roles": [{"role": "Theme User"}],
+		}
+	).insert(ignore_permissions=True)
+
+
+def _bundled() -> str | None:
+	return frappe.db.get_value("Theme Definition", {"is_default": 1}, "name")
 
 
 class TestThemeDefinition(FrappeTestCase):
+	def setUp(self):
+		frappe.set_user(ADMIN)
+		self._made: list[str] = []
+
+	def tearDown(self):
+		frappe.set_user(ADMIN)
+		# Settings first: a theme made here may be the site default.
+		self._govern(allow_custom=1, allow_sharing=1, site_default=None)
+		for name in self._made:
+			if frappe.db.exists("Theme Definition", name):
+				frappe.db.delete("User Theme Preference", {"active_theme": name})
+				frappe.delete_doc("Theme Definition", name, force=True, ignore_permissions=True)
+		for email in (THEME_USER, OTHER_USER):
+			if frappe.db.exists("User", email):
+				frappe.delete_doc("User", email, force=True, ignore_permissions=True)
+
+	def _govern(self, allow_custom, allow_sharing, site_default):
+		doc = frappe.get_single("Theme Settings")
+		doc.allow_custom_themes = allow_custom
+		doc.allow_public_sharing = allow_sharing
+		doc.site_default_theme = site_default
+		doc.flags.ignore_permissions = True
+		doc.save()
+		clear_settings_cache()
+
+	def _custom(self, key: str, **values):
+		"""A custom theme copied from a bundled one, saved as the session user."""
+		base = _bundled()
+		if not base:
+			self.skipTest("no bundled theme on this site")
+		doc = frappe.copy_doc(frappe.get_doc("Theme Definition", base))
+		doc.theme_key = key
+		doc.theme_name = key.replace("-", " ").title()
+		doc.is_default = 0
+		doc.is_public = 0
+		doc.owner_user = None
+		for k, v in values.items():
+			setattr(doc, k, v)
+		self._made.append(key)
+		return doc
+
 	def test_slug_regex_accepts_valid_keys(self):
 		for key in ("indigo", "midnight-indigo", "theme1", "a-b-c"):
 			self.assertRegex(key, _SLUG_RE)
@@ -39,6 +104,71 @@ class TestThemeDefinition(FrappeTestCase):
 			}
 		)
 		self.assertRaises(frappe.ValidationError, doc.insert)
+
+	# ------------------------------------------------------------------
+	# What a Theme User may claim on a theme
+	# ------------------------------------------------------------------
+
+	def test_a_theme_user_cannot_mark_a_theme_as_default(self):
+		_theme_user(THEME_USER)
+		frappe.set_user(THEME_USER)
+		doc = self._custom("nxt-test-not-default", is_default=1)
+		self.assertRaises(frappe.ValidationError, doc.insert)
+
+	def test_a_theme_user_owns_what_they_save(self):
+		_theme_user(THEME_USER)
+		_theme_user(OTHER_USER)
+		frappe.set_user(THEME_USER)
+		doc = self._custom("nxt-test-owned", owner_user=OTHER_USER)
+		doc.insert()
+		self.assertEqual(doc.owner_user, THEME_USER)
+
+	def test_a_system_manager_may_name_any_owner(self):
+		_theme_user(OTHER_USER)
+		doc = self._custom("nxt-test-admin-owned", owner_user=OTHER_USER)
+		doc.insert()
+		self.assertEqual(doc.owner_user, OTHER_USER)
+
+	def test_sharing_follows_the_site_switch(self):
+		_theme_user(THEME_USER)
+		self._govern(allow_custom=1, allow_sharing=0, site_default=None)
+		frappe.set_user(THEME_USER)
+		doc = self._custom("nxt-test-not-shared", is_public=1)
+		doc.insert()
+		self.assertEqual(doc.is_public, 0)
+
+	def test_custom_themes_off_blocks_the_row_too(self):
+		_theme_user(THEME_USER)
+		self._govern(allow_custom=0, allow_sharing=1, site_default=None)
+		frappe.set_user(THEME_USER)
+		doc = self._custom("nxt-test-no-custom")
+		self.assertRaises(frappe.ValidationError, doc.insert)
+
+	# ------------------------------------------------------------------
+	# Who may read a theme
+	# ------------------------------------------------------------------
+
+	def test_a_private_theme_is_read_only_by_its_owner(self):
+		_theme_user(THEME_USER)
+		_theme_user(OTHER_USER)
+		frappe.set_user(THEME_USER)
+		private = self._custom("nxt-test-private")
+		private.insert()
+		shared = self._custom("nxt-test-shared", is_public=1)
+		shared.insert()
+
+		frappe.set_user(OTHER_USER)
+		listed = set(frappe.get_list("Theme Definition", pluck="name", limit=0))
+		self.assertNotIn(private.name, listed)
+		self.assertIn(shared.name, listed)
+		self.assertIn(_bundled(), listed)
+		self.assertFalse(frappe.has_permission("Theme Definition", "read", doc=private.name))
+		self.assertTrue(frappe.has_permission("Theme Definition", "read", doc=shared.name))
+		self.assertTrue(frappe.has_permission("Theme Definition", "read", doc=_bundled()))
+
+		frappe.set_user(THEME_USER)
+		self.assertIn(private.name, set(frappe.get_list("Theme Definition", pluck="name", limit=0)))
+		self.assertTrue(frappe.has_permission("Theme Definition", "read", doc=private.name))
 
 	def test_default_theme_cannot_be_deleted(self):
 		default = frappe.get_all("Theme Definition", filters={"is_default": 1}, limit=1)

@@ -185,13 +185,17 @@ before_uninstall = "nexus_theme.uninstall.before_uninstall"
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+# The Theme User role reads Theme Definition without `if_owner` so the
+# gallery can list bundled and shared themes — which also let anyone read
+# every private theme on the site through /api/resource. These narrow a
+# Theme User's reads to the gallery's own rule: bundled, shared, or yours.
+permission_query_conditions = {
+	"Theme Definition": "nexus_theme.nexus_theme.doctype.theme_definition.theme_definition.get_permission_query_conditions",
+}
+
+has_permission = {
+	"Theme Definition": "nexus_theme.nexus_theme.doctype.theme_definition.theme_definition.has_permission",
+}
 
 # DocType Class
 # ---------------

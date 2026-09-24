@@ -4,17 +4,55 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
+from nexus_theme.preferences import is_privileged
 from nexus_theme.utils.contrast import contrast_ratio, passes_aa
 from nexus_theme.utils.css_safety import COLOR_FIELDS, STYLE_FIELDS, is_safe_value
 
 _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 
 
+def _settings() -> dict:
+	from nexus_theme.nexus_theme.doctype.theme_settings.theme_settings import get_settings
+
+	return get_settings()
+
+
 class ThemeDefinition(Document):
 	def validate(self):
+		self._validate_ownership()
 		self._validate_theme_key()
 		self._validate_style_fields()
 		self._validate_contrast()
+
+	def _validate_ownership(self):
+		"""What a Theme User may claim on a theme.
+
+		save_custom_theme() sets these fields itself, but the DocType is also
+		reachable through /api/resource and the form, where a Theme User could
+		post `is_default: 1` (a bundled theme: shown to everyone, undeletable,
+		exempt from the ownership checks), name someone else as `owner_user`,
+		or share a theme on a site whose admin has turned sharing off. The
+		rules are the API's, enforced on the row so every route obeys them.
+		System Managers, and server-side code writing with ignore_permissions
+		(install, patches, fixtures), are left alone.
+		"""
+		if self.flags.ignore_permissions or is_privileged():
+			return
+
+		if self.is_default:
+			frappe.throw(_("Only a System Manager can mark a theme as a default theme."))
+
+		settings = _settings()
+		if not settings["allow_custom_themes"]:
+			frappe.throw(_("Custom themes are disabled on this site."))
+
+		# A theme you save is yours. Set rather than checked: the form leaves
+		# the field empty, and the API fills it in the same way.
+		self.owner_user = frappe.session.user
+
+		if self.is_public and not settings["allow_public_sharing"]:
+			# The API quietly drops the share flag too, so the theme still saves.
+			self.is_public = 0
 
 	def _validate_style_fields(self):
 		"""Reject any color/style value that is not a plain color or CSS token.
@@ -34,10 +72,6 @@ class ThemeDefinition(Document):
 				else:
 					hint = _("contains characters that are not allowed")
 				frappe.throw(_("{0} {1}.").format(_(label), hint))
-
-	def on_trash(self):
-		if self.is_default:
-			frappe.throw(_("Default themes cannot be deleted."))
 
 	def _validate_theme_key(self):
 		if not self.theme_key:
@@ -78,3 +112,39 @@ class ThemeDefinition(Document):
 					frappe.throw(msg)
 				else:
 					frappe.msgprint(msg, indicator="orange", title=_("Low Contrast"))
+
+
+# ---------------------------------------------------------------------------
+# Permission hooks (see hooks.py)
+# ---------------------------------------------------------------------------
+#
+# The Theme User role reads Theme Definition without `if_owner`, which is
+# what lets the gallery show bundled and shared themes — and also what let
+# every private theme on the site be read back through /api/resource. These
+# two hooks narrow reads to the gallery's own rule: bundled, shared, or yours.
+# frappe.get_all() ignores permissions, so get_available_themes() and the
+# db.get_value() lookups behind get_active_theme() are unaffected.
+
+
+def get_permission_query_conditions(user: str | None = None, doctype: str | None = None) -> str:
+	"""The WHERE clause a Theme User's list queries get."""
+	user = user or frappe.session.user
+	if is_privileged(user):
+		return ""
+	return (
+		"(`tabTheme Definition`.`is_default` = 1"
+		" or `tabTheme Definition`.`is_public` = 1"
+		f" or `tabTheme Definition`.`owner_user` = {frappe.db.escape(user)})"
+	)
+
+
+def has_permission(doc, ptype: str | None = None, user: str | None = None, debug: bool = False) -> bool:
+	"""The same rule, for a single document.
+
+	A new document has no owner yet — validate() assigns one — so creation
+	is left to the role permissions; a hook can only ever deny.
+	"""
+	user = user or frappe.session.user
+	if is_privileged(user) or ptype == "create" or doc.is_new():
+		return True
+	return bool(doc.is_default or doc.is_public or doc.owner_user == user)
