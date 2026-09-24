@@ -70,22 +70,20 @@ web_include_css = ["web_theme.bundle.css"]
 # CSS keyed off [data-theme="dark"] matches the site theme.
 web_include_js = ["web_theme.bundle.js"]
 
-# Register an <audio id="sound-X"> element for every supported Desk event so
-# the app is fully self-contained — it never depends on Frappe's stock sounds
-# staying in place. Each default points at preset 1 (the "apt" sound) of that
+# Register an <audio id="sound-X"> element for each Desk event Frappe has no
+# sound of its own for. desk.html prints one element per entry from every
+# app's hook, and play_sound() takes the first match by id, so re-declaring
+# click, submit, cancel, delete, error, email or alert here would only add a
+# duplicate element that never plays: Frappe's stock sound stays the default
+# for those. Each default below points at preset 1 (the "apt" sound) of that
 # event; all files are original tones synthesised by tools/generate_sounds.py.
-# Users can override any of them per-event via Sound Studio.
+# The presets for every event, stock ones included, are offered in Sound
+# Studio, where users can pick one or upload their own per event. There is
+# no "save" entry either: the Save button plays "click", and Sound Studio's
+# Save row maps onto it (see USER_TO_FRAPPE in sound_manager.js).
 sounds = [
 	{"name": event, "src": f"/assets/nexus_theme/sounds/{event}-1.wav", "volume": 0.3}
 	for event in (
-		"save",
-		"submit",
-		"cancel",
-		"delete",
-		"error",
-		"email",
-		"alert",
-		"click",
 		"notification",
 		"login",
 		"logout",
