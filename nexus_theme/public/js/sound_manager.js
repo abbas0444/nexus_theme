@@ -221,14 +221,41 @@
 			frappe.msgprint = wrapped;
 		}
 
-		/** Hook new realtime notifications to play the (new) 'notification' sound. */
+		/**
+		 * Hook new realtime notifications to play the (new) 'notification'
+		 * sound. Notification Log publishes the event as "notification"
+		 * (notification_log.py, after_commit, to the recipient only), the
+		 * same one Frappe's bell listens to.
+		 *
+		 * frappe.realtime.on() is a silent no-op until frappe.realtime.init()
+		 * has created the socket, and init() runs inside Application.startup()
+		 * — after every app_include_js has executed. So the handler is
+		 * registered once the socket exists: on "app_ready" (triggered right
+		 * after startup) or, should that already have fired, by polling.
+		 */
 		wireRealtimeNotification() {
 			if (!window.frappe || !frappe.realtime || !frappe.realtime.on) return;
-			frappe.realtime.on("notification", () => {
-				if (window.frappe && frappe.utils && frappe.utils.play_sound) {
-					frappe.utils.play_sound("notification");
-				}
-			});
+			let registered = false;
+			const register = () => {
+				if (registered || !frappe.realtime.socket) return false;
+				registered = true;
+				frappe.realtime.on("notification", () => {
+					if (window.frappe && frappe.utils && frappe.utils.play_sound) {
+						frappe.utils.play_sound("notification");
+					}
+				});
+				return true;
+			};
+			if (register()) return;
+			$(document).one("app_ready", register);
+			// Fallback for a boot where app_ready came and went before this
+			// ran. Bounded: a site with disable_async never gets a socket.
+			let tries = 0;
+			const poll = () => {
+				if (register() || ++tries >= 60) return;
+				setTimeout(poll, 500);
+			};
+			setTimeout(poll, 500);
 		}
 
 		/**
