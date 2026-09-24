@@ -862,6 +862,9 @@
 						if (parentDialog) parentDialog.hide();
 					},
 				});
+				// frappe.ui.Dialog leaves its markup in the DOM after hide(); this
+				// one is built per click, so take it down with it.
+				d.$wrapper.on("hidden.bs.modal", () => d.$wrapper.remove());
 				d.show();
 			},
 		};

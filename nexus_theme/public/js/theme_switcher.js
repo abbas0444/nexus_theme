@@ -304,6 +304,9 @@
 					}
 				},
 			});
+			// Built per click; take the markup down with it (see the login
+			// preview below for why).
+			d.$wrapper.on("hidden.bs.modal", () => d.$wrapper.remove());
 			d.show();
 		};
 
@@ -516,8 +519,15 @@
 				}
 			});
 		}
+		// The studio is rebuilt from fresh server data on every open, and
+		// frappe.ui.Dialog leaves its markup in the DOM after hide(), so each
+		// open used to add another hidden copy — the launcher page opens one
+		// per visit — and every copy kept its ThemeManager listener alive.
+		// Take the whole thing down once the close animation is done.
 		dialog.$wrapper.on("hidden.bs.modal", () => {
 			if (unsubscribe) unsubscribe();
+			if (loginPreviewDialog) loginPreviewDialog.$wrapper.remove();
+			dialog.$wrapper.remove();
 		});
 
 		// ---- Editor ----
