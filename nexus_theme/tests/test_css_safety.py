@@ -10,6 +10,7 @@ from nexus_theme.utils.css_safety import (
 	STYLE_FIELDS,
 	is_safe_value,
 	sanitize_overrides,
+	sanitize_overrides_blob,
 )
 
 
@@ -122,6 +123,25 @@ class TestSanitizeOverrides(unittest.TestCase):
 		self.assertEqual(sanitize_overrides({"is_dark": 0}), {"is_dark": 0})
 		self.assertEqual(sanitize_overrides({"is_dark": "0"}), {"is_dark": 0})
 		self.assertEqual(sanitize_overrides({"enable_hover_lift": "0"}), {"enable_hover_lift": 0})
+
+	def test_blob_keeps_the_dark_half_and_cleans_it_too(self):
+		# The row-level validate runs over the stored blob, where the dark
+		# theme's overrides sit under one nested key. A flat sanitize would
+		# drop that key and lose them on every save.
+		blob = {
+			"bg_primary": "#101820",
+			"dark": {"bg_primary": "#000000", "text_primary": "url(https://evil.example/x)"},
+		}
+		self.assertEqual(
+			sanitize_overrides_blob(blob),
+			{"bg_primary": "#101820", "dark": {"bg_primary": "#000000"}},
+		)
+		# A dark half with nothing safe left in it is not written back empty.
+		self.assertEqual(sanitize_overrides_blob({"dark": {"x": "y"}}), {})
+		self.assertEqual(sanitize_overrides_blob({"dark": "not a dict"}), {})
+		self.assertEqual(sanitize_overrides_blob(None), {})
+		# Plain sanitize still refuses the key, so it can never collide.
+		self.assertEqual(sanitize_overrides({"dark": {"bg_primary": "#000"}}), {})
 
 	def test_style_fields_tuple_is_exposed(self):
 		self.assertIn("font_family", STYLE_FIELDS)

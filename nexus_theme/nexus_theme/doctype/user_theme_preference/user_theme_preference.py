@@ -45,9 +45,10 @@ class UserThemePreference(Document):
 			# overrides_json is injected into the Desk as CSS on every boot.
 			# set_active_theme() sanitizes what it is given, but this row can
 			# also arrive through /api/resource or the form, so the guard has
-			# to live here, on the row itself, to mean anything.
-			from nexus_theme.utils.css_safety import sanitize_overrides
+			# to live here, on the row itself, to mean anything. The blob
+			# form, so the dark half nested inside it survives the pass.
+			from nexus_theme.utils.css_safety import sanitize_overrides_blob
 
-			self.overrides_json = json.dumps(sanitize_overrides(parsed))
+			self.overrides_json = json.dumps(sanitize_overrides_blob(parsed))
 		else:
 			self.overrides_json = "{}"

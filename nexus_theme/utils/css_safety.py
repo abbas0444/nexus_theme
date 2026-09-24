@@ -100,3 +100,25 @@ def sanitize_overrides(overrides: dict) -> dict:
 			# can arrive as.
 			clean[key] = 0 if val in (0, "0", False, None, "") else 1
 	return clean
+
+
+# While automatic light/dark is on, a preference row carries two sets of
+# overrides: the light half's as flat keys, and the dark half's nested under
+# this one key. It cannot collide with a real override, because only Theme
+# Definition field names get through sanitize_overrides() above.
+DARK_OVERRIDES_KEY = "dark"
+
+
+def sanitize_overrides_blob(blob: dict) -> dict:
+	"""Sanitize a whole `overrides_json` blob, nested dark half included.
+
+	sanitize_overrides() on its own knows nothing of the nesting, so running
+	it over the stored blob would throw the dark half away on every save.
+	Callers that hold the blob, not one half of it, use this instead."""
+	if not isinstance(blob, dict):
+		return {}
+	clean = sanitize_overrides(blob)
+	dark = sanitize_overrides(blob.get(DARK_OVERRIDES_KEY))
+	if dark:
+		clean[DARK_OVERRIDES_KEY] = dark
+	return clean
