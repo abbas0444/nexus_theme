@@ -46,8 +46,6 @@
 	];
 
 	const PATCH_FLAG = "__nexus_theme_desktop_menu";
-	const RETRY_MS = 300;
-	const MAX_TRIES = 40; // ~12s, then stop quietly rather than poll forever
 
 	// add_menu_item() ignores a label it already holds, so this is safe to
 	// call on every page show. Returns true if anything was actually added.
@@ -93,10 +91,10 @@
 			return originalShow.apply(this, arguments);
 		};
 
-		// Fallback for the common case: this script is an app_include_js bundle,
-		// so it runs before the desktop page is fetched, and by the time polling
-		// finds it the avatar menu is usually already on screen. Rebuild once so
-		// the items appear without making the user navigate away and back.
+		// Fallback for a page that is already on screen when we get here (a
+		// bundle loaded late, or a desktop rendered before this ran). Rebuild
+		// once so the items appear without making the user navigate away and
+		// back.
 		//
 		// frappe.ui.create_menu() is not idempotent — each call registers a new
 		// menu instance and a document click listener — which is why this runs
@@ -111,10 +109,43 @@
 		return true;
 	}
 
-	let tries = 0;
-	(function attempt() {
-		if (patch()) return;
-		if (++tries >= MAX_TRIES) return;
-		setTimeout(attempt, RETRY_MS);
-	})();
+	// When the desktop page exists is not up to us. On a plain /desk load it
+	// is fetched within a second or two; on a deep link (/desk/todo, a form
+	// opened from an email) it is not fetched until the user first goes
+	// home, which can be minutes later. A fixed number of polls missed that
+	// case every time, and the avatar menu then never had our items.
+	//
+	// So instead of polling, hang off the two moments that matter, both of
+	// which fire however the page is reached:
+	//
+	//   "desktop_screen" — DesktopPage.setup() triggers it on every render,
+	//     with the page object, just before setup_avatar() reads
+	//     desktop_menu_items. Adding here is what puts the items in the menu.
+	//   "page-change" — frappe.container fires it on every navigation, after
+	//     the page object is built and before its "show" handler runs, which
+	//     is the earliest the desktop's on_page_show can be wrapped. It is
+	//     also the retry for a Frappe build without the first event.
+	//
+	// Both are idempotent: patch() marks the page and add_menu_item() drops a
+	// label it already holds, so however many times they fire nothing doubles.
+	function install() {
+		patch();
+		if (!window.$ || typeof $(document).on !== "function") return;
+		$(document).on("desktop_screen", function (_e, data) {
+			const desktop = data && data.desktop;
+			if (desktop) addItems(desktop);
+			patch();
+		});
+		$(document).on("page-change", function () {
+			patch();
+		});
+	}
+
+	if (window.frappe && typeof frappe.ready === "function") {
+		frappe.ready(install);
+	} else if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", install);
+	} else {
+		install();
+	}
 })();
