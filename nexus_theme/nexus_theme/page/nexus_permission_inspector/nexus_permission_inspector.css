@@ -540,6 +540,7 @@
 .nxpi-pill.is-1 { background: var(--nxpi-yes-bg); color: var(--nxpi-yes); }
 .nxpi-pill.is-0 { background: var(--nxpi-no-bg); color: var(--nxpi-no); font-weight: 500; }
 .nxpi-pill.is-2 { background: var(--nxpi-own-bg); color: var(--nxpi-own); }
+.nxpi-pill.is-shared { background: var(--nxpi-soft); color: var(--nxpi-accent); }
 .nxpi-pill.is-na { background: transparent; color: var(--nxpi-muted); opacity: 0.6; font-weight: 400; }
 
 /* ---------- Matrix ---------- */

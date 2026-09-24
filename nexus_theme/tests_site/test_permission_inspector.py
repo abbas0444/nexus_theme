@@ -10,6 +10,7 @@ and that the guards refuse what the stock Permission Manager refuses.
 """
 
 import frappe
+import frappe.share
 from frappe.tests.utils import FrappeTestCase
 
 from nexus_theme.permission_inspector import api
@@ -226,11 +227,62 @@ class TestPermissionInspector(FrappeTestCase):
 			d = api.get_doctype_detail("user", USER, DT)
 			self.assertEqual(d["live"]["write"], 1)
 			self.assertEqual(d["live"]["delete"], 0)
+			self.assertEqual(d["live_shared"], [])
 			self.assertEqual({r["role"] for r in d["rules"]}, set(ROLES))
 			ups = api.get_user_permissions(USER)["rows"]
 			self.assertEqual([(u["allow"], u["for_value"]) for u in ups], [("Role", ROLE_A)])
 		finally:
 			frappe.db.delete("User Permission", {"user": USER})
+
+	def test_detail_reports_own_only_and_shared_access_as_such(self):
+		# Write only through an "if owner" rule: has_permission(doctype, "write")
+		# without a document says No, the matrix says Own only; the drawer
+		# must agree with the matrix, since that is what a record gets.
+		api.save_changes(
+			[
+				{"doctype": DT, "role": ROLE_B, "ptype": "write", "value": 0},
+				{"doctype": DT, "role": ROLE_C, "ptype": "write", "value": 0},
+			]
+		)
+		owner_rule = frappe.new_doc("Custom DocPerm")
+		owner_rule.update(dict.fromkeys(RIGHTS, 0))
+		owner_rule.update(
+			{
+				"parent": DT,
+				"parenttype": "DocType",
+				"parentfield": "permissions",
+				"role": ROLE_A,
+				"permlevel": 0,
+				"if_owner": 1,
+				"read": 1,
+				"write": 1,
+			}
+		)
+		owner_rule.insert(ignore_permissions=True)
+		frappe.clear_cache(doctype=DT)
+		frappe.local.role_permissions = {}
+
+		d = api.get_doctype_detail("user", USER, DT)
+		self.assertEqual(d["live"]["write"], 2)
+		self.assertEqual(d["live"]["read"], 1)  # granted outright by the plain rules
+		self.assertEqual(d["live"]["share"], 0)
+		self.assertEqual(self.user_row()["p"].get("write"), 2)
+
+		# A record shared with them: has_permission(doctype, "share") says Yes
+		# although no role allows it. Reported apart, not as a role right.
+		doc = frappe.get_doc({"doctype": DT, "title": "Shared with NXPI"}).insert(ignore_permissions=True)
+		try:
+			frappe.share.add_docshare(
+				DT, doc.name, USER, read=1, share=1, flags={"ignore_share_permission": True}
+			)
+			frappe.local.role_permissions = {}
+			d = api.get_doctype_detail("user", USER, DT)
+			self.assertEqual(d["live"]["share"], 0)
+			self.assertIn("share", d["live_shared"])
+			self.assertNotIn("read", d["live_shared"])  # a role already allows that
+		finally:
+			frappe.db.delete("DocShare", {"share_doctype": DT})
+			frappe.delete_doc(DT, doc.name, force=True, ignore_permissions=True)
 
 	# ------------------------------------------------------------------
 	# writing: the change must be real

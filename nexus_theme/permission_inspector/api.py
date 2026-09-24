@@ -18,8 +18,8 @@ How Frappe v16 decides a role permission (frappe.permissions.get_role_permission
   is implied by Read.
 
 The matrix below reproduces exactly that evaluation so it can also explain
-*which* role is responsible, and the detail view asks frappe.has_permission
-directly so the answer can be checked against the engine itself.
+*which* role is responsible, and the detail view asks the engine's own
+get_role_permissions so the answer can be checked against it.
 """
 
 import json
@@ -27,6 +27,7 @@ from collections import defaultdict
 
 import frappe
 import frappe.permissions
+import frappe.share
 from frappe import _
 from frappe.core.doctype.doctype.doctype import clear_permissions_cache
 from frappe.model import table_fields
@@ -85,6 +86,10 @@ CORE_LOCKED = ("DocType", "DocField", "DocPerm", "Custom DocPerm")
 
 # Rights that make a rule "exist" for Frappe's validator (check_atleast_one_set).
 BASIC_RIGHTS = ("select", "read", "write", "submit", "cancel", "create")
+
+# Rights frappe.has_permission grants on the strength of a DocShare alone
+# (its false_if_not_shared), plus any custom Permission Type of the DocType.
+SHARE_RIGHTS = ("read", "write", "share", "submit", "email", "print")
 
 # Frappe v16 added a "mask" flag beside the standard rights (it is not in
 # std_rights because it gates masked field values, not documents). Shown as a
@@ -484,30 +489,68 @@ def get_matrix(target_type: str, target: str, include_child: int = 0):
 # ---------------------------------------------------------------------------
 
 
-def _live_check(doctype: str, user: str, rights: list[str]) -> dict | None:
-	"""Ask the engine itself. This is the proof that a saved change is real."""
+def _live_check(doctype: str, user: str, rights: list[str]) -> tuple[dict | None, list[str]]:
+	"""Ask the engine itself, right by right, the way it decides for a document.
+
+	frappe.has_permission(doctype, ptype) without a document is the wrong
+	question for two of the answers this drawer gives. A right granted only
+	by an "if owner" rule comes back as a plain Yes for Read (so the list can
+	open) and a plain No for everything else, when the truth is "only on
+	their own records"; and a right the user has only because one record was
+	shared with them comes back Yes as if a role allowed it. So the role
+	rules are read through get_role_permissions with owner awareness, which
+	is what the engine consults for a document, and share-based access is
+	reported separately instead of being folded into Yes.
+
+	Returns (live, shared): live maps ptype -> 1 (allowed), 2 (only on
+	documents the user owns) or 0, and is None for a child table, which the
+	engine checks through its parent; shared lists the rights the user has
+	only through a DocShare on some record.
+	"""
 	meta = frappe.get_meta(doctype)
 	if meta.istable:
-		return None  # needs a parent; the engine checks the parent instead
-	out = {}
-	saved_log = frappe.local.message_log
-	frappe.local.message_log = []
-	try:
-		for ptype in rights:
-			try:
-				out[ptype] = (
-					# `raise_exception=False` is Frappe 15's "answer quietly": despite the
-					# name it never raises, it only suppresses the msgprint that would
-					# otherwise explain the refusal. (Frappe 16 renamed it print_logs.)
-					1
-					if frappe.permissions.has_permission(doctype, ptype, user=user, raise_exception=False)
-					else 0
+		return None, []
+	na = _not_applicable(meta)
+	perms = frappe.permissions.get_role_permissions(meta, user=user, is_owner=True)
+	owner_only = perms.get("if_owner") or {}
+	sharing_off = cint(frappe.get_system_settings("disable_document_sharing"))
+	roles = set(frappe.get_roles(user))
+
+	live = {}
+	for ptype in rights:
+		if ptype in na or (ptype == "share" and sharing_off):
+			live[ptype] = 0
+		elif ptype == MASK:
+			# Not in get_rights, so get_role_permissions never evaluates it:
+			# masked fields are checked per field at the field's level
+			# (Document.get_permlevel_access). Read from the level-0 rules,
+			# which is what the matrix column shows too.
+			live[ptype] = (
+				1
+				if any(
+					p.role in roles and cint(p.permlevel) == 0 and cint(p.get(MASK)) for p in meta.permissions
 				)
-			except Exception:
-				out[ptype] = 0
-	finally:
-		frappe.local.message_log = saved_log
-	return out
+				else 0
+			)
+		elif owner_only.get(ptype):
+			live[ptype] = 2
+		else:
+			live[ptype] = 1 if perms.get(ptype) else 0
+	# has_permission falls back to Read when Select is not granted.
+	if "select" in live and not live["select"] and live.get("read"):
+		live["select"] = live["read"]
+
+	shareable = set(SHARE_RIGHTS) | set(get_doctype_ptype_map().get(doctype, []))
+	shared = []
+	for ptype in rights:
+		if live.get(ptype) or ptype in na or ptype not in shareable:
+			continue
+		if ptype == "share" and sharing_off:
+			continue
+		right = "read" if ptype in ("email", "print") else ptype
+		if frappe.share.get_shared(doctype, user, rights=[right], limit=1):
+			shared.append(ptype)
+	return live, shared
 
 
 def _rule_rows(doctype: str, roles: list[str] | None, rights: list[str], perm_doctype=None) -> list[dict]:
@@ -548,7 +591,10 @@ def get_doctype_detail(target_type: str, target: str, doctype: str):
 
 	if target_type == "user":
 		roles = None if target == ADMIN else frappe.get_roles(target)
-		live = {r: 1 for r in rights} if target == ADMIN else _live_check(doctype, target, rights)
+		if target == ADMIN:
+			live, shared = {r: 1 for r in rights}, []
+		else:
+			live, shared = _live_check(doctype, target, rights)
 		linked = set(get_linked_doctypes(doctype)) if not meta.istable else {doctype}
 		ups = frappe.get_all(
 			"User Permission",
@@ -566,7 +612,7 @@ def get_doctype_detail(target_type: str, target: str, doctype: str):
 		)
 	else:
 		roles = [target]
-		live = None
+		live, shared = None, []
 		ups = []
 
 	customised = bool(frappe.db.exists("Custom DocPerm", {"parent": doctype}))
@@ -597,6 +643,7 @@ def get_doctype_detail(target_type: str, target: str, doctype: str):
 		"rules": _rule_rows(doctype, roles, rights),
 		"standard_rules": _rule_rows(doctype, roles, rights, perm_doctype="DocPerm") if customised else None,
 		"live": live,
+		"live_shared": shared,
 		"user_permissions": ups,
 		"parents": parents,
 	}
