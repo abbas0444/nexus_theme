@@ -267,6 +267,18 @@ class TestThemeApi(FrappeTestCase):
 		self.assertRaises(frappe.ValidationError, api.toggle_user_sounds, 1)
 		self._govern(None, 0, [], 1)
 
+	def test_the_site_switch_withholds_custom_sounds_but_not_audio(self):
+		api.set_user_sound("save", SOUND, 0.5)
+		self._govern(None, 0, [], 0)
+		payload = api.get_user_sounds()
+		# Off means "no custom sounds", not "silence": stock sounds still
+		# play, so `enabled` stays up while the mapping is withheld.
+		self.assertEqual(payload["allowed"], 0)
+		self.assertEqual(payload["enabled"], 1)
+		self.assertEqual(payload["mapping"], {})
+		self._govern(None, 0, [], 1)
+		self.assertEqual(api.get_user_sounds()["mapping"]["save"]["url"], SOUND)
+
 	# ------------------------------------------------------------------
 	# Role provisioning
 	# ------------------------------------------------------------------

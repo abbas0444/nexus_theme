@@ -435,7 +435,7 @@ Open **Nexus Theme → Theme Settings** or `/app/theme-settings`. Every option i
 | **Allow Custom Themes** | Lets people build and save their own themes in Theme Studio. |
 | **Allow Public Sharing** | Lets people share a custom theme with everyone on the site. |
 | **Restrict Theme Choice** + **Allowed Themes** | Shows only the listed themes in Theme Studio. Anyone already using another theme keeps it; they are not reset. |
-| **Allow User Sounds** | Turn off to switch Sound Studio off for everyone. Their choices are kept for when it is switched on again. |
+| **Allow User Sounds** | Turn off to switch Sound Studio off for everyone: nobody's custom files or volumes apply, and the Desk plays Frappe's own sounds as if the app were not there. Their choices are kept for when it is switched on again. |
 | **Navbar Logo** | Replaces the Frappe logo in the navbar. |
 | **Favicon** | The browser-tab icon on the Desk and the website. |
 | **Login Background** | A background image for the login page. On the Nexus login page it sits behind the coloured panel. |
@@ -478,7 +478,7 @@ All of the wording lives in one place, in the **Login Page** section of Theme Se
 
 - *Company look for everyone, still free to personalise:* set a Site Default Theme, tick Allow Custom Themes, leave Restrict Theme Choice off.
 - *Locked-down branding:* set a Site Default Theme, tick Restrict Theme Choice and list the approved themes, untick Allow Public Sharing.
-- *Quiet office:* untick Allow User Sounds.
+- *No custom sounds on this site:* untick Allow User Sounds. Frappe's own sounds still play; people who want silence untick **Enable sounds** in Sound Studio, or **Mute Sounds** in their Frappe settings.
 
 ---
 
@@ -573,7 +573,7 @@ Only events the person actually changed appear in the table. An event with no ro
 
 **When to create a new one:** never, in normal use. Sound Studio writes this row the first time someone picks a sound or moves a slider.
 
-An administrator might open one to **silence one person** (untick **Enabled**) or to **remove a file someone uploaded** by deleting its row. To silence the whole site instead, untick **Allow User Sounds** in Theme Settings — that overrules every row here.
+An administrator might open one to **silence one person** (untick **Enabled**) or to **remove a file someone uploaded** by deleting its row. To take every custom sound off the whole site instead, untick **Allow User Sounds** in Theme Settings — that sets every row here aside, and Frappe's own sounds play.
 
 > **Deleting a row is safe.** These two preference records are only preferences. Delete one and that person simply goes back to the site default the next time their Desk loads; no theme, no sound file and no part of their account is lost.
 
@@ -598,7 +598,7 @@ An administrator might open one to **silence one person** (untick **Enabled**) o
 
 **I made a theme on staging and want it in production.** Export on staging, Import on production, then set it as default or share it.
 
-**Everything went silent.** Sound Settings → check the Enable sounds switch. If it is on, ask an administrator whether Allow User Sounds is off in Theme Settings.
+**Everything went silent.** Sound Settings → check the Enable sounds switch, then **Mute Sounds** in your Frappe user settings. **Custom sounds stopped and Frappe's own play instead:** ask an administrator whether Allow User Sounds is off in Theme Settings.
 
 **Why can Abbas delete invoices?** Permission Inspector → A person → Abbas → search *Sales Invoice* → the Delete cell says Yes and the Because of column names the role. Click the row for the full reasons.
 

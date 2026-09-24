@@ -209,12 +209,13 @@
 			frappe.show_alert({ message: __("Could not load sound settings"), indicator: "red" });
 			return;
 		}
-		const fresh = (res && res.message) || { enabled: 1, mapping: {} };
+		const fresh = (res && res.message) || { enabled: 1, allowed: 1, mapping: {} };
 
 		if (studio) {
 			// Same state object the handlers closed over — replace its
 			// contents, not the object.
 			studio.state.enabled = fresh.enabled;
+			studio.state.allowed = fresh.allowed;
 			studio.state.mapping = fresh.mapping || {};
 			studio.refresh();
 			studio.dialog.show();
@@ -277,6 +278,7 @@
 		// refresh() repaints both after state was replaced on a reopen.
 		const refresh = () => {
 			dialog.set_value("enabled", state.enabled ? 1 : 0);
+			dialog.set_df_property("enabled", "read_only", state.allowed === 0 ? 1 : 0);
 			render();
 		};
 		bindRowEvents($table, dialog, state, render);
@@ -323,19 +325,29 @@
 	}
 
 	function renderTable(state) {
+		// Site-wide off: the server hands out no custom files and refuses
+		// every write, and Frappe's own sounds play. Say so instead of
+		// offering controls whose every save would fail.
+		const locked = state.allowed === 0;
+		const hint = locked
+			? __(
+					"Custom sounds are turned off on this site, so Frappe's own sounds play. Your choices are kept for when they are turned on again."
+			  )
+			: __("Upload your own audio for any event. Sounds are always cut at 3 seconds.");
 		return `
-      <div class="sound-studio">
+      <div class="sound-studio${locked ? " is-locked" : ""}">
         <div class="sound-studio-hint">
-          ${__("Upload your own audio for any event. Sounds are always cut at 3 seconds.")}
+          ${escapeHtml(hint)}
         </div>
         <div class="sound-studio-rows">
-          ${EVENTS.map((e) => renderRow(e, state.mapping[e.key])).join("")}
+          ${EVENTS.map((e) => renderRow(e, state.mapping[e.key], locked)).join("")}
         </div>
       </div>`;
 	}
 
-	function renderRow(event, mapped) {
+	function renderRow(event, mapped, locked) {
 		const hasCustom = !!(mapped && mapped.url);
+		const dis = locked ? " disabled" : "";
 		const volume = mapped && typeof mapped.volume === "number" ? mapped.volume : 0.5;
 		const savedUrl = (mapped && mapped.url) || "";
 		const selectedIdx = selectedPresetIndex(event.key, savedUrl);
@@ -352,7 +364,7 @@
 				const sel = i === selectedIdx ? " is-selected" : "";
 				return `
           <button type="button" class="preset-chip${sel}" data-preset-idx="${i}"
-                  title="${escapeHtml(p.label)}">
+                  title="${escapeHtml(p.label)}"${dis}>
             <span class="preset-play" data-action="preset-preview"
                   data-preset-idx="${i}" aria-label="${escapeHtml(__("Preview"))}">▶</span>
             <span class="preset-name">${escapeHtml(p.label)}</span>
@@ -368,19 +380,21 @@
         </div>
         <div class="sound-row-volume">
           <input type="range" min="0" max="100" value="${Math.round(volume * 100)}"
-                 data-action="volume" aria-label="${escapeHtml(__("Volume"))}">
+                 data-action="volume" aria-label="${escapeHtml(__("Volume"))}"${dis}>
         </div>
         <div class="sound-row-actions">
           <button type="button" class="btn btn-xs btn-default" data-action="preview">${__(
 				"Preview"
 			)}</button>
-          <button type="button" class="btn btn-xs btn-default" data-action="upload">${__(
-				"Upload"
-			)}</button>
+          <button type="button" class="btn btn-xs btn-default" data-action="upload"${dis}>${__(
+			"Upload"
+		)}</button>
           <button type="button" class="btn btn-xs btn-default" data-action="frappe-default"
-                  title="${escapeHtml(__("Use Default Frappe Sound"))}">${__("Default")}</button>
+                  title="${escapeHtml(__("Use Default Frappe Sound"))}"${dis}>${__(
+			"Default"
+		)}</button>
           <button type="button" class="btn btn-xs btn-default" data-action="clear"
-                  ${hasCustom ? "" : "disabled"}>${__("Clear")}</button>
+                  ${hasCustom && !locked ? "" : "disabled"}>${__("Clear")}</button>
         </div>
         <div class="sound-row-presets">
           <span class="presets-label">${escapeHtml(__("Defaults:"))}</span>

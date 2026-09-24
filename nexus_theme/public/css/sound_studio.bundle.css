@@ -26,6 +26,12 @@
   gap: 10px;
 }
 
+/* Site-wide "Allow User Sounds" is off: every control is disabled and the
+   hint says why, so the rows only need to read as inert. */
+.sound-studio.is-locked .sound-row {
+  opacity: 0.6;
+}
+
 .sound-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 140px auto;
