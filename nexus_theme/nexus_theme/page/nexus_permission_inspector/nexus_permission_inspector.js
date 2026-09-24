@@ -467,11 +467,6 @@ frappe.pages["nexus-permission-inspector"].on_page_show = function (wrapper) {
 			return __("A custom permission type defined for this record type.");
 		}
 
-		target_label() {
-			const t = this.data.target;
-			return t.type === "user" ? t.label : __("people with the role {0}", [t.label]);
-		}
-
 		// ------------------------------------------------------------------
 		// Summary
 		// ------------------------------------------------------------------
