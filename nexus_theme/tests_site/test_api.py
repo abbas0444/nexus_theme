@@ -179,6 +179,23 @@ class TestThemeApi(FrappeTestCase):
 		self.assertEqual(again, name)
 		self.assertEqual(frappe.db.get_value("Theme Definition", name, "theme_name"), "Renamed")
 
+	def test_renaming_onto_another_of_your_own_themes_is_refused(self):
+		"""Names no longer have to be unique across the site, but one
+		person's themes still need distinct names or their gallery shows
+		two cards nobody can tell apart."""
+		self._save_custom("nxt-test-rename-a")
+		self._save_custom("nxt-test-rename-b")
+		with self.assertRaises(frappe.ValidationError) as caught:
+			api.save_custom_theme(
+				dict(
+					_portable("nxt-test-rename-a"),
+					theme_key="nxt-test-rename-a",
+					theme_name="Nxt Test Rename B",
+				),
+				share_public=0,
+			)
+		self.assertIn("already have", str(caught.exception))
+
 	# ------------------------------------------------------------------
 	# Sounds
 	# ------------------------------------------------------------------
