@@ -29,6 +29,8 @@
 			// the mapping is empty and Sound Studio is read-only; it does not
 			// mean silence — Frappe's own sounds still play.
 			this.customAllowed = true;
+			// The user's last_login, from the server; see wireLoginSound.
+			this.loginStamp = null;
 		}
 
 		/**
@@ -263,24 +265,39 @@
 		}
 
 		/**
-		 * Detect a fresh login with two strategies:
-		 *   1. document.referrer — if we came from /login, always play.
-		 *   2. sessionStorage flag — first desk load of a tab that has no referrer info.
-		 * The flag is cleared on logout so a same-tab logout→login replays the sound.
+		 * Play the login sound once per actual sign-in, not once per page.
+		 *
+		 * The server hands over the user's last_login timestamp with the
+		 * sound map (get_user_sounds → login_stamp). Login clears the user's
+		 * bootinfo cache, so a new sign-in always brings a new stamp; a
+		 * reload or a second tab brings the same one. The stamp last played
+		 * for is kept in localStorage — sessionStorage is per tab, which is
+		 * why the old flag chimed in every new tab, and document.referrer
+		 * survives a reload, which is why the referrer check chimed on every
+		 * F5 after signing in.
+		 *
+		 * The referrer still matters for one case: a sign-in whose cache
+		 * clear missed (Frappe clears it by the typed usr, which may be a
+		 * username rather than the user id). Then the stamp is stale, but
+		 * the page was reached from /login and this tab has not chimed yet —
+		 * logout clears the per-tab flag so a same-tab logout→login counts.
 		 */
 		wireLoginSound() {
 			let shouldPlay = false;
 			try {
+				const stamp = this.loginStamp;
+				const user = (window.frappe && frappe.session && frappe.session.user) || "";
+				const marker = stamp ? user + "|" + stamp : "";
 				const ref = (document.referrer || "").toString();
-				const cameFromLogin = ref.includes("/login") || ref.endsWith("/login");
-				const flag = sessionStorage.getItem("theme:login_sound_played");
-				if (cameFromLogin) {
+				const cameFromLogin = ref.includes("/login");
+				const tabFlag = sessionStorage.getItem("theme:login_sound_played");
+				if (marker && localStorage.getItem("theme:login_sound_for") !== marker) {
 					shouldPlay = true;
-					sessionStorage.setItem("theme:login_sound_played", "1");
-				} else if (!flag) {
+				} else if (cameFromLogin && !tabFlag) {
 					shouldPlay = true;
-					sessionStorage.setItem("theme:login_sound_played", "1");
 				}
+				if (marker) localStorage.setItem("theme:login_sound_for", marker);
+				sessionStorage.setItem("theme:login_sound_played", "1");
 			} catch (_e) {
 				/* storage unavailable — fall through silently */
 			}
@@ -349,6 +366,7 @@
 				firing = true;
 				try {
 					sessionStorage.removeItem("theme:login_sound_played");
+					localStorage.removeItem("theme:login_sound_for");
 				} catch (_e) {
 					/* ignore */
 				}
@@ -449,6 +467,7 @@
 			// mapping, so stock sounds keep playing — only the overrides go.
 			this.enabled = m.enabled !== 0;
 			this.customAllowed = m.allowed !== 0;
+			this.loginStamp = m.login_stamp || null;
 			this.applyMapping(m.mapping || {});
 		}
 
