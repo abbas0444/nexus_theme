@@ -110,41 +110,34 @@ def sync_public_assets() -> None:
 		return
 
 
-# Entries added to the navbar's settings dropdown — the menu behind the avatar
-# at the top right. Frappe 15 renders it from Navbar Settings
-# (`settings_dropdown`) in ui/toolbar/navbar.html, which is also how Frappe
-# itself registers "Toggle Theme", so this is the supported way in rather than
-# a DOM injection. theme_switcher.js additionally places an icon in the navbar
-# itself; the two are independent, and either alone is enough to reach the
-# studios.
-NAVBAR_ITEMS = (
-	{
-		"item_label": "Theme Studio",
-		"item_type": "Action",
-		"action": "window.openThemeSwitcher && window.openThemeSwitcher()",
-		"is_standard": 1,
-	},
-	{
-		"item_label": "Sound Settings",
-		"item_type": "Action",
-		"action": "window.openSoundStudio && window.openSoundStudio()",
-		"is_standard": 1,
-	},
-)
+def navbar_items() -> list[dict]:
+	"""The avatar-menu entries hooks.py declares.
+
+	`standard_navbar_items` is the hook Frappe reads when it first fills
+	Navbar Settings, and the one Frappe 16's migrate keeps rows in step
+	with; reading the same list here keeps install and uninstall working
+	from one definition.
+	"""
+	return [dict(item) for item in frappe.get_hooks("standard_navbar_items", app_name="nexus_theme")]
 
 
 def ensure_navbar_items() -> None:
-	"""Add our entries to the sidebar settings dropdown. Idempotent."""
+	"""Add our entries to the avatar menu's settings dropdown. Idempotent.
+
+	Frappe 15 has no navbar sync on migrate (that arrived in 16), so this
+	runs after install and after every migrate. It only ever adds what is
+	missing, so rows already there keep their order and any "hidden" tick.
+	"""
 	if not frappe.db.exists("DocType", "Navbar Settings"):
 		return
 	try:
 		settings = frappe.get_single("Navbar Settings")
 		existing = {row.item_label for row in (settings.settings_dropdown or [])}
 		added = False
-		for item in NAVBAR_ITEMS:
+		for item in navbar_items():
 			if item["item_label"] in existing:
 				continue
-			settings.append("settings_dropdown", dict(item))
+			settings.append("settings_dropdown", item)
 			added = True
 		if added:
 			settings.flags.ignore_permissions = True

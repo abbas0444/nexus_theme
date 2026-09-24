@@ -145,6 +145,31 @@ sounds = [
 # 	"filters": "nexus_theme.utils.jinja_filters"
 # }
 
+# Avatar menu settings dropdown
+# -----------------------------
+# Frappe 15 draws the menu behind the avatar from Navbar Settings
+# (`settings_dropdown`, ui/toolbar/navbar.html). That is how Frappe registers
+# "Toggle Theme", and it is one of the app's two ways into Theme Studio and
+# Sound Studio (theme_switcher.js also puts an icon in the navbar itself).
+#
+# Declared under this hook, the same as on the Frappe 16 branch, so the two
+# builds share one definition: install.py reads it to add the rows, and on
+# 16 Frappe's own migrate keeps them in step with it.
+standard_navbar_items = [
+	{
+		"item_label": "Theme Studio",
+		"item_type": "Action",
+		"action": "window.openThemeSwitcher && window.openThemeSwitcher()",
+		"is_standard": 1,
+	},
+	{
+		"item_label": "Sound Settings",
+		"item_type": "Action",
+		"action": "window.openSoundStudio && window.openSoundStudio()",
+		"is_standard": 1,
+	},
+]
+
 # Installation
 # ------------
 
