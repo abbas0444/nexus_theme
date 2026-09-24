@@ -21,6 +21,16 @@ class TestUserSoundPreference(FrappeTestCase):
 		doc.validate()
 		self.assertEqual(doc.sounds[0].volume, 0.5)
 
+	def test_a_file_off_this_site_is_refused_on_the_row(self):
+		# set_user_sound() checks its argument, but the row's Attach field
+		# accepts any string through /api/resource, and every file becomes an
+		# <audio src> in the user's Desk.
+		for bad in ("https://example.com/x.mp3", "javascript:alert(1)", "/files/x.exe"):
+			with self.subTest(url=bad):
+				doc = frappe.new_doc("User Sound Preference")
+				doc.append("sounds", {"event_key": "save", "file": bad, "volume": 0.5})
+				self.assertRaises(frappe.ValidationError, doc.validate)
+
 	def test_in_range_volume_is_preserved(self):
 		doc = frappe.new_doc("User Sound Preference")
 		doc.append("sounds", {"event_key": "error", "file": "/files/e.mp3", "volume": 0.7})

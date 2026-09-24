@@ -7,10 +7,28 @@ from nexus_theme.nexus_theme.doctype.theme_settings.theme_settings import (
 )
 
 USER = "Administrator"
+THEME_USER = "nxt-pref-owner@example.com"
+OTHER_USER = "nxt-pref-other@example.com"
 
 
 def _bundled(is_dark: int) -> str | None:
 	return frappe.db.get_value("Theme Definition", {"is_default": 1, "is_dark": is_dark}, "name")
+
+
+def _theme_user(email: str):
+	"""A Desk user holding only Theme User: the role every self-service
+	write in this app is granted through, and nothing more."""
+	if frappe.db.exists("User", email):
+		frappe.delete_doc("User", email, force=True, ignore_permissions=True)
+	return frappe.get_doc(
+		{
+			"doctype": "User",
+			"email": email,
+			"first_name": "Pref Test",
+			"send_welcome_email": 0,
+			"roles": [{"role": "Theme User"}],
+		}
+	).insert(ignore_permissions=True)
 
 
 class TestUserThemePreference(FrappeTestCase):
@@ -26,7 +44,12 @@ class TestUserThemePreference(FrappeTestCase):
 		self._drop_pref()
 
 	def tearDown(self):
+		frappe.set_user(USER)
 		self._drop_pref()
+		for email in (THEME_USER, OTHER_USER):
+			self._drop_pref(email)
+			if frappe.db.exists("User", email):
+				frappe.delete_doc("User", email, force=True, ignore_permissions=True)
 		p = self._prev
 		self._govern(p["site_default_theme"], p["restrict_theme_choice"], p["allowed_themes"])
 
@@ -38,8 +61,8 @@ class TestUserThemePreference(FrappeTestCase):
 		doc.save(ignore_permissions=True)
 		clear_settings_cache()
 
-	def _drop_pref(self):
-		name = frappe.db.exists("User Theme Preference", {"user": USER})
+	def _drop_pref(self, user=USER):
+		name = frappe.db.exists("User Theme Preference", {"user": user})
 		if name:
 			frappe.delete_doc("User Theme Preference", name, force=True, ignore_permissions=True)
 
@@ -74,6 +97,16 @@ class TestUserThemePreference(FrappeTestCase):
 		doc.validate()
 		self.assertEqual(doc.overrides_json, '{"accent": "#6366f1"}')
 
+	def test_unsafe_overrides_are_dropped_from_the_row(self):
+		# set_active_theme() sanitizes its input, but a row posted straight to
+		# /api/resource used to keep whatever it was given — and overrides are
+		# injected into the Desk as CSS.
+		doc = self._doc(
+			overrides_json='{"accent": "#6366f1", "bg_primary": "url(https://evil.example/x)", "x": "y"}'
+		)
+		doc.validate()
+		self.assertEqual(doc.overrides_json, '{"accent": "#6366f1"}')
+
 	def test_a_theme_is_required_unless_opting_out(self):
 		doc = self._doc(active_theme=None)
 		self.assertRaises(frappe.ValidationError, doc.validate)
@@ -92,6 +125,71 @@ class TestUserThemePreference(FrappeTestCase):
 		self.assertFalse(doc.dark_theme)
 		self.assertEqual(doc.theme_mode, "Single")
 		self.assertEqual(doc.overrides_json, "{}")
+
+	# ------------------------------------------------------------------
+	# Whose row is it
+	# ------------------------------------------------------------------
+
+	def test_a_theme_user_cannot_write_a_row_for_someone_else(self):
+		light = _bundled(is_dark=0)
+		if not light:
+			self.skipTest("no bundled light theme on this site")
+		_theme_user(THEME_USER)
+		_theme_user(OTHER_USER)
+
+		frappe.set_user(THEME_USER)
+		doc = frappe.new_doc("User Theme Preference")
+		doc.user = OTHER_USER
+		doc.active_theme = light
+		doc.overrides_json = '{"bg_primary": "#000000"}'
+		self.assertRaises(frappe.PermissionError, doc.insert)
+		self.assertFalse(frappe.db.exists("User Theme Preference", {"user": OTHER_USER}))
+
+	def test_a_system_manager_may_set_another_users_row(self):
+		light = _bundled(is_dark=0)
+		if not light:
+			self.skipTest("no bundled light theme on this site")
+		_theme_user(THEME_USER)
+
+		frappe.set_user(USER)
+		doc = frappe.new_doc("User Theme Preference")
+		doc.user = THEME_USER
+		doc.active_theme = light
+		doc.insert()
+		# The row is the user's, not the admin's: `owner` follows `user`.
+		self.assertEqual(frappe.db.get_value("User Theme Preference", doc.name, "owner"), THEME_USER)
+
+	def test_the_user_a_row_is_for_can_always_save_over_it(self):
+		"""A row planted by someone else must not lock its user out.
+
+		Before the ownership check existed, a row inserted with another
+		user's `user` had the attacker as `owner`, so `if_owner` refused the
+		victim's own saves. The row belongs to its user; saving it takes
+		`owner` back too.
+		"""
+		light = _bundled(is_dark=0)
+		if not light:
+			self.skipTest("no bundled light theme on this site")
+		_theme_user(THEME_USER)
+		_theme_user(OTHER_USER)
+
+		frappe.set_user(USER)
+		planted = frappe.new_doc("User Theme Preference")
+		planted.user = THEME_USER
+		planted.active_theme = light
+		planted.insert()
+		frappe.db.set_value("User Theme Preference", planted.name, "owner", OTHER_USER, update_modified=False)
+
+		frappe.set_user(THEME_USER)
+		mine = frappe.get_doc("User Theme Preference", planted.name)
+		self.assertTrue(mine.has_permission("write"))
+		mine.use_frappe_theme = 1
+		mine.save()  # used to raise PermissionError here
+		self.assertEqual(frappe.db.get_value("User Theme Preference", planted.name, "owner"), THEME_USER)
+
+		# Only the row's own user gets that latitude.
+		frappe.set_user(OTHER_USER)
+		self.assertFalse(frappe.get_doc("User Theme Preference", planted.name).has_permission("write"))
 
 	# ------------------------------------------------------------------
 	# Resolution against the site default
