@@ -14,7 +14,8 @@ website renders exactly as before.
 
 import frappe
 
-from nexus_theme.utils.web_css import VAR_MAP, theme_css_rules
+from nexus_theme.login_page import public_file
+from nexus_theme.utils.web_css import VAR_MAP, css_url, theme_css_rules
 
 
 def update_website_context(context):
@@ -41,21 +42,25 @@ def update_website_context(context):
 			css += theme_css_rules(theme)
 			context.nexus_theme_is_dark = 1 if theme.get("is_dark") else 0
 
-	favicon = settings.get("favicon")
+	# Both images are fetched by visitors who are not signed in, so a private
+	# upload answers 403 — a broken favicon, or no background at all. The same
+	# rule the login page applies to its own images: skip them.
+	favicon = public_file(settings.get("favicon"))
 	if favicon:
 		context.favicon = favicon
 
-	login_bg = settings.get("login_background")
+	login_bg = css_url(public_file(settings.get("login_background")))
 	# The Nexus login page places this image in its own side panel, so the
 	# blanket background rule below would double it up behind the form.
 	on_nexus_login = bool(getattr(frappe.local, "flags", {}).get("nexus_login_page"))
 	if login_bg and _is_login_route() and not on_nexus_login:
 		# Only the login route; a background image behind every web page
-		# would be a surprise, not a brand.
-		safe = frappe.utils.escape_html(login_bg)
+		# would be a surprise, not a brand. css_url() has quoted and escaped
+		# the value for a <style> element; HTML escaping is wrong here and
+		# turned every `&` and `'` in a file name into a broken image.
 		css += (
 			".page_content,.for-login,.login-content{"
-			f"background-image:url('{safe}');"
+			f"background-image:url({login_bg});"
 			"background-size:cover;background-position:center;}"
 		)
 

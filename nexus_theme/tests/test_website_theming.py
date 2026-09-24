@@ -7,7 +7,7 @@ verbatim into every public page's <head>.
 
 import unittest
 
-from nexus_theme.utils.web_css import VAR_MAP
+from nexus_theme.utils.web_css import VAR_MAP, css_url
 from nexus_theme.utils.web_css import theme_css_rules as _theme_style_block
 
 
@@ -74,6 +74,36 @@ class TestThemeStyleBlock(unittest.TestCase):
 		for field, css_var in VAR_MAP.items():
 			self.assertIn(field, js, f"{field} missing from theme_manager.js")
 			self.assertIn(css_var, js, f"{css_var} missing from theme_manager.js")
+
+
+class TestCssUrl(unittest.TestCase):
+	def test_quotes_a_plain_path(self):
+		self.assertEqual(css_url("/files/bg.png"), '"/files/bg.png"')
+		self.assertEqual(css_url("  /files/bg.png  "), '"/files/bg.png"')
+
+	def test_keeps_characters_html_escaping_broke(self):
+		# escape_html turned these into &amp; and &#x27;, and the browser
+		# fetched a file that did not exist.
+		self.assertEqual(css_url("/files/a&b.png"), '"/files/a&b.png"')
+		self.assertEqual(css_url("/files/it's.png"), '"/files/it\'s.png"')
+		self.assertEqual(css_url("/files/bg.png?v=1&x=2"), '"/files/bg.png?v=1&x=2"')
+
+	def test_escapes_quotes_and_backslashes(self):
+		self.assertEqual(css_url('/files/a"b.png'), '"/files/a\\"b.png"')
+		self.assertEqual(css_url("/files/a\\b.png"), '"/files/a\\\\b.png"')
+
+	def test_refuses_what_cannot_be_made_safe(self):
+		for bad in (
+			"",
+			"   ",
+			None,
+			42,
+			"/files/x.png\n}body{display:none}",
+			"/files/x.png</style><script>alert(1)</script>",
+			"/files/x\t.png",
+			"/files/x\x00.png",
+		):
+			self.assertIsNone(css_url(bad), repr(bad))
 
 
 if __name__ == "__main__":
