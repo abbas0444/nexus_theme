@@ -64,6 +64,10 @@
 			this.pair = { light: null, dark: null };
 			this.pairOverrides = { light: {}, dark: {} };
 			this._systemQuery = null;
+			// Bumped every time the user hands the Desk back to Frappe. A
+			// server round-trip that started before the bump must not apply
+			// its result afterwards, or the theme they just left comes back.
+			this._epoch = 0;
 		}
 
 		/** The theme that should be showing right now, given mode + system. */
@@ -209,6 +213,7 @@
 			// bypass the boot value and ask the server directly — otherwise
 			// the freshly-applied theme reverts to the previous one on refresh.
 			const fromCache = !!(window.frappe && frappe.boot && frappe.boot.from_cache);
+			const epoch = this._epoch;
 			let result = null;
 
 			if (window.frappe && frappe.call) {
@@ -230,6 +235,11 @@
 				if (boot === undefined) return;
 				result = boot;
 			}
+
+			// The user chose Frappe's own look while this was in flight. The
+			// reply describes the theme they just left; clear_active_theme is
+			// on its way and the next load will agree with them.
+			if (epoch !== this._epoch) return;
 
 			if (result && result.theme) {
 				const showing = this._applyPair(result);
@@ -253,6 +263,7 @@
 		 */
 		async setActive(themeName, overrides = {}) {
 			if (!window.frappe || !frappe.call) return null;
+			const epoch = this._epoch;
 			const set = await frappe.call({
 				method: "nexus_theme.api.set_active_theme",
 				args: {
@@ -261,6 +272,7 @@
 				},
 			});
 			const r = await frappe.call({ method: "nexus_theme.api.get_active_theme" });
+			if (epoch !== this._epoch) return null;
 			const half = (set && set.message && set.message.half) || "light";
 			const mode = (set && set.message && set.message.mode) || "Single";
 			if (r && r.message && r.message.theme) {
@@ -309,6 +321,7 @@
 		 * 3. Wipe local state so Frappe's stock palette paints cleanly.
 		 */
 		async resetToFrappeDefault() {
+			this._epoch++;
 			if (window.frappe && frappe.call) {
 				try {
 					await frappe.call({ method: "nexus_theme.api.clear_active_theme" });
@@ -350,14 +363,34 @@
 		 *
 		 * Returns the server call so a caller can await it; local state is
 		 * already released by the time it returns. Safe to call repeatedly.
+		 *
+		 * This runs even when nothing of ours is showing yet. Right after a
+		 * page load the cache may be empty while loadFromServer() is still
+		 * waiting on its reply, and a choice made in that window used to be
+		 * dropped on the floor — then the reply arrived and painted the very
+		 * theme the user had just stepped away from. Bumping the epoch makes
+		 * that reply (and any setActive in flight) ignore its result, and
+		 * the opt-out still reaches the server so a reload agrees.
 		 */
 		handOffToFrappe() {
-			if (!this.active) return Promise.resolve();
-			this._clearAppTheme();
-			this._clearCache();
-			this._notify();
+			this._epoch++;
+			if (this.active) {
+				this._clearAppTheme();
+				this._clearCache();
+				this._notify();
+			}
+			// One choice, one request: the native switcher calls this directly
+			// and core then writes `data-theme-mode`, which lands here again
+			// through the observer a moment later.
+			if (this._handOff) return this._handOff;
 			if (!(window.frappe && frappe.call)) return Promise.resolve();
-			return frappe.call({ method: "nexus_theme.api.clear_active_theme" }).catch(() => {});
+			this._handOff = frappe
+				.call({ method: "nexus_theme.api.clear_active_theme" })
+				.catch(() => {})
+				.then(() => {
+					this._handOff = null;
+				});
+			return this._handOff;
 		}
 
 		// Brief opacity dip on the body while we swap CSS variables. Only used
@@ -534,16 +567,18 @@
 			const next = ROOT.getAttribute("data-theme-mode") || "light";
 			const changed = next !== this.frappeMode;
 			this.frappeMode = next;
-			if (!this.active) {
-				if (changed) this._notify();
-				return;
-			}
-			// Step aside whether or not the value moved. Frappe's dialog writes
-			// the attribute even when it is unchanged — and "Frappe Light" while
-			// the mode is already light is the common case when one of our dark
-			// themes is sitting on top of it. Bailing out on an unchanged value
-			// is exactly what used to leave that dark theme in place.
+			// Step aside whether or not the value moved, and whether or not one
+			// of our themes is showing yet. Frappe's dialog writes the attribute
+			// even when it is unchanged — and "Frappe Light" while the mode is
+			// already light is the common case when one of our dark themes is
+			// sitting on top of it. Bailing out on an unchanged value is exactly
+			// what used to leave that dark theme in place; bailing out on "no
+			// theme yet" is what let a load still in flight paint one over the
+			// choice. Nothing but that dialog writes this attribute, so every
+			// write here is the user asking for Frappe's look.
+			const hadTheme = !!this.active;
 			this.handOffToFrappe();
+			if (!hadTheme && changed) this._notify();
 		}
 
 		_onFrappeThemeWrite() {

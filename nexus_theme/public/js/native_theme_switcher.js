@@ -221,12 +221,15 @@
 			toggle_theme(name) {
 				const theme = (this.themes || []).find((t) => t.name === name);
 				if (!theme || !theme.is_custom) {
-					// Light / Dark / Automatic. Release our theme first so the
-					// manager's observer sees nothing active when core writes
-					// `data-theme-mode` a moment later, and only one clear reaches
-					// the server. Core then persists desk_theme and Frappe's own
-					// resolver derives `data-theme` from the new mode.
-					if (window.ThemeManager && ThemeManager.active) {
+					// Light / Dark / Automatic. Release our theme first, whether
+					// or not one is showing yet: the choice must be recorded even
+					// while the manager is still waiting on the server, or that
+					// reply paints the theme the user just left. The manager
+					// sends one clear per choice however many times it is asked,
+					// so the observer seeing core's `data-theme-mode` write a
+					// moment later costs nothing. Core then persists desk_theme
+					// and Frappe's own resolver derives `data-theme` from the mode.
+					if (window.ThemeManager) {
 						ThemeManager.handOffToFrappe();
 					}
 					return super.toggle_theme(name);
