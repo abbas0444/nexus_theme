@@ -50,7 +50,12 @@
     this page must not pick their rules up.
 -#}
 {#- The email + password body, shared by the sign-in and social sign-in cards,
-    exactly as Frappe's own template shares it. -#}
+    exactly as Frappe's own template shares it. That means Frappe's ids
+    (login_email, login_password) appear twice when social login is on, as
+    they do in frappe/www/login.html — its login.js selects by those ids, so
+    they cannot be made unique. Nothing of this page's own is an id for the
+    same reason: the eye button finds the input in its own field, and the
+    remember-me box is found by class inside its form (nexus_login.js). -#}
 {%- macro credentials_body() -%}
 {% if not disable_user_pass_login or (ldap_settings and ldap_settings.enabled) %}
 <div class="page-card-body">
@@ -70,14 +75,14 @@
 			{{ icon_lock() }}
 			<input type="password" id="login_password" class="form-control"
 				placeholder="{{ _('Enter your password') }}" autocomplete="current-password" required>
-			<button type="button" class="nxlogin-eye" data-nxlogin-toggle="#login_password"
+			<button type="button" class="nxlogin-eye" data-nxlogin-toggle
 				aria-label="{{ _('Show password') }}">{{ icon_eye() }}</button>
 		</div>
 	</div>
 
 	<div class="nxlogin-row">
 		<label class="nxlogin-remember">
-			<input type="checkbox" id="nxlogin_remember">
+			<input type="checkbox" class="nxlogin-remember-input">
 			<span>{{ _("Remember me") }}</span>
 		</label>
 		{% if not disable_user_pass_login %}
