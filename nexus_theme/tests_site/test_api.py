@@ -146,6 +146,50 @@ class TestThemeApi(FrappeTestCase):
 		self.assertEqual(api.set_theme_mode("Single")["mode"], "Single")
 		self.assertFalse(frappe.db.exists("User Theme Preference", {"user": ADMIN}))
 
+	def test_applying_a_theme_while_paired_replaces_its_own_half(self):
+		"""With pairing on, a theme goes to the half that matches its polarity.
+
+		It used to overwrite the light half every time, so applying a theme
+		with the OS in dark mode changed nothing on screen, and applying a dark
+		theme stored it as the light half as well.
+		"""
+		light, dark_base = _bundled(0), _bundled(1)
+		if not (light and dark_base):
+			self.skipTest("need one bundled light and one dark theme")
+		other_dark = self._save_custom("nxt-test-other-dark", base=dark_base)
+
+		api.set_active_theme(light)
+		api.set_theme_mode("Automatic", dark_theme=dark_base)
+
+		got = api.set_active_theme(other_dark, overrides={"accent": "#123456"})
+		self.assertEqual(got["half"], "dark")
+		self.assertEqual(got["mode"], "Automatic")
+
+		got = api.get_active_theme()
+		self.assertEqual(got["theme"]["name"], light)
+		self.assertEqual(got["dark_theme"]["name"], other_dark)
+		self.assertEqual(got["overrides"], {})
+		self.assertEqual(got["dark_overrides"], {"accent": "#123456"})
+
+	def test_each_half_keeps_its_own_overrides(self):
+		light, dark_base = _bundled(0), _bundled(1)
+		if not (light and dark_base):
+			self.skipTest("need one bundled light and one dark theme")
+
+		api.set_active_theme(light, overrides={"accent": "#111111"})
+		api.set_theme_mode("Automatic", dark_theme=dark_base)
+		api.set_active_theme(dark_base, overrides={"accent": "#222222"})
+
+		got = api.get_active_theme()
+		self.assertEqual(got["overrides"], {"accent": "#111111"})
+		self.assertEqual(got["dark_overrides"], {"accent": "#222222"})
+
+		# Leaving Automatic leaves nothing for the dark overrides to belong to.
+		api.set_theme_mode("Single")
+		got = api.get_active_theme()
+		self.assertEqual(got["overrides"], {"accent": "#111111"})
+		self.assertEqual(got["dark_overrides"], {})
+
 	def test_the_site_default_cannot_be_deleted(self):
 		name = self._save_custom("nxt-test-site-default")
 		self._govern(name, 0, [], 1)

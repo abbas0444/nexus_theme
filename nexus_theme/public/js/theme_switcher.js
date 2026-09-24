@@ -92,7 +92,10 @@
 		// candidate overrides. The live page is NOT touched until the user
 		// clicks Apply. selectedTheme falls back to the active theme if any,
 		// otherwise the first default so the preview always has something
-		// to render.
+		// to render. With automatic light/dark on, "active" is whichever
+		// half is showing right now; Apply then replaces that half (or the
+		// other one, if the user picks a theme of the other polarity — the
+		// server routes by polarity, see api.set_active_theme).
 		const initialActive = (window.ThemeManager && ThemeManager.active) || null;
 		let selectedTheme =
 			(initialActive && themesByName.get(initialActive.name)) ||
@@ -120,8 +123,9 @@
 					return;
 				}
 				const overrides = editor ? editor.getOverrides() : {};
+				let result;
 				try {
-					await ThemeManager.setActive(selectedTheme.name, overrides);
+					result = await ThemeManager.setActive(selectedTheme.name, overrides);
 				} catch (err) {
 					// The server's own reason is already on screen via frappe.call;
 					// this keeps the dialog open instead of an unhandled rejection.
@@ -131,7 +135,21 @@
 					});
 					return;
 				}
-				frappe.show_alert({ message: __("Theme applied"), indicator: "green" });
+				// With pairing on, the theme went to the half of its own polarity,
+				// which is not always the half on screen. Saying so beats a
+				// silent "Theme applied" while nothing visibly changes.
+				const showing = result && result.showing;
+				if (result && result.mode === "Automatic" && showing && showing.name !== selectedTheme.name) {
+					frappe.show_alert({
+						message:
+							result.half === "dark"
+								? __("Saved as your dark theme. It shows when your system switches to dark mode.")
+								: __("Saved as your light theme. It shows when your system switches to light mode."),
+						indicator: "blue",
+					});
+				} else {
+					frappe.show_alert({ message: __("Theme applied"), indicator: "green" });
+				}
 				dialog.hide();
 			},
 			secondary_action_label: gov.allow_custom_themes ? __("Save as Custom…") : undefined,

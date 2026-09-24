@@ -166,6 +166,45 @@ def get_available_themes():
 	}
 
 
+# Overrides belong to the theme they were tuned on. With automatic light/dark
+# pairing there are two themes, so there are two sets: `overrides_json`
+# holds the ones for `active_theme` (the light half) as flat keys — every
+# existing reader keeps working — and the dark half's under this one
+# reserved key. It can never collide with a real override, because
+# sanitize_overrides() only lets Theme Definition field names through.
+DARK_OVERRIDES_KEY = "dark"
+
+
+def _split_overrides(pref) -> tuple[dict, dict]:
+	"""The (light, dark) override dicts stored on a preference row."""
+	try:
+		raw = json.loads(pref.overrides_json or "{}")
+	except Exception:
+		raw = {}
+	if not isinstance(raw, dict):
+		raw = {}
+	dark = raw.pop(DARK_OVERRIDES_KEY, None)
+	return raw, (dark if isinstance(dark, dict) else {})
+
+
+def _store_overrides(pref, light: dict, dark: dict | None) -> None:
+	blob = dict(light or {})
+	if dark:
+		blob[DARK_OVERRIDES_KEY] = dark
+	pref.overrides_json = json.dumps(blob)
+
+
+def _is_pairing(pref) -> bool:
+	"""True while the row holds a usable light/dark pair."""
+	return bool(
+		pref
+		and not pref.use_frappe_theme
+		and pref.active_theme
+		and pref.get("theme_mode") == "Automatic"
+		and pref.get("dark_theme")
+	)
+
+
 @frappe.whitelist()
 def get_active_theme():
 	"""Return the user's active theme, or a null theme if they have none.
@@ -174,6 +213,9 @@ def get_active_theme():
 	"never chose" and gets the site default; a row with `use_frappe_theme`
 	means "chose Frappe's own theme" and gets nothing of ours, site default
 	included; a row with a theme gets that theme.
+
+	With pairing on, `overrides` are the light half's and `dark_overrides`
+	the dark half's; the client lays each set over its own theme only.
 
 	A user with no `User Theme Preference` row has not opted in to Theme
 	Studio — the client clears our CSS variables and Frappe's native palette
@@ -196,10 +238,17 @@ def get_active_theme():
 					"theme": theme,
 					"overrides": {},
 					"dark_theme": None,
+					"dark_overrides": {},
 					"mode": "Single",
 					"source": "site_default",
 				}
-		return {"theme": None, "overrides": {}, "dark_theme": None, "mode": "Single"}
+		return {
+			"theme": None,
+			"overrides": {},
+			"dark_theme": None,
+			"dark_overrides": {},
+			"mode": "Single",
+		}
 
 	pref = frappe.get_doc("User Theme Preference", pref_name)
 	if pref.use_frappe_theme:
@@ -210,15 +259,13 @@ def get_active_theme():
 			"theme": None,
 			"overrides": {},
 			"dark_theme": None,
+			"dark_overrides": {},
 			"mode": "Single",
 			"source": "frappe",
 		}
 
 	theme = frappe.db.get_value("Theme Definition", pref.active_theme, THEME_FIELDS, as_dict=True)
-	try:
-		overrides = json.loads(pref.overrides_json or "{}")
-	except Exception:
-		overrides = {}
+	overrides, dark_overrides = _split_overrides(pref)
 
 	# `theme` and `overrides` keep their original meaning so existing callers
 	# are unaffected; automatic pairing is additive.
@@ -230,11 +277,13 @@ def get_active_theme():
 		# A mode of Automatic with no usable dark theme behaves as Single
 		# rather than leaving the client to guess.
 		mode = "Single"
+		dark_overrides = {}
 
 	return {
 		"theme": theme,
 		"overrides": overrides,
 		"dark_theme": dark_theme,
+		"dark_overrides": dark_overrides,
 		"mode": mode,
 		"source": "user",
 	}
@@ -266,8 +315,17 @@ def set_theme_mode(mode: str, dark_theme: str | None = None):
 		# leave a preference the person never expressed.
 		return {"ok": True, "mode": mode}
 
+	# The dark half's overrides were tuned on the dark theme they were saved
+	# with. A different dark theme, or no dark theme at all, leaves them with
+	# nothing to belong to — same rule as the Studio, which clears the editor
+	# when a different theme is selected.
+	light, dark = _split_overrides(pref)
+	if mode != "Automatic" or dark_theme != pref.dark_theme:
+		dark = {}
+
 	pref.theme_mode = mode
 	pref.dark_theme = dark_theme if mode == "Automatic" else None
+	_store_overrides(pref, light, dark)
 	pref.save(ignore_permissions=False)
 	_invalidate_bootinfo(user)
 	return {"ok": True, "mode": mode}
@@ -275,6 +333,19 @@ def set_theme_mode(mode: str, dark_theme: str | None = None):
 
 @frappe.whitelist()
 def set_active_theme(theme_name: str, overrides=None):
+	"""Apply a theme, with optional per-user overrides on top of it.
+
+	With automatic light/dark pairing on, the theme replaces the half of
+	the pair that matches its own polarity: a dark theme becomes the dark
+	half, a light one the light half, and the other half is left alone.
+	Overrides go to the same half. This used to always overwrite the light
+	half, so applying a theme while the OS was in dark mode changed nothing
+	on screen, and applying a dark one while the pair was showing it stored
+	that dark theme as the light half too.
+
+	Returns which half was written so the client can say so when it is not
+	the one showing.
+	"""
 	if not theme_name:
 		frappe.throw(_("theme_name is required"))
 	_assert_theme_applicable(theme_name)
@@ -294,17 +365,33 @@ def set_active_theme(theme_name: str, overrides=None):
 	pref_name = frappe.db.exists("User Theme Preference", {"user": user})
 	if pref_name:
 		pref = frappe.get_doc("User Theme Preference", pref_name)
+		light, dark = _split_overrides(pref)
 	else:
 		pref = frappe.new_doc("User Theme Preference")
 		pref.user = user
+		light, dark = {}, {}
+
+	pairing = _is_pairing(pref)
+	half = "light"
+	if pairing and frappe.db.get_value("Theme Definition", theme_name, "is_dark"):
+		half = "dark"
+
+	if half == "dark":
+		pref.dark_theme = theme_name
+		dark = overrides
+	else:
+		pref.active_theme = theme_name
+		light = overrides
+		if not pairing:
+			# Single mode has no dark half, so nothing for these to belong to.
+			dark = {}
 
 	# Applying a theme ends any opt-out to Frappe's own theme.
 	pref.use_frappe_theme = 0
-	pref.active_theme = theme_name
-	pref.overrides_json = json.dumps(overrides)
+	_store_overrides(pref, light, dark)
 	pref.save(ignore_permissions=False)
 	_invalidate_bootinfo(user)
-	return {"ok": True}
+	return {"ok": True, "half": half, "mode": "Automatic" if pairing else "Single"}
 
 
 def _unique_theme_key(base_key: str) -> str:

@@ -70,7 +70,9 @@
 			refresh() {
 				// A Theme Definition being active wins over `data-theme-mode`: the
 				// latter still reads "light"/"dark" while our CSS variables are what
-				// is actually painting the Desk.
+				// is actually painting the Desk. With automatic pairing on this is
+				// the half showing right now, which is also the one a pick from
+				// this dialog would replace if it has the same polarity.
 				const active = (window.ThemeManager && ThemeManager.active) || null;
 				this.current_theme =
 					(active && active.name) ||
