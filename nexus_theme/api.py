@@ -352,6 +352,16 @@ def save_custom_theme(payload, share_public=0):
 	if existing:
 		doc = frappe.get_doc("Theme Definition", existing)
 		theme_key = doc.theme_key
+		# theme_name is no longer unique across the site — two people may
+		# each have a "My Theme", and "Dracula" may be someone's own take on
+		# the bundled one — but one person's themes still need distinct
+		# names, or the gallery shows two cards nobody can tell apart. Only
+		# a rename can clash: a new theme under a taken name matched above.
+		clash = frappe.db.exists(
+			"Theme Definition", dict(own, theme_name=payload["theme_name"], name=["!=", existing])
+		)
+		if clash:
+			frappe.throw(_("You already have a theme called {0}.").format(payload["theme_name"]))
 	else:
 		theme_key = _unique_theme_key(theme_key)
 		doc = frappe.new_doc("Theme Definition")

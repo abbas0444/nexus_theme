@@ -170,6 +170,26 @@ class TestThemeDefinition(FrappeTestCase):
 		self.assertIn(private.name, set(frappe.get_list("Theme Definition", pluck="name", limit=0)))
 		self.assertTrue(frappe.has_permission("Theme Definition", "read", doc=private.name))
 
+	# ------------------------------------------------------------------
+	# Names
+	# ------------------------------------------------------------------
+
+	def test_two_users_may_give_their_themes_the_same_name(self):
+		"""theme_key is the docname; theme_name is only a label. It used to
+		be unique across the site, so the second person to call their theme
+		"My Theme" — or anyone naming theirs after a bundled one — got a raw
+		duplicate-entry error."""
+		_theme_user(THEME_USER)
+		_theme_user(OTHER_USER)
+		frappe.set_user(THEME_USER)
+		self._custom("nxt-test-same-name-a", theme_name="Dracula").insert()
+		frappe.set_user(OTHER_USER)
+		self._custom("nxt-test-same-name-b", theme_name="Dracula").insert()  # used to raise here
+		self.assertEqual(
+			frappe.db.count("Theme Definition", {"theme_name": "Dracula", "is_default": 0}),
+			2,
+		)
+
 	def test_default_theme_cannot_be_deleted(self):
 		default = frappe.get_all("Theme Definition", filters={"is_default": 1}, limit=1)
 		if not default:

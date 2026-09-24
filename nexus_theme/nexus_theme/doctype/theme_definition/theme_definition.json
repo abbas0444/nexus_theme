@@ -54,8 +54,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Theme Name",
-   "reqd": 1,
-   "unique": 1
+   "reqd": 1
   },
   {
    "description": "URL-safe slug. Lowercase letters, digits and hyphens.",
@@ -238,7 +237,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-22 00:00:00",
+ "modified": "2026-09-24 00:00:00",
  "modified_by": "Administrator",
  "module": "Nexus Theme",
  "name": "Theme Definition",
