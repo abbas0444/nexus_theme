@@ -1,6 +1,11 @@
 from frappe.model.document import Document
 
-from nexus_theme.preferences import assert_own_row, own_row_permission, repair_owner
+from nexus_theme.preferences import (
+	assert_own_row,
+	own_row_permission,
+	repair_owner,
+	repair_owner_after_save,
+)
 
 
 class UserSoundPreference(Document):
@@ -15,6 +20,10 @@ class UserSoundPreference(Document):
 		# as being cleaned up and stored.
 		assert_own_row(self)
 		repair_owner(self)
+
+	def on_update(self):
+		# The existing-row case of repair_owner: see preferences.py.
+		repair_owner_after_save(self)
 
 		# Every file becomes an <audio src> in this user's Desk. set_user_sound()
 		# checks what it is handed, but a row can also arrive through

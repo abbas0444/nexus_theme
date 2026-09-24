@@ -58,8 +58,27 @@ def repair_owner(doc) -> None:
 	user saving their own row and wrong for an admin creating one on their
 	behalf — and it never changes afterwards on its own. Setting it here
 	keeps `if_owner` (list views, reports, the form) in step with `user`.
+
+	Called from validate(), so it only ever touches a new row, in memory,
+	before it is written. An existing row cannot be fixed there: `owner` is
+	a set-only-once field, and a changed value is refused as "Value cannot
+	be changed for Created By" before the save gets anywhere. Those go
+	through repair_owner_after_save() from on_update() instead.
+	"""
+	if doc.is_new() and doc.user and doc.owner != doc.user:
+		doc.owner = doc.user
+
+
+def repair_owner_after_save(doc) -> None:
+	"""The existing-row half of repair_owner(), for on_update().
+
+	The save has gone through by now, so the value goes straight to the
+	table — the one place the set-only-once rule does not look — and the
+	document in memory follows, so anything reading `owner` off it after
+	the save sees the same answer as the next load.
 	"""
 	if doc.user and doc.owner != doc.user:
+		frappe.db.set_value(doc.doctype, doc.name, "owner", doc.user, update_modified=False)
 		doc.owner = doc.user
 
 
