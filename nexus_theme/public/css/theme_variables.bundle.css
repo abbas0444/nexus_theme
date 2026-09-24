@@ -264,23 +264,40 @@ html[data-app-theme] .grid-static-col a svg {
 }
 
 /* Toast notifications (frappe.show_alert / "Theme applied" pill).
-   Frappe's toast keeps the light pastel background (--alert-bg-*) on
-   every theme because we don't trigger its dark-mode CSS, but the
-   toast text color falls back to our themed --text-color, which is
-   light on dark themes. Light text on light pastel = invisible.
-   Force a dark text + subtle icon stroke so the toast stays readable
-   on every theme. */
-html[data-app-theme] .desk-alert .alert-message,
-html[data-app-theme] .desk-alert .alert-title-container,
-html[data-app-theme] .desk-alert .alert-subtitle,
-html[data-app-theme] .desk-alert .next-action {
+   Frappe colours the toast by polarity: desk/toast.scss paints the
+   background from --alert-bg-* and the text from --text-color, and
+   desk/dark.scss flips both under html[data-theme="dark"] (red-50 →
+   red-900, gray-900 → gray-50). A theme keeps Frappe's light polarity
+   whenever it is not dark, so its pastel toast gets our themed
+   --text-color, which on a dim-but-not-dark theme can be light. Light
+   text on light pastel = invisible. So the text is pinned per polarity:
+   dark on the light pastels, light on the dark ones, with the icon
+   stroke to match. theme_manager mirrors the theme's polarity onto
+   data-theme, which is what the two scopes key off. */
+html[data-app-theme]:not([data-theme="dark"]) .desk-alert .alert-message,
+html[data-app-theme]:not([data-theme="dark"]) .desk-alert .alert-title-container,
+html[data-app-theme]:not([data-theme="dark"]) .desk-alert .alert-subtitle,
+html[data-app-theme]:not([data-theme="dark"]) .desk-alert .next-action {
   color: #1f2937 !important;
 }
 
-html[data-app-theme] .desk-alert .alert-message-container .icon,
-html[data-app-theme] .desk-alert .close .icon {
+html[data-app-theme]:not([data-theme="dark"]) .desk-alert .alert-message-container .icon,
+html[data-app-theme]:not([data-theme="dark"]) .desk-alert .close .icon {
   --icon-stroke: #1f2937 !important;
   fill: #1f2937 !important;
+}
+
+html[data-app-theme][data-theme="dark"] .desk-alert .alert-message,
+html[data-app-theme][data-theme="dark"] .desk-alert .alert-title-container,
+html[data-app-theme][data-theme="dark"] .desk-alert .alert-subtitle,
+html[data-app-theme][data-theme="dark"] .desk-alert .next-action {
+  color: #f3f4f6 !important;
+}
+
+html[data-app-theme][data-theme="dark"] .desk-alert .alert-message-container .icon,
+html[data-app-theme][data-theme="dark"] .desk-alert .close .icon {
+  --icon-stroke: #f3f4f6 !important;
+  fill: #f3f4f6 !important;
 }
 
 html[data-app-theme],
