@@ -1,8 +1,9 @@
 import json
-import re
 
 import frappe
 from frappe import _
+
+from nexus_theme.utils import sound_url
 
 
 def _invalidate_bootinfo(user: str | None = None) -> None:
@@ -652,13 +653,10 @@ def _get_or_create_sound_pref(user: str | None = None):
 	return doc
 
 
-# A sound this site serves: uploads land under /files or /private/files, the
-# bundled presets under /assets. One path, an audio extension, nothing else.
-_SOUND_URL_RE = re.compile(
-	r"^/(?:assets|files|private/files)/(?:[\w .%()+-]+/)*[\w .%()+-]+"
-	r"\.(?:mp3|wav|ogg|oga|m4a|aac|flac|webm|opus)$",
-	re.IGNORECASE,
-)
+# The URL rule itself lives in utils/sound_url.py, which has no frappe
+# import and is covered by the pure tests; these names stay for callers.
+SOUND_EXTENSIONS = sound_url.SOUND_EXTENSIONS
+_SOUND_URL_RE = sound_url.SOUND_URL_RE
 
 
 def _assert_sound_url(file_url: str) -> None:
@@ -670,8 +668,40 @@ def _assert_sound_url(file_url: str) -> None:
 	Only checked here — the row's Attach field would accept any string.
 	"""
 	url = (file_url or "").strip()
-	if not _SOUND_URL_RE.match(url) or "/../" in url or "/./" in url:
+	if not sound_url.is_sound_url(url):
 		frappe.throw(_("That is not a sound file on this site."))
+
+
+def _discard_rejected_upload(file_url: str) -> None:
+	"""Delete the File record behind a URL that set_user_sound has refused.
+
+	Sound Studio uploads first and asks to use the file second, so a refusal
+	would otherwise leave an orphan attached to the preference row. Only a
+	File this user uploaded against their own preference row qualifies —
+	the caller must not be able to delete anyone else's attachments by
+	naming their URL.
+
+	The delete is committed before the caller throws, because the throw
+	rolls the request's transaction back; nothing else has been written
+	at this point.
+	"""
+	url = (file_url or "").strip()
+	if not url.startswith(("/files/", "/private/files/")):
+		return
+	name = frappe.db.get_value(
+		"File",
+		{
+			"file_url": url,
+			"owner": frappe.session.user,
+			"attached_to_doctype": "User Sound Preference",
+			"attached_to_name": frappe.session.user,
+		},
+		"name",
+	)
+	if not name:
+		return
+	frappe.delete_doc("File", name, ignore_permissions=True, force=True)
+	frappe.db.commit()
 
 
 def _assert_sounds_allowed() -> None:
@@ -708,10 +738,15 @@ def get_user_sounds():
 def set_user_sound(event_key: str, file_url: str, volume: float | str | None = 0.5):
 	_assert_sounds_allowed()
 	if event_key not in SOUND_EVENTS:
+		_discard_rejected_upload(file_url)
 		frappe.throw(_("Unknown sound event: {0}").format(event_key))
 	if not file_url:
 		frappe.throw(_("file_url is required"))
-	_assert_sound_url(file_url)
+	try:
+		_assert_sound_url(file_url)
+	except frappe.ValidationError:
+		_discard_rejected_upload(file_url)
+		raise
 	try:
 		vol = float(volume) if volume is not None else 0.5
 	except (TypeError, ValueError):
