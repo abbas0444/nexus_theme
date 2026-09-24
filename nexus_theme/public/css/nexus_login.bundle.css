@@ -140,7 +140,7 @@ body.nxlogin-body {
 
 .nxlogin-field .nxlogin-icon {
 	position: absolute;
-	left: 13px;
+	inset-inline-start: 13px;
 	top: 50%;
 	width: 17px;
 	height: 17px;
@@ -153,7 +153,8 @@ body.nxlogin-body {
 .nxlogin .form-control {
 	width: 100%;
 	height: 46px;
-	padding: 0 14px 0 40px;
+	padding-block: 0;
+	padding-inline: 40px 14px; /* room for the icon on the start side */
 	font-size: 14px;
 	color: var(--nx-text);
 	background: var(--nx-input);
@@ -181,7 +182,7 @@ body.nxlogin-body {
 
 .nxlogin-eye {
 	position: absolute;
-	right: 8px;
+	inset-inline-end: 8px;
 	top: 50%;
 	display: flex;
 	align-items: center;
@@ -350,7 +351,7 @@ body.nxlogin-body {
 	width: 16px;
 	height: 16px;
 	vertical-align: -3px;
-	margin-right: 8px;
+	margin-inline-end: 8px;
 }
 
 .nxlogin-divider {
@@ -365,8 +366,7 @@ body.nxlogin-body {
 	content: "";
 	position: absolute;
 	top: 50%;
-	left: 0;
-	right: 0;
+	inset-inline: 0;
 	height: 1px;
 	background: var(--nx-border);
 }
@@ -440,7 +440,8 @@ body.nxlogin-body {
 	overflow: hidden;
 	display: flex;
 	align-items: center;
-	margin: 18px 18px 18px 0;
+	margin-block: 18px;
+	margin-inline: 0 18px; /* flush against the form column on the start side */
 	padding: 64px;
 	border-radius: 26px;
 	color: #ffffff;
