@@ -252,6 +252,8 @@ If a check fails you get a clear message naming the pair of colours to fix. You 
 
 Click **Auto Light/Dark** in Theme Studio, choose a light theme and a dark theme, set the mode to **Automatic** and save. The Desk now follows your operating system: switch your computer to dark mode and the dark theme appears by itself.
 
+While Automatic is on, applying a theme from the gallery replaces the half it belongs to: a dark theme becomes your dark theme, a light one your light theme, and the other half stays as it was. Colour overrides are kept per half too, so an accent you tuned on the light theme never paints over the dark one at night. If the theme you applied is not the one on screen right now, the studio says so.
+
 ![Pairing a light theme with a dark one](docs/images/studio-auto-light-dark.png)
 
 ### 4.8 Share, export, import, delete
@@ -666,8 +668,8 @@ All methods live in `nexus_theme.api` and are whitelisted, so they work from `fr
 ```python
 # Themes
 get_available_themes()                       # defaults, owned, public
-get_active_theme()                           # theme, mode, dark theme, overrides, source
-set_active_theme(theme_name, overrides=None) # apply a theme (+ optional colour overrides)
+get_active_theme()                           # theme, mode, dark theme, overrides, dark_overrides, source
+set_active_theme(theme_name, overrides=None) # apply a theme (+ overrides); returns the half it went to
 set_theme_mode("Automatic", dark_theme="dracula")
 clear_active_theme()                         # back to Frappe's own look
 save_custom_theme(payload, share_public=0)   # payload = the 11 colours + style fields
@@ -679,8 +681,9 @@ get_login_preview()                          # brand + words for the login previ
 generate_palette(seed="#8c6f3f", is_dark=0)  # 3 accessible variants from one colour
 
 # Sounds
-get_user_sounds()                            # enabled flag + event -> {url, volume}
+get_user_sounds()                            # enabled + allowed flags, event -> {url, volume}
 set_user_sound("save", file_url="/files/pop.wav", volume=0.6)
+set_user_sound("save", volume=0.3)           # volume alone; the file, if any, is kept
 clear_user_sound("save")
 toggle_user_sounds(enabled=0)
 clear_all_user_sounds()
