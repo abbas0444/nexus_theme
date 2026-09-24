@@ -625,14 +625,30 @@ SOUND_EVENTS = {
 
 
 def _get_or_create_sound_pref(user: str | None = None):
+	"""The user's preference row, locked for this transaction.
+
+	for_update makes a second request for the same user wait on the first
+	instead of both loading the same `modified` and the loser failing with
+	TimestampMismatchError on save. The first-ever save has no row to lock,
+	so two of them can both try to insert; the one that loses the unique
+	race rolls back to its savepoint and reads the winner's row.
+	"""
 	user = user or frappe.session.user
 	name = frappe.db.exists("User Sound Preference", {"user": user})
 	if name:
-		return frappe.get_doc("User Sound Preference", name)
+		return frappe.get_doc("User Sound Preference", name, for_update=True)
 	doc = frappe.new_doc("User Sound Preference")
 	doc.user = user
 	doc.enabled = 1
-	doc.insert(ignore_permissions=True)
+	frappe.db.savepoint("sound_pref_insert")
+	try:
+		doc.insert(ignore_permissions=True)
+	except frappe.DuplicateEntryError:
+		frappe.db.rollback(save_point="sound_pref_insert")
+		name = frappe.db.exists("User Sound Preference", {"user": user})
+		if not name:
+			raise
+		return frappe.get_doc("User Sound Preference", name, for_update=True)
 	return doc
 
 
@@ -702,19 +718,27 @@ def set_user_sound(event_key: str, file_url: str, volume: float | str | None = 0
 		vol = 0.5
 	vol = max(0.0, min(1.0, vol))
 
-	pref = _get_or_create_sound_pref()
-
-	existing = None
-	for row in pref.sounds or []:
-		if row.event_key == event_key:
-			existing = row
+	# The row is locked for update, so a save that still sees a stale
+	# `modified` (the lock was taken after the other request committed, on
+	# a database that does not honour it) is retried on a fresh read.
+	for attempt in range(3):
+		pref = _get_or_create_sound_pref()
+		existing = None
+		for row in pref.sounds or []:
+			if row.event_key == event_key:
+				existing = row
+				break
+		if existing:
+			existing.file = file_url
+			existing.volume = vol
+		else:
+			pref.append("sounds", {"event_key": event_key, "file": file_url, "volume": vol})
+		try:
+			pref.save(ignore_permissions=False)
 			break
-	if existing:
-		existing.file = file_url
-		existing.volume = vol
-	else:
-		pref.append("sounds", {"event_key": event_key, "file": file_url, "volume": vol})
-	pref.save(ignore_permissions=False)
+		except frappe.TimestampMismatchError:
+			if attempt == 2:
+				raise
 	_invalidate_bootinfo()
 	return {"ok": True, "event_key": event_key}
 
