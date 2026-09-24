@@ -801,20 +801,29 @@ html[data-app-theme] .list-subject {
   border-color: var(--theme-border) !important;
 }
 
-/* ---- Unified hover affordance (rows, dropdowns, menus, nav, sidebar) ---- */
+/* ---- Unified hover affordance (rows, dropdowns, menus, nav, sidebar) ----
+   The active sidebar item is left out: its pill (below, and Frappe's own
+   --sidebar-active-color) must not give way to the hover wash the moment
+   the pointer crosses it. Frappe v16 excludes it the same way
+   (sidebar.scss: `&:not(.active-sidebar):hover`). */
 html[data-app-theme] .list-row:hover,
 html[data-app-theme] .list-row-container:hover,
 html[data-app-theme] .dropdown-item:hover,
 html[data-app-theme] .menu-item:hover,
 html[data-app-theme] .nav-link:hover,
-html[data-app-theme] .sidebar-item:hover,
-html[data-app-theme] .standard-sidebar-item:hover,
-html[data-app-theme] .desk-sidebar-item:hover {
+html[data-app-theme] .sidebar-item:not(.active-sidebar):not(.selected):hover,
+html[data-app-theme] .standard-sidebar-item:not(.active-sidebar):not(.selected):hover,
+html[data-app-theme] .desk-sidebar-item:not(.active-sidebar):not(.selected):hover {
   background-color: color-mix(in srgb, var(--theme-accent) 10%, transparent) !important;
   color: var(--theme-text-primary) !important;
 }
 
-/* Active/selected sidebar items use a stronger tint so they stand out */
+/* Active/selected sidebar items use a stronger tint so they stand out.
+   Frappe v16 marks the current item with .active-sidebar
+   (ui/sidebar/sidebar.js set_active_workspace_item); .selected is the
+   class the older sidebars used. */
+html[data-app-theme] .standard-sidebar-item.active-sidebar,
+html[data-app-theme] .sidebar-item.active-sidebar,
 html[data-app-theme] .sidebar-item.selected,
 html[data-app-theme] .standard-sidebar-item.selected,
 html[data-app-theme] .desk-sidebar-item.selected {
