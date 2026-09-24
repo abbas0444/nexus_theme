@@ -85,22 +85,26 @@
 			.replace(/'/g, "&#39;");
 	}
 
+	// The opaque #rrggbb form of a colour, for <input type="color"> (which
+	// accepts nothing else) and the contrast maths. Every hex form the server
+	// allows (css_safety._HEX_RE) is handled: #rgb and #rgba are expanded,
+	// and an alpha channel is dropped rather than failing the whole value —
+	// #1a2b3c80 used to come back as black, so a theme with any translucent
+	// colour showed black swatches and a wrong contrast badge. Only the
+	// picker sees the opaque form; a value the user never touches stays as
+	// stored, alpha included, because the editor only writes on input.
 	function toHexColor(value) {
 		if (!value) return "#000000";
 		const v = String(value).trim();
-		if (/^#([0-9a-f]{3}){1,2}$/i.test(v)) {
-			if (v.length === 4)
-				return (
-					"#" +
-					v
-						.slice(1)
-						.split("")
-						.map((c) => c + c)
-						.join("")
-				);
-			return v.toLowerCase();
+		if (!/^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(v)) return "#000000";
+		let hex = v.slice(1);
+		if (hex.length <= 4) {
+			hex = hex
+				.split("")
+				.map((c) => c + c)
+				.join("");
 		}
-		return "#000000";
+		return "#" + hex.slice(0, 6).toLowerCase();
 	}
 
 	function slugify(s) {
