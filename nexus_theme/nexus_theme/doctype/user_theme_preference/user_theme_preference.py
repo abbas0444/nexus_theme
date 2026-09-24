@@ -4,7 +4,12 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
-from nexus_theme.preferences import assert_own_row, own_row_permission, repair_owner
+from nexus_theme.preferences import (
+	assert_own_row,
+	own_row_permission,
+	repair_owner,
+	repair_owner_after_save,
+)
 
 
 class UserThemePreference(Document):
@@ -19,6 +24,10 @@ class UserThemePreference(Document):
 		# as being cleaned up and stored.
 		assert_own_row(self)
 		repair_owner(self)
+
+	def on_update(self):
+		# The existing-row case of repair_owner: see preferences.py.
+		repair_owner_after_save(self)
 
 		if self.use_frappe_theme:
 			# An explicit opt-out: the user picked Frappe's own theme over any
