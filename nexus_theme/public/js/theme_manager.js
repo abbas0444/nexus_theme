@@ -5,6 +5,13 @@
 	// (which Frappe sets to "light"/"dark") so the two systems never clobber
 	// each other. CSS in theme_variables.bundle.css scopes everything under
 	// html[data-app-theme].
+	//
+	// The key is shared by every user of the browser on purpose: the login
+	// page (login_page.py) reads it to repaint itself in the last person's
+	// theme before they sign in, and it has no user to key on. The payload
+	// carries `user` instead, and the Desk ignores a cache left by somebody
+	// else — otherwise the next person to sign in on a shared machine got
+	// the previous one's theme until the server answered.
 	const STORAGE_KEY = "theme:active";
 	const APP_ATTR = "data-app-theme";
 	const HOVER_ATTR = "data-hover-lift";
@@ -34,6 +41,14 @@
 		border_radius: "--theme-border-radius",
 	};
 
+	/** Who the Desk is signed in as; null outside a booted Desk. */
+	function bootUser() {
+		const f = window.frappe;
+		if (!f) return null;
+		if (f.boot && f.boot.user && f.boot.user.name) return f.boot.user.name;
+		return (f.session && f.session.user) || null;
+	}
+
 	class ThemeManager {
 		constructor() {
 			this.active = null;
@@ -43,8 +58,11 @@
 			this._frappeObserver = null;
 			// Automatic light/dark pairing. `pair` holds the two themes the user
 			// chose; `_systemQuery` is what decides which one is showing.
+			// Overrides are tuned on one theme, so each half keeps its own set
+			// and only ever paints over its own theme.
 			this.mode = "Single";
 			this.pair = { light: null, dark: null };
+			this.pairOverrides = { light: {}, dark: {} };
 			this._systemQuery = null;
 		}
 
@@ -57,13 +75,38 @@
 			return prefersDark ? this.pair.dark : this.pair.light;
 		}
 
+		/** The overrides saved for `theme`, or none if it is not in the pair. */
+		_overridesFor(theme) {
+			if (!theme) return {};
+			if (this.pair.dark && theme.name === this.pair.dark.name) {
+				return this.pairOverrides.dark || {};
+			}
+			if (this.pair.light && theme.name === this.pair.light.name) {
+				return this.pairOverrides.light || {};
+			}
+			return {};
+		}
+
+		/**
+		 * Public form for the Studio: the overrides the user saved on this
+		 * theme, as a copy it can edit. Nothing for a theme that is not the
+		 * active one or a half of the pair.
+		 */
+		overridesFor(theme) {
+			return Object.assign({}, this._overridesFor(theme));
+		}
+
 		/**
 		 * Store the pair and start (or stop) following the OS setting.
 		 * Re-entrant: called on every load and after every save.
 		 */
-		_setPair(mode, lightTheme, darkTheme) {
+		_setPair(mode, lightTheme, darkTheme, lightOverrides, darkOverrides) {
 			this.mode = mode === "Automatic" && darkTheme ? "Automatic" : "Single";
 			this.pair = { light: lightTheme || null, dark: darkTheme || null };
+			this.pairOverrides = {
+				light: lightOverrides || {},
+				dark: this.mode === "Automatic" ? darkOverrides || {} : {},
+			};
 
 			if (this.mode !== "Automatic") {
 				this._unwatchSystem();
@@ -72,12 +115,30 @@
 			this._watchSystem();
 		}
 
+		/**
+		 * Take a server reply (get_active_theme) or a cache payload and paint
+		 * the half that should be showing, with that half's own overrides.
+		 * Returns the theme now showing.
+		 */
+		_applyPair(info) {
+			this._setPair(
+				info.mode,
+				info.theme,
+				info.dark_theme,
+				info.overrides,
+				info.dark_overrides
+			);
+			const showing = this._resolvePair() || info.theme;
+			if (showing) this._apply(showing, this._overridesFor(showing));
+			return showing;
+		}
+
 		_watchSystem() {
 			if (this._systemQuery || !window.matchMedia) return;
 			this._systemQuery = window.matchMedia("(prefers-color-scheme: dark)");
 			this._onSystemChange = () => {
 				const next = this._resolvePair();
-				if (next) this._crossfade(() => this._apply(next, this.overrides));
+				if (next) this._crossfade(() => this._apply(next, this._overridesFor(next)));
 			};
 			// addEventListener is unavailable on the legacy MediaQueryList in
 			// older Safari, which only exposes addListener.
@@ -99,18 +160,43 @@
 			this._onSystemChange = null;
 		}
 
+		/**
+		 * Read a cache payload written by _cache(), in this tab or another.
+		 * Returns false when it is unusable or belongs to a different user.
+		 */
+		_readCache(raw) {
+			if (!raw) return false;
+			let cached;
+			try {
+				cached = JSON.parse(raw);
+			} catch (_e) {
+				return false;
+			}
+			if (!cached || typeof cached !== "object") return false;
+			const user = bootUser();
+			if (user && cached.user !== user) return false;
+			return cached;
+		}
+
+		/** Paint from a cache payload. Shared by boot and the cross-tab sync. */
+		_restoreFromCache(cached) {
+			// The cached pair is what makes a reload with the OS in the other
+			// mode paint the right half straight away; an older payload has
+			// only `theme`, which _applyPair handles as Single.
+			this._applyPair({
+				mode: cached.mode,
+				theme: cached.light_theme || cached.theme,
+				dark_theme: cached.dark_theme,
+				overrides: cached.light_overrides || cached.overrides,
+				dark_overrides: cached.dark_overrides,
+			});
+		}
+
 		bootstrapFromCache() {
 			try {
-				const raw = localStorage.getItem(STORAGE_KEY);
-				if (!raw) return;
-				const cached = JSON.parse(raw);
-				if (cached.mode === "Automatic" && cached.dark_theme) {
-					this._setPair("Automatic", cached.light_theme, cached.dark_theme);
-					const showing = this._resolvePair();
-					if (showing) this._apply(showing, cached.overrides || {});
-					return;
-				}
-				if (cached.theme) this._apply(cached.theme, cached.overrides || {});
+				const cached = this._readCache(localStorage.getItem(STORAGE_KEY));
+				if (!cached) return;
+				if (cached.theme || cached.light_theme) this._restoreFromCache(cached);
 			} catch (_e) {
 				/* ignore malformed cache */
 			}
@@ -146,10 +232,8 @@
 			}
 
 			if (result && result.theme) {
-				this._setPair(result.mode, result.theme, result.dark_theme);
-				const showing = this._resolvePair() || result.theme;
-				this._apply(showing, result.overrides || {});
-				this._cache(showing, result.overrides || {}, result);
+				const showing = this._applyPair(result);
+				this._cache(showing, this._overridesFor(showing), result);
 			} else {
 				// Server says "no custom theme" — clear local state so Frappe's
 				// native palette renders without our variables interfering.
@@ -159,9 +243,17 @@
 			}
 		}
 
+		/**
+		 * Apply a theme with `overrides` on top of it.
+		 *
+		 * With pairing on, the server puts the theme in the half matching
+		 * its polarity (see api.set_active_theme). That half is not always
+		 * the one on screen, so the result says which it went to and what is
+		 * showing now: `{ half, mode, showing }`.
+		 */
 		async setActive(themeName, overrides = {}) {
-			if (!window.frappe || !frappe.call) return;
-			await frappe.call({
+			if (!window.frappe || !frappe.call) return null;
+			const set = await frappe.call({
 				method: "nexus_theme.api.set_active_theme",
 				args: {
 					theme_name: themeName,
@@ -169,15 +261,19 @@
 				},
 			});
 			const r = await frappe.call({ method: "nexus_theme.api.get_active_theme" });
+			const half = (set && set.message && set.message.half) || "light";
+			const mode = (set && set.message && set.message.mode) || "Single";
 			if (r && r.message && r.message.theme) {
 				const msg = r.message;
-				this._setPair(msg.mode, msg.theme, msg.dark_theme);
+				this._setPair(msg.mode, msg.theme, msg.dark_theme, msg.overrides, msg.dark_overrides);
 				const showing = this._resolvePair() || msg.theme;
 				this._crossfade(() => {
-					this._apply(showing, msg.overrides || {});
-					this._cache(showing, msg.overrides || {}, msg);
+					this._apply(showing, this._overridesFor(showing));
+					this._cache(showing, this._overridesFor(showing), msg);
 				});
+				return { half, mode, showing };
 			}
+			return { half, mode, showing: null };
 		}
 
 		/**
@@ -308,6 +404,10 @@
 			// "0" explicitly: a cached override can arrive as a numeric string.
 			const hoverLift = merged.enable_hover_lift;
 			ROOT.setAttribute(HOVER_ATTR, hoverLift && hoverLift !== "0" ? "1" : "0");
+			// Polarity also comes off `merged`: a palette applied in the Studio
+			// carries its own `is_dark`, and the server keeps it (css_safety
+			// sanitize_overrides), so a dark palette over a light theme flips
+			// the Desk's chrome to dark along with the colours.
 			const isDark = !!(merged.is_dark && merged.is_dark !== "0");
 			ROOT.setAttribute(DARK_ATTR, isDark ? "1" : "0");
 			// Align Frappe's own polarity with the theme's.
@@ -363,14 +463,20 @@
 
 		_cache(theme, overrides, pairInfo) {
 			try {
-				const payload = { theme, overrides: overrides || {} };
+				// `theme` and `overrides` are what is showing right now — the
+				// login page reads exactly these two. `user` is what lets the
+				// Desk tell a cache of its own from one another user left.
+				const payload = { user: bootUser(), theme, overrides: overrides || {} };
 				// Cache the pair as well as the resolved theme, so a reload with the
 				// OS in the other mode paints the correct side immediately instead
-				// of flashing the previous one until the server responds.
+				// of flashing the previous one until the server responds. Each
+				// half's overrides ride along so that paint is right too.
 				if (pairInfo && pairInfo.mode === "Automatic" && pairInfo.dark_theme) {
 					payload.mode = "Automatic";
 					payload.light_theme = pairInfo.theme;
 					payload.dark_theme = pairInfo.dark_theme;
+					payload.light_overrides = pairInfo.overrides || {};
+					payload.dark_overrides = pairInfo.dark_overrides || {};
 				}
 				localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 			} catch (_e) {
@@ -457,6 +563,11 @@
 	mgr.bootstrapFromCache();
 	mgr._watchFrappeToggle();
 
+	// Another tab of this browser changed the theme. Follow the whole cache —
+	// pair and mode included, not only the theme it happened to be showing —
+	// so this tab keeps tracking the OS setting the same way that one does.
+	// A cache written for a different user (two people sharing a browser
+	// profile) is not ours to follow; a removal is a reset either way.
 	window.addEventListener("storage", (e) => {
 		if (e.key !== STORAGE_KEY) return;
 		if (!e.newValue) {
@@ -464,12 +575,9 @@
 			mgr._notify();
 			return;
 		}
-		try {
-			const { theme, overrides } = JSON.parse(e.newValue);
-			if (theme) mgr._apply(theme, overrides || {});
-		} catch (_err) {
-			/* ignore */
-		}
+		const cached = mgr._readCache(e.newValue);
+		if (!cached || !(cached.theme || cached.light_theme)) return;
+		mgr._restoreFromCache(cached);
 	});
 
 	const reconcile = () => mgr.loadFromServer();
