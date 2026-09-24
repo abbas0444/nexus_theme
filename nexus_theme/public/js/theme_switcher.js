@@ -821,7 +821,9 @@
 		$gallery.on("click", "[data-action='delete']", async function (e) {
 			e.stopPropagation();
 			const card = $(this).closest(".theme-card");
-			const name = card.data("name");
+			// attr(), not data(): jQuery's data() turns an all-digit theme name
+			// into a Number, and the server then cannot find "123" as 123.
+			const name = card.attr("data-name");
 			const confirmed = await new Promise((resolve) => {
 				frappe.confirm(
 					__("Delete this custom theme?"),
