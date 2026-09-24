@@ -2,7 +2,20 @@
 
 
 def _normalize_hex(hex_color: str) -> str:
+	"""The six hex digits of a colour, from any form css_safety accepts.
+
+	#rgba and #rrggbbaa are valid theme values, so the WCAG check has to
+	read them too — a theme written with alpha channels used to skip the
+	check altogether, because the ValueError raised here was taken to mean
+	"not a colour". Alpha is dropped rather than refused: the formula is
+	defined for opaque colours, and the contrast of the colour as if opaque
+	is the most useful answer there is.
+	"""
 	h = (hex_color or "").strip().lstrip("#")
+	if len(h) == 4:
+		h = h[:3]
+	elif len(h) == 8:
+		h = h[:6]
 	if len(h) == 3:
 		h = "".join(c * 2 for c in h)
 	if len(h) != 6:
