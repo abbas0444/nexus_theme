@@ -25,10 +25,6 @@ class UserThemePreference(Document):
 		assert_own_row(self)
 		repair_owner(self)
 
-	def on_update(self):
-		# The existing-row case of repair_owner: see preferences.py.
-		repair_owner_after_save(self)
-
 		if self.use_frappe_theme:
 			# An explicit opt-out: the user picked Frappe's own theme over any
 			# of ours, the site default included. Nothing of ours may stay on
@@ -61,3 +57,7 @@ class UserThemePreference(Document):
 			self.overrides_json = json.dumps(sanitize_overrides_blob(parsed))
 		else:
 			self.overrides_json = "{}"
+
+	def on_update(self):
+		# The existing-row case of repair_owner: see preferences.py.
+		repair_owner_after_save(self)

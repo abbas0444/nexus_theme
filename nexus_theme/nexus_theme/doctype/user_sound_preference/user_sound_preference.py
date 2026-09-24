@@ -21,10 +21,6 @@ class UserSoundPreference(Document):
 		assert_own_row(self)
 		repair_owner(self)
 
-	def on_update(self):
-		# The existing-row case of repair_owner: see preferences.py.
-		repair_owner_after_save(self)
-
 		# Every file becomes an <audio src> in this user's Desk. set_user_sound()
 		# checks what it is handed, but a row can also arrive through
 		# /api/resource or the form with any string in the Attach field, so the
@@ -42,3 +38,7 @@ class UserSoundPreference(Document):
 				row.volume = 0.5
 			else:
 				row.volume = max(0.0, min(1.0, float(row.volume)))
+
+	def on_update(self):
+		# The existing-row case of repair_owner: see preferences.py.
+		repair_owner_after_save(self)
