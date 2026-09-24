@@ -33,7 +33,9 @@ from frappe.core.doctype.doctype.doctype import clear_permissions_cache
 from frappe.core.doctype.permission_type.permission_type import get_doctype_ptype_map
 from frappe.model import table_fields
 from frappe.permissions import (
+	ALL_USER_ROLE,
 	AUTOMATIC_ROLES,
+	SYSTEM_USER_ROLE,
 	get_all_perms,
 	get_linked_doctypes,
 	get_valid_perms,
@@ -177,6 +179,17 @@ def _columns() -> list[dict]:
 		for key, label, desc in COLUMNS
 		if key != MASK or has_mask
 	]
+
+
+_LABELS = {key: label for key, label, _desc in COLUMNS}
+
+
+def _label(ptype: str) -> str:
+	return _(_LABELS.get(ptype) or frappe.unscrub(ptype))
+
+
+def _names(ptypes) -> str:
+	return ", ".join(_label(p) for p in ptypes)
 
 
 # ---------------------------------------------------------------------------
@@ -675,6 +688,49 @@ def _validate_rule(meta, role: str, d: dict) -> None:
 			d[key] = 0
 
 
+def _assert_rule_removable(doctype: str, role: str, name: str) -> None:
+	"""What Frappe's validator would object to once this level-0 rule is gone,
+	asked before deleting so no row is ever left in a state a later save
+	refuses.
+
+	check_level_zero_is_set: a rule at a higher level needs a level-0 rule
+	for the same role (All and Desk User excepted). The stock manager
+	deletes first and relies on validate_permissions_for_doctype to complain;
+	but that validator reads the DocType's standard DocPerm rows, not the
+	Custom DocPerm rows the engine uses, so the check is made here against
+	the rows that matter. And, as the stock Remove does, a DocType must keep
+	at least one rule — a level-0 one, since only those grant access and a
+	higher-level survivor would be orphaned anyway."""
+	remaining = frappe.get_all(
+		"Custom DocPerm",
+		filters={"parent": doctype, "permlevel": 0, "name": ["!=", name]},
+		fields=["role", "if_owner"],
+	)
+	if not remaining:
+		frappe.throw(
+			_(
+				"{0} must keep at least one permission rule. Clear a different role's rule first, or leave this one a basic right."
+			).format(frappe.bold(doctype)),
+			title=_("Cannot Remove Last Rule"),
+		)
+	if role in (ALL_USER_ROLE, SYSTEM_USER_ROLE) or any(r.role == role for r in remaining):
+		return
+	higher = frappe.get_all(
+		"Custom DocPerm",
+		filters={"parent": doctype, "role": role, "permlevel": [">", 0]},
+		pluck="permlevel",
+	)
+	if higher:
+		frappe.throw(
+			_(
+				"{0} also has field-level rules on {1} (level {2}), and Frappe requires a level-0 rule beneath them. Remove those in the Role Permission Manager first, or leave this rule a basic right."
+			).format(
+				frappe.bold(role), frappe.bold(doctype), ", ".join(str(lv) for lv in sorted(set(higher)))
+			),
+			title=_("Cannot Remove Rule"),
+		)
+
+
 def _apply_rule_changes(doctype: str, role: str, values: dict) -> dict:
 	meta = frappe.get_meta(doctype)
 	if lock := _lock_reason(meta):
@@ -702,17 +758,29 @@ def _apply_rule_changes(doctype: str, role: str, values: dict) -> dict:
 	_validate_rule(meta, role, desired)
 
 	if not any(desired.get(r) for r in BASIC_RIGHTS):
-		# Frappe's validator refuses a rule with no basic right, so an
-		# all-clear means "remove the rule", as the stock manager's Remove does.
-		if not current:
-			return {"doctype": doctype, "role": role, "action": "unchanged"}
-		if frappe.db.count("Custom DocPerm", {"parent": doctype}) <= 1:
+		# Frappe's validator refuses a rule with no basic right ("No basic
+		# permissions set"). Only when every right is clear does that mean
+		# "remove the rule", as the stock manager's Remove does; with other
+		# rights still ticked, deleting the row would take those away too.
+		leftover = [r for r in rights if desired.get(r)]
+		basics = _names(BASIC_RIGHTS)
+		if leftover and not current:
 			frappe.throw(
 				_(
-					"{0} must keep at least one permission rule. Clear a different role's rule first, or leave this one a basic right."
-				).format(frappe.bold(doctype)),
-				title=_("Cannot Remove Last Rule"),
+					"{0} has no rule on {1} yet. A rule needs one of {2} before it can carry {3}: tick {4} first."
+				).format(frappe.bold(role), frappe.bold(doctype), basics, _names(leftover), _label("read")),
+				title=_("No Basic Permission"),
 			)
+		if leftover:
+			frappe.throw(
+				_(
+					"{0} on {1} would keep {2} but none of {3}, and Frappe does not allow such a rule. Untick {2} as well to remove the rule entirely, or leave one of {3} ticked."
+				).format(frappe.bold(role), frappe.bold(doctype), _names(leftover), basics),
+				title=_("No Basic Permission Left"),
+			)
+		if not current:
+			return {"doctype": doctype, "role": role, "action": "unchanged"}
+		_assert_rule_removable(doctype, role, name)
 		frappe.delete_doc("Custom DocPerm", name, ignore_permissions=True, force=True)
 		return {"doctype": doctype, "role": role, "action": "removed"}
 
