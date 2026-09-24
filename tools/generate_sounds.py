@@ -12,7 +12,10 @@ Run from the app repository root:
 
 Output: nexus_theme/public/sounds/<event>-<n>.wav
         12 events x 3 presets = 36 files. Preset 1 of each event is the
-        "apt" default used by hooks.py.
+        "apt" sound; for the events Frappe ships no sound of its own
+        (notification, login, logout, missing_fields) hooks.py registers
+        it as the default. The rest keep Frappe's stock sound until a
+        user picks a preset in Sound Studio.
 """
 
 import math
@@ -153,7 +156,8 @@ def write_wav(path, samples):
 
 # --- per-event recipes ----------------------------------------------------
 # Each event maps to exactly three (label, builder) presets. Preset 1 is the
-# "apt" sound that best fits the action and serves as the registered default.
+# "apt" sound that best fits the action; hooks.py registers it as the default
+# for the events Frappe has no sound for.
 RECIPES = {
 	"login": [
 		("Welcome", lambda: arp([C5, E5, G5], 0.12, 0.6, "bell", 5.0)),

@@ -27,9 +27,13 @@
 	// All preset sounds are original tones synthesised by tools/generate_sounds.py
 	// and bundled with the app under nexus_theme/public/sounds/, served by
 	// Frappe at /assets/nexus_theme/sounds/<event>-<n>.wav. Every event has
-	// three presets; preset 1 is the "apt" sound also registered as the default in
-	// hooks.py. To retune them, edit the recipes in tools/generate_sounds.py and
-	// re-run it — no external/licensed audio is used.
+	// three presets. What plays when nothing is picked ("Using default")
+	// depends on the event: for click/save, submit, cancel, delete, error,
+	// email and alert it is Frappe's own stock sound; for notification,
+	// login, logout and missing_fields — events Frappe has no sound for —
+	// hooks.py registers preset 1 as the default. To retune them, edit the
+	// recipes in tools/generate_sounds.py and re-run it — no external/licensed
+	// audio is used.
 	const SND = (event, n) => `/assets/nexus_theme/sounds/${event}-${n}.wav`;
 
 	const PRESETS = {
