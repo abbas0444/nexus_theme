@@ -20,8 +20,25 @@ class TestContrast(unittest.TestCase):
 	def test_normalize_strips_hash_and_whitespace(self):
 		self.assertEqual(_normalize_hex("  #1E293B  "), "1E293B")
 
+	def test_normalize_drops_the_alpha_channel(self):
+		# css_safety accepts #rgba and #rrggbbaa, so the contrast check must
+		# read them rather than treat them as "not a colour" and skip.
+		self.assertEqual(_normalize_hex("#1e293bff"), "1e293b")
+		self.assertEqual(_normalize_hex("#1e293b80"), "1e293b")
+		self.assertEqual(_normalize_hex("#fff8"), "ffffff")
+		self.assertEqual(_normalize_hex("#0000"), "000000")
+
+	def test_alpha_forms_give_the_opaque_colours_ratio(self):
+		self.assertAlmostEqual(contrast_ratio("#000000ff", "#ffff"), 21.0, places=2)
+		self.assertAlmostEqual(
+			contrast_ratio("#0f172a80", "#e2e8f0"),
+			contrast_ratio("#0f172a", "#e2e8f0"),
+			places=6,
+		)
+		self.assertFalse(passes_aa("#77777780", "#888888"))
+
 	def test_normalize_rejects_wrong_length_hex(self):
-		for bad in ("", "#12", "12345", "#1234567"):
+		for bad in ("", "#12", "12345", "#1234567", "#123456789"):
 			with self.assertRaises(ValueError):
 				_normalize_hex(bad)
 
