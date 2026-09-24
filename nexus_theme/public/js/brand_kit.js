@@ -31,20 +31,88 @@
 		if (link.getAttribute("href") !== href) link.setAttribute("href", href);
 	}
 
+	// Where Frappe draws the app logo, per Desk:
+	//
+	//   v16  desk/page/desktop/desktop.html — <img id="brand-logo"> in the
+	//        desktop navbar's `.navbar-home`. The page body is emptied and
+	//        re-rendered by DesktopPage.make() on every visit home, so the
+	//        element is replaced, not just re-shown.
+	//   v16  ui/sidebar/sidebar_header.html — the workspace icon in the
+	//        sidebar header. Usually a Desktop Icon of its own; only when a
+	//        workspace has none does SidebarHeader fall back to the app logo
+	//        (get_default_icon → frappe.boot.app_data[0].app_logo_url). That
+	//        fallback is the brand, so it is swapped; a real workspace icon is
+	//        not ours to touch. The header is removed and rebuilt on every
+	//        workspace change.
+	//   v15  the classic navbar's `.navbar-brand img` / `.app-logo`.
+	//
+	// The old selector list targeted only the v15 shapes, so on v16 it found
+	// nothing in its 40 tries and gave up.
+	const LOGO_SELECTORS = [
+		".desktop-navbar .navbar-home img",
+		"#brand-logo",
+		".navbar-brand img",
+		".navbar-brand .app-logo",
+	];
+	const SIDEBAR_LOGO = ".sidebar-header .header-logo img";
+
+	function appLogoUrls() {
+		const boot = window.frappe && frappe.boot;
+		const urls = [];
+		if (!boot) return urls;
+		if (boot.app_logo_url) urls.push(boot.app_logo_url);
+		for (const app of boot.app_data || []) {
+			if (app && app.app_logo_url) urls.push(app.app_logo_url);
+		}
+		return urls;
+	}
+
+	function swap(img, src) {
+		if (img.getAttribute("src") === src) return;
+		img.setAttribute("src", src);
+		img.removeAttribute("srcset");
+	}
+
+	/** Idempotent: re-run as often as the Desk re-renders. */
 	function applyNavbarLogo(url) {
 		const src = safeAssetUrl(url);
-		if (!src) return false;
-		// Frappe renders the navbar brand differently across versions; cover the
-		// common shapes rather than betting on one.
-		const img = document.querySelector(
-			".navbar-brand img, .app-logo, .navbar .navbar-home img, .sidebar-standard-icons img"
-		);
-		if (!img) return false;
-		if (img.getAttribute("src") !== src) {
-			img.setAttribute("src", src);
-			img.removeAttribute("srcset");
+		if (!src) return;
+		document.querySelectorAll(LOGO_SELECTORS.join(", ")).forEach((img) => swap(img, src));
+
+		const fallbacks = appLogoUrls();
+		document.querySelectorAll(SIDEBAR_LOGO).forEach((img) => {
+			const current = img.getAttribute("src") || "";
+			if (current === src || fallbacks.includes(current)) swap(img, src);
+		});
+	}
+
+	// The logo elements come and go with navigation, so one pass at boot is
+	// never enough. Re-apply on the events Frappe fires when it rebuilds
+	// them — "desktop_screen" after every desktop render, "page-change" on
+	// every navigation — and, because the sidebar header rebuilds on its own
+	// schedule, on any DOM insertion as well. The observer is coalesced to
+	// one pass per frame, and a pass on an unchanged page is a handful of
+	// querySelectorAll calls that write nothing, so this costs nothing
+	// noticeable. Setting `src` is an attribute change on an existing node,
+	// which a childList observer does not see, so it cannot loop.
+	function keepLogoApplied(url) {
+		applyNavbarLogo(url);
+
+		if (window.$ && typeof $(document).on === "function") {
+			$(document).on("desktop_screen page-change", () => applyNavbarLogo(url));
 		}
-		return true;
+
+		if (typeof MutationObserver === "undefined" || !document.body) return;
+		let scheduled = false;
+		const observer = new MutationObserver(() => {
+			if (scheduled) return;
+			scheduled = true;
+			requestAnimationFrame(() => {
+				scheduled = false;
+				applyNavbarLogo(url);
+			});
+		});
+		observer.observe(document.body, { childList: true, subtree: true });
 	}
 
 	function boot() {
@@ -53,15 +121,8 @@
 
 		applyFavicon(s.favicon);
 
-		if (!s.navbar_logo) return;
-		// The navbar is rendered asynchronously; retry briefly, then give up
-		// rather than polling for the life of the page.
-		let attempts = 0;
-		const tryLogo = () => {
-			if (applyNavbarLogo(s.navbar_logo)) return;
-			if (attempts++ < 40) setTimeout(tryLogo, 250);
-		};
-		tryLogo();
+		if (!s.navbar_logo || !safeAssetUrl(s.navbar_logo)) return;
+		keepLogoApplied(s.navbar_logo);
 	}
 
 	if (window.frappe && typeof frappe.ready === "function") {
