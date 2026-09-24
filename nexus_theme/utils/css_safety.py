@@ -16,9 +16,16 @@ import re
 # #rgb, #rgba, #rrggbb, #rrggbbaa — the only color forms we accept.
 _HEX_RE = re.compile(r"^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
 
-# CSS font-family stacks: letters, digits, spaces, commas, quotes, hyphens.
-# Deliberately excludes ; ( ) { } : / * < > which enable declaration breakout.
-_FONT_FAMILY_RE = re.compile(r"^[A-Za-z0-9 ,\"'-]+$")
+# CSS font-family stacks: a comma-separated list of families, each either
+# unquoted words (letters, digits, hyphens) or one quoted name. Deliberately
+# excludes ; ( ) { } : / * < > which enable declaration breakout — and the
+# quotes have to pair up within a family: a stray one (`Inter'`) does not
+# break out of the declaration, but it opens a string the browser never sees
+# closed, and everything after it in the stylesheet is thrown away.
+_FONT_FAMILY_RE = re.compile(
+	r"^\s*(?:[A-Za-z0-9-]+(?: +[A-Za-z0-9-]+)*|\"[A-Za-z0-9 -]+\"|'[A-Za-z0-9 -]+')"
+	r"(?:\s*,\s*(?:[A-Za-z0-9-]+(?: +[A-Za-z0-9-]+)*|\"[A-Za-z0-9 -]+\"|'[A-Za-z0-9 -]+'))*\s*$"
+)
 
 _SIZE_RE = re.compile(r"^\d+(?:\.\d+)?(?:px|rem|em|pt)$")
 _DURATION_RE = re.compile(r"^\d+(?:\.\d+)?m?s$")

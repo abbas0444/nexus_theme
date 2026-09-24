@@ -56,6 +56,31 @@ class TestStyleValidation(unittest.TestCase):
 		):
 			self.assertFalse(is_safe_value("font_family", bad), bad)
 
+	def test_font_family_quotes_must_pair_up(self):
+		# A stray quote cannot break out of the declaration, but it opens a
+		# string that never closes and the browser drops the rest of the
+		# stylesheet — every rule after it on the login page, say.
+		for bad in (
+			"Inter'",
+			"'Inter",
+			'"Inter',
+			'Inter", sans-serif',
+			"'Inter\", sans-serif",
+			"\"Segoe UI', sans-serif",
+			'"Inter" Bold, sans-serif',
+			",",
+			"Inter,",
+			'""',
+		):
+			self.assertFalse(is_safe_value("font_family", bad), bad)
+		for ok in (
+			"Inter",
+			"'Inter', sans-serif",
+			"Georgia, 'Iowan Old Style', \"Times New Roman\", serif",
+			"  Inter , sans-serif  ",
+		):
+			self.assertTrue(is_safe_value("font_family", ok), ok)
+
 	def test_size_duration_radius_patterns(self):
 		self.assertTrue(is_safe_value("font_size_base", "14px"))
 		self.assertTrue(is_safe_value("transition_duration", "150ms"))
