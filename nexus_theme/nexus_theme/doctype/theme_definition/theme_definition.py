@@ -73,6 +73,45 @@ class ThemeDefinition(Document):
 					hint = _("contains characters that are not allowed")
 				frappe.throw(_("{0} {1}.").format(_(label), hint))
 
+	def on_update(self):
+		self._clear_caches()
+
+	def on_trash(self):
+		if self.is_default:
+			frappe.throw(_("Default themes cannot be deleted."))
+		self._clear_caches()
+
+	def _clear_caches(self):
+		"""Drop every cache that holds this theme's values.
+
+		Theme Settings clears everything when the site default changes, but
+		editing the default theme itself cleared nothing: with "Apply to
+		Login & Website" on, public pages are cached for half an hour with
+		the old CSS baked in, and every user without a preference of their
+		own kept the old palette in bootinfo. A shared theme has the same
+		problem for everyone who applied it.
+		"""
+		from frappe.website.utils import clear_website_cache
+
+		from nexus_theme.api import _invalidate_bootinfo
+
+		if self.name == _settings()["site_default_theme"]:
+			# The site default reaches everyone with no preference, and the
+			# website. frappe.clear_cache() is what Theme Settings does for
+			# the same reason; the website cache is named as well so the
+			# intent survives if that ever narrows.
+			frappe.clear_cache()
+			clear_website_cache()
+			return
+
+		users = frappe.get_all(
+			"User Theme Preference",
+			or_filters={"active_theme": self.name, "dark_theme": self.name},
+			pluck="user",
+		)
+		for user in set(users):
+			_invalidate_bootinfo(user)
+
 	def _validate_theme_key(self):
 		if not self.theme_key:
 			return

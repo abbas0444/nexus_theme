@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
@@ -171,7 +173,7 @@ class TestThemeDefinition(FrappeTestCase):
 		self.assertTrue(frappe.has_permission("Theme Definition", "read", doc=private.name))
 
 	# ------------------------------------------------------------------
-	# Names
+	# Names and caches
 	# ------------------------------------------------------------------
 
 	def test_two_users_may_give_their_themes_the_same_name(self):
@@ -189,6 +191,30 @@ class TestThemeDefinition(FrappeTestCase):
 			frappe.db.count("Theme Definition", {"theme_name": "Dracula", "is_default": 0}),
 			2,
 		)
+
+	def test_editing_the_site_default_clears_the_website_cache(self):
+		doc = self._custom("nxt-test-site-default")
+		doc.insert()
+		self._govern(allow_custom=1, allow_sharing=1, site_default=doc.name)
+		with patch("frappe.website.utils.clear_website_cache") as cleared:
+			doc.accent = "#123456"
+			doc.save()
+		cleared.assert_called_once()
+
+	def test_editing_an_applied_theme_clears_its_users_bootinfo(self):
+		doc = self._custom("nxt-test-applied")
+		doc.insert()
+		pref = frappe.new_doc("User Theme Preference")
+		pref.user = ADMIN
+		pref.active_theme = doc.name
+		pref.save()
+		try:
+			with patch("nexus_theme.api._invalidate_bootinfo") as cleared:
+				doc.accent = "#123456"
+				doc.save()
+			cleared.assert_called_once_with(ADMIN)
+		finally:
+			frappe.delete_doc("User Theme Preference", pref.name, force=True, ignore_permissions=True)
 
 	def test_default_theme_cannot_be_deleted(self):
 		default = frappe.get_all("Theme Definition", filters={"is_default": 1}, limit=1)
