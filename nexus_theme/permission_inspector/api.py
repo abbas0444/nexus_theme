@@ -22,6 +22,7 @@ The matrix below reproduces exactly that evaluation so it can also explain
 get_role_permissions so the answer can be checked against it.
 """
 
+import functools
 import json
 from collections import defaultdict
 
@@ -860,6 +861,12 @@ def _apply_rule_changes(doctype: str, role: str, values: dict) -> dict:
 	return {"doctype": doctype, "role": role, "action": "added", "changed": desired}
 
 
+def _clear_permission_caches(doctypes: list[str]) -> None:
+	for doctype in doctypes:
+		clear_permissions_cache(doctype)
+	frappe.local.role_permissions = {}
+
+
 @frappe.whitelist()
 def save_changes(changes, target_type: str | None = None, target: str | None = None, include_child: int = 0):
 	"""Apply a batch of {doctype, role, ptype, value} edits as one transaction.
@@ -903,9 +910,11 @@ def save_changes(changes, target_type: str | None = None, target: str | None = N
 	frappe.db.release_savepoint(savepoint)
 
 	doctypes = sorted({dt for dt, _r in grouped})
-	for doctype in doctypes:
-		clear_permissions_cache(doctype)
-	frappe.local.role_permissions = {}
+	_clear_permission_caches(doctypes)
+	# And again once the transaction commits, as the stock manager does: a
+	# request served between the clear above and the commit could otherwise
+	# re-cache the old rules, since it cannot yet see the new rows.
+	frappe.db.after_commit.add(functools.partial(_clear_permission_caches, doctypes))
 
 	out = {"applied": applied, "doctypes": doctypes}
 	if target_type and target:
