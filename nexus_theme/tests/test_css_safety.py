@@ -113,6 +113,16 @@ class TestSanitizeOverrides(unittest.TestCase):
 		self.assertEqual(sanitize_overrides({"enable_hover_lift": "yes"}), {"enable_hover_lift": 1})
 		self.assertEqual(sanitize_overrides({"enable_hover_lift": 0}), {"enable_hover_lift": 0})
 
+	def test_is_dark_survives_as_flag(self):
+		# A palette's polarity rides along with its colours; dropping it left
+		# dark colours under data-theme="light".
+		self.assertEqual(sanitize_overrides({"is_dark": 1}), {"is_dark": 1})
+		self.assertEqual(sanitize_overrides({"is_dark": "1"}), {"is_dark": 1})
+		self.assertEqual(sanitize_overrides({"is_dark": True}), {"is_dark": 1})
+		self.assertEqual(sanitize_overrides({"is_dark": 0}), {"is_dark": 0})
+		self.assertEqual(sanitize_overrides({"is_dark": "0"}), {"is_dark": 0})
+		self.assertEqual(sanitize_overrides({"enable_hover_lift": "0"}), {"enable_hover_lift": 0})
+
 	def test_style_fields_tuple_is_exposed(self):
 		self.assertIn("font_family", STYLE_FIELDS)
 

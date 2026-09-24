@@ -90,7 +90,13 @@ def sanitize_overrides(overrides: dict) -> dict:
 	for key, val in overrides.items():
 		if (key in COLOR_FIELDS or key in _STYLE_VALIDATORS) and is_safe_value(key, val):
 			clean[key] = val
-		elif key == "enable_hover_lift":
-			# Coerced to "1"/"0" before it touches the DOM — safe as-is.
-			clean[key] = 1 if val else 0
+		elif key in ("enable_hover_lift", "is_dark"):
+			# Flags, not CSS: both are coerced to 1/0 here and rendered as an
+			# attribute on <html>, never as a value. `is_dark` travels with a
+			# palette's colours on purpose — a dark palette over a theme whose
+			# polarity still says light paints a black sidebar on a light Desk,
+			# so the flag has to survive to the client alongside them. A "0"
+			# string counts as off: it is what a checkbox or a cached value
+			# can arrive as.
+			clean[key] = 0 if val in (0, "0", False, None, "") else 1
 	return clean
