@@ -666,8 +666,13 @@ def _assert_sound_url(file_url: str) -> None:
 	arbitrary URL is a stored outbound beacon to a third-party host, and a
 	scheme such as javascript: has no business anywhere near a src attribute.
 	Only checked here — the row's Attach field would accept any string.
+
+	An empty value passes: a row may carry only a volume, for an event that
+	keeps Frappe's stock sound (see set_user_sound).
 	"""
 	url = (file_url or "").strip()
+	if not url:
+		return
 	if not sound_url.is_sound_url(url):
 		frappe.throw(_("That is not a sound file on this site."))
 
@@ -713,7 +718,11 @@ def _assert_sounds_allowed() -> None:
 
 @frappe.whitelist()
 def get_user_sounds():
-	"""Return this user's sound configuration: {enabled, mapping: {event: {url, volume}}}."""
+	"""Return this user's sound configuration: {enabled, mapping: {event: {url, volume}}}.
+
+	A mapping entry may have no url, when the user only set a volume for an
+	event that keeps its stock sound.
+	"""
 	# A site-wide off switch wins over the per-user flag.
 	if not _settings()["allow_user_sounds"]:
 		return {"enabled": 0, "mapping": {}}
@@ -725,23 +734,28 @@ def get_user_sounds():
 	pref = frappe.get_doc("User Sound Preference", name)
 	mapping = {}
 	for row in pref.sounds or []:
-		if not row.event_key or not row.file:
+		if not row.event_key:
 			continue
 		mapping[row.event_key] = {
-			"url": row.file,
+			"url": row.file or None,
 			"volume": float(row.volume) if row.volume is not None else 0.5,
 		}
 	return {"enabled": 1 if pref.enabled else 0, "mapping": mapping}
 
 
 @frappe.whitelist()
-def set_user_sound(event_key: str, file_url: str, volume: float | str | None = 0.5):
+def set_user_sound(event_key: str, file_url: str | None = None, volume: float | str | None = 0.5):
+	"""Store a file and/or a volume for one event.
+
+	Without a file the volume alone is stored, against the existing file if
+	the event has one and otherwise on its own — the volume then applies to
+	Frappe's stock sound for that event.
+	"""
 	_assert_sounds_allowed()
+	file_url = (file_url or "").strip()
 	if event_key not in SOUND_EVENTS:
 		_discard_rejected_upload(file_url)
 		frappe.throw(_("Unknown sound event: {0}").format(event_key))
-	if not file_url:
-		frappe.throw(_("file_url is required"))
 	try:
 		_assert_sound_url(file_url)
 	except frappe.ValidationError:
@@ -764,10 +778,11 @@ def set_user_sound(event_key: str, file_url: str, volume: float | str | None = 0
 				existing = row
 				break
 		if existing:
-			existing.file = file_url
+			if file_url:
+				existing.file = file_url
 			existing.volume = vol
 		else:
-			pref.append("sounds", {"event_key": event_key, "file": file_url, "volume": vol})
+			pref.append("sounds", {"event_key": event_key, "file": file_url or None, "volume": vol})
 		try:
 			pref.save(ignore_permissions=False)
 			break

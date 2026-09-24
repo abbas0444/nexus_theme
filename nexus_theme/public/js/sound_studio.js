@@ -507,21 +507,28 @@
 			}
 		});
 
+		// The volume is stored whether or not the event has a custom file:
+		// without one, set_user_sound keeps a volume-only row and the slider
+		// governs Frappe's stock sound for that event.
 		$root.on("change", "[data-action='volume']", async function () {
 			const key = $(this).closest(".sound-row").data("event");
 			const vol = parseInt(this.value, 10) / 100;
 			const mapped = state.mapping[key];
-			if (!mapped || !mapped.url) return; // only persist if a custom file exists
+			const url = (mapped && mapped.url) || null;
 			try {
 				await frappe.call({
 					method: "nexus_theme.api.set_user_sound",
-					args: { event_key: key, file_url: mapped.url, volume: vol },
+					args: { event_key: key, file_url: url, volume: vol },
 				});
 			} catch (_err) {
 				frappe.show_alert({ message: __("Could not save volume"), indicator: "red" });
 				return;
 			}
-			state.mapping[key].volume = vol;
+			state.mapping[key] = { url, volume: vol };
+			if (window.SoundManager) {
+				SoundManager.mapping[key] = SoundManager.mapping[key] || { url };
+				SoundManager.mapping[key].volume = vol;
+			}
 		});
 	}
 

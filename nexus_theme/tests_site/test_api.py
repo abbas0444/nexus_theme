@@ -249,6 +249,18 @@ class TestThemeApi(FrappeTestCase):
 				api.set_user_sound("save", url, 0.5)
 				self.assertEqual(api.get_user_sounds()["mapping"]["save"]["url"], url)
 
+	def test_a_volume_is_kept_without_a_file(self):
+		api.set_user_sound("submit", None, 0.2)
+		row = api.get_user_sounds()["mapping"]["submit"]
+		self.assertIsNone(row["url"])
+		self.assertAlmostEqual(row["volume"], 0.2)
+		# A later file keeps that volume; a later volume keeps the file.
+		api.set_user_sound("submit", SOUND, 0.2)
+		api.set_user_sound("submit", None, 0.9)
+		row = api.get_user_sounds()["mapping"]["submit"]
+		self.assertEqual(row["url"], SOUND)
+		self.assertAlmostEqual(row["volume"], 0.9)
+
 	def test_sound_writes_honour_the_site_switch(self):
 		self._govern(None, 0, [], 0)
 		self.assertRaises(frappe.ValidationError, api.set_user_sound, "save", SOUND, 0.5)
