@@ -25,6 +25,10 @@
 			// Set when applyMapping ran before every <audio> element it wanted
 			// existed, so the swap is retried the next time a sound is played.
 			this._pendingSwap = false;
+			// Whether Theme Settings lets users pick their own files. Off means
+			// the mapping is empty and Sound Studio is read-only; it does not
+			// mean silence — Frappe's own sounds still play.
+			this.customAllowed = true;
 		}
 
 		/**
@@ -437,19 +441,27 @@
 				);
 		}
 
+		/** Take a get_user_sounds payload (from boot or a call) into the manager. */
+		_applyServerState(m) {
+			m = m || {};
+			// `enabled` is the user's own switch. When the site disallows
+			// custom sounds the server still says enabled:1 with an empty
+			// mapping, so stock sounds keep playing — only the overrides go.
+			this.enabled = m.enabled !== 0;
+			this.customAllowed = m.allowed !== 0;
+			this.applyMapping(m.mapping || {});
+		}
+
 		async loadFromServer() {
 			const boot = window.frappe && frappe.boot && frappe.boot.user_sounds;
 			if (boot) {
-				this.enabled = boot.enabled !== 0;
-				this.applyMapping(boot.mapping || {});
+				this._applyServerState(boot);
 				return;
 			}
 			if (!window.frappe || !frappe.call) return;
 			try {
 				const r = await frappe.call({ method: "nexus_theme.api.get_user_sounds" });
-				const m = (r && r.message) || {};
-				this.enabled = m.enabled !== 0;
-				this.applyMapping(m.mapping || {});
+				this._applyServerState(r && r.message);
 			} catch (_e) {
 				/* keep defaults */
 			}

@@ -718,29 +718,40 @@ def _assert_sounds_allowed() -> None:
 
 @frappe.whitelist()
 def get_user_sounds():
-	"""Return this user's sound configuration: {enabled, mapping: {event: {url, volume}}}.
+	"""Return this user's sound configuration.
 
-	A mapping entry may have no url, when the user only set a volume for an
-	event that keeps its stock sound.
+	{enabled, allowed, mapping: {event: {url, volume}}}
+
+	`enabled` is the user's own switch and mutes everything, stock sounds
+	included. `allowed` is the site's "Allow User Sounds" setting: off means
+	no custom files are handed out and Sound Studio cannot write, but
+	Frappe's own sounds keep playing — the site turned off customisation,
+	not audio. A mapping entry may have no url, when the user only set a
+	volume for an event that keeps its stock sound.
 	"""
-	# A site-wide off switch wins over the per-user flag.
-	if not _settings()["allow_user_sounds"]:
-		return {"enabled": 0, "mapping": {}}
-
 	user = frappe.session.user
+	payload = {
+		"enabled": 1,
+		"allowed": 1,
+		"mapping": {},
+	}
+	if not _settings()["allow_user_sounds"]:
+		payload["allowed"] = 0
+		return payload
+
 	name = frappe.db.exists("User Sound Preference", {"user": user})
 	if not name:
-		return {"enabled": 1, "mapping": {}}
+		return payload
 	pref = frappe.get_doc("User Sound Preference", name)
-	mapping = {}
 	for row in pref.sounds or []:
 		if not row.event_key:
 			continue
-		mapping[row.event_key] = {
+		payload["mapping"][row.event_key] = {
 			"url": row.file or None,
 			"volume": float(row.volume) if row.volume is not None else 0.5,
 		}
-	return {"enabled": 1 if pref.enabled else 0, "mapping": mapping}
+	payload["enabled"] = 1 if pref.enabled else 0
+	return payload
 
 
 @frappe.whitelist()
