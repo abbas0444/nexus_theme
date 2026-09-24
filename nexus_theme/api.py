@@ -171,8 +171,10 @@ def get_available_themes():
 # holds the ones for `active_theme` (the light half) as flat keys — every
 # existing reader keeps working — and the dark half's under this one
 # reserved key. It can never collide with a real override, because
-# sanitize_overrides() only lets Theme Definition field names through.
-DARK_OVERRIDES_KEY = "dark"
+# sanitize_overrides() only lets Theme Definition field names through. The
+# key itself lives in css_safety, next to the blob sanitizer that has to
+# know about it.
+from nexus_theme.utils.css_safety import DARK_OVERRIDES_KEY
 
 
 def _split_overrides(pref) -> tuple[dict, dict]:
