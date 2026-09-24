@@ -186,6 +186,12 @@
 	//
 	//   opts.getSelectedTheme() : () => themeDict         (required)
 	//   opts.onPreview(overrides) : (overrides) => void   (optional)
+	//   opts.initialOverrides : overrides dict            (optional)
+	//
+	// `initialOverrides` are the ones the user already saved on the selected
+	// theme. Starting empty looked like a clean slate but was not one: Apply
+	// sends the editor's overrides as the whole new set, so opening the
+	// Studio and applying wiped every tweak made on a previous visit.
 	window.openThemeEditor = function ($mount, parentDialog, opts) {
 		const options = opts || {};
 		const getSelectedTheme =
@@ -195,6 +201,11 @@
 		const onPreview = typeof options.onPreview === "function" ? options.onPreview : () => {};
 
 		const overrides = {};
+		const seedOverrides = (seed) => {
+			for (const k of Object.keys(overrides)) delete overrides[k];
+			Object.assign(overrides, seed || {});
+		};
+		seedOverrides(options.initialOverrides);
 		let activeTab = readStoredTab();
 		let palettesCache = null; // lazy-loaded from server
 
@@ -745,8 +756,11 @@
 		// ---- Public surface (consumed by theme_switcher.js) ----
 		return {
 			getOverrides: () => Object.assign({}, overrides),
-			reset: () => {
-				for (const k of Object.keys(overrides)) delete overrides[k];
+			// `seed` is the saved overrides of the theme being switched to, if
+			// it has any (the host asks ThemeManager); nothing means a clean
+			// slate for a theme the user has never tuned.
+			reset: (seed) => {
+				seedOverrides(seed);
 				clearGeneratorState();
 				render();
 			},

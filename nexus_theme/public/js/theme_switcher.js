@@ -102,6 +102,13 @@
 			initialActive ||
 			defaults[0] ||
 			null;
+		// The overrides already saved on a theme, so the editor starts from
+		// them rather than from nothing: Apply sends the editor's set as the
+		// whole new set, and starting empty wiped the previous visit's work.
+		const savedOverridesFor = (theme) =>
+			window.ThemeManager && typeof ThemeManager.overridesFor === "function"
+				? ThemeManager.overridesFor(theme)
+				: {};
 
 		const dialog = new frappe.ui.Dialog({
 			title: __("Theme Studio"),
@@ -454,7 +461,9 @@
 			selectedTheme = next;
 			// Switching themes wipes editor overrides — the previous overrides
 			// were tuned for the previous theme and would bleed into this one.
-			if (editor) editor.reset();
+			// Coming back to a theme the user has saved overrides on (the
+			// active one, or the other half of the pair) brings those back.
+			if (editor) editor.reset(savedOverridesFor(next));
 			renderPreview();
 			if (editor) editor.refresh();
 		};
@@ -469,7 +478,7 @@
 
 			if (selectedTheme && selectedTheme.name === name) {
 				selectedTheme = defaults[0] || owned[0] || publicThemes[0] || null;
-				if (editor) editor.reset();
+				if (editor) editor.reset(savedOverridesFor(selectedTheme));
 				renderPreview();
 				if (editor) editor.refresh();
 				$gallery.find(".theme-card").removeClass("is-selected");
@@ -518,6 +527,7 @@
 				getSelectedTheme: () => selectedTheme,
 				onPreview: () => renderPreview(),
 				allowPublicSharing: !!gov.allow_public_sharing,
+				initialOverrides: savedOverridesFor(selectedTheme),
 			});
 		}
 
