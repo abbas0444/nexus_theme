@@ -69,7 +69,13 @@ frappe.pages["nexus-permission-inspector"].on_page_show = function (wrapper) {
 	// Roles shown before the list folds. Administrator carries around fifty,
 	// which would push the table itself off the screen.
 	const ROLES_SHOWN = 12;
-	const STATE_TEXT = { 1: __("Yes"), 0: __("No"), 2: __("Own only"), na: "–" };
+	const STATE_TEXT = {
+		1: __("Yes"),
+		0: __("No"),
+		2: __("Own only"),
+		shared: __("Shared records only"),
+		na: "–",
+	};
 	// The rights Frappe's validator needs at least one of for a rule to exist
 	// (check_atleast_one_set). A rule left with none of these is refused by
 	// the server unless every right is gone, which removes the rule.
@@ -1437,8 +1443,12 @@ frappe.pages["nexus-permission-inspector"].on_page_show = function (wrapper) {
 
 			// What can they do here?
 			const applicable = d.rights.filter((pt) => !(d.na || []).includes(pt));
+			const shared = d.live_shared || [];
 			const state_of = (pt) => {
-				if (d.live) return d.live[pt] ? 1 : 0;
+				if (d.live) {
+					if (shared.includes(pt)) return "shared";
+					return d.live[pt] || 0;
+				}
 				if (!row) return 0;
 				return this.cell_state(row, pt, this.effective(row));
 			};
@@ -1458,8 +1468,19 @@ frappe.pages["nexus-permission-inspector"].on_page_show = function (wrapper) {
 				${
 					d.live
 						? `<p style="margin-top:6px">${__(
-								"Checked live with Frappe, so this is exactly what the system enforces right now."
-						  )}</p>`
+								"Worked out by Frappe's own permission engine from this person's roles, the way it decides for a record. Own only: allowed on records they created, not on others'."
+						  )}${
+								shared.length
+									? " " +
+									  __(
+											"Shared records only: no role allows it, but one or more records have been shared with them."
+									  )
+									: ""
+						  }${
+								(d.user_permissions || []).length
+									? " " + __("User Permissions below can still narrow which records.")
+									: ""
+						  }</p>`
 						: ""
 				}
 			</div>`;
