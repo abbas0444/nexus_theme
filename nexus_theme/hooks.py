@@ -144,6 +144,33 @@ sounds = [
 # 	"filters": "nexus_theme.utils.jinja_filters"
 # }
 
+# Sidebar settings dropdown
+# -------------------------
+# Frappe v16 replaced the top navbar with the left sidebar, whose settings
+# dropdown is drawn from Navbar Settings (sidebar_header.add_navbar_items
+# reads `settings_dropdown`). That is how Frappe registers "Toggle Theme",
+# and it is the app's way into Theme Studio and Sound Studio.
+#
+# Declared under this hook, and not only added by install.py, because
+# migrate's sync_standard_items() deletes every `is_standard` row that no
+# installed app declares: rows added by install alone were removed and put
+# back on every migrate, losing their order and any "hidden" tick along the
+# way. Listed here they are added once, and kept.
+standard_navbar_items = [
+	{
+		"item_label": "Theme Studio",
+		"item_type": "Action",
+		"action": "window.openThemeSwitcher && window.openThemeSwitcher()",
+		"is_standard": 1,
+	},
+	{
+		"item_label": "Sound Settings",
+		"item_type": "Action",
+		"action": "window.openSoundStudio && window.openSoundStudio()",
+		"is_standard": 1,
+	},
+]
+
 # Installation
 # ------------
 

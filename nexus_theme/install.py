@@ -110,42 +110,33 @@ def sync_public_assets() -> None:
 		return
 
 
-# Entries added to the sidebar's settings dropdown. Frappe v16 replaced the
-# top navbar with the left sidebar, so the app's own DOM injection (which
-# targets `.navbar-nav` and the v15 user dropdown) no longer finds anything
-# and Theme Studio / Sound Studio had no reachable entry point at all.
-#
-# Navbar Settings is the supported way in: sidebar_header.add_navbar_items()
-# reads `settings_dropdown` and renders each item. It is also how Frappe
-# itself registers "Toggle Theme".
-NAVBAR_ITEMS = (
-	{
-		"item_label": "Theme Studio",
-		"item_type": "Action",
-		"action": "window.openThemeSwitcher && window.openThemeSwitcher()",
-		"is_standard": 1,
-	},
-	{
-		"item_label": "Sound Settings",
-		"item_type": "Action",
-		"action": "window.openSoundStudio && window.openSoundStudio()",
-		"is_standard": 1,
-	},
-)
+def navbar_items() -> list[dict]:
+	"""The sidebar settings-dropdown entries hooks.py declares.
+
+	`standard_navbar_items` is the hook Frappe's own migrate reads, so the
+	rows survive sync_standard_items(); reading the same list here keeps
+	install and uninstall working from one definition.
+	"""
+	return [dict(item) for item in frappe.get_hooks("standard_navbar_items", app_name="nexus_theme")]
 
 
 def ensure_navbar_items() -> None:
-	"""Add our entries to the sidebar settings dropdown. Idempotent."""
+	"""Add our entries to the sidebar settings dropdown. Idempotent.
+
+	Only needed on install: `bench install-app` runs no navbar sync of its
+	own. Every migrate after that keeps the rows in place through Frappe's
+	sync_standard_items(), which reads the same hook.
+	"""
 	if not frappe.db.exists("DocType", "Navbar Settings"):
 		return
 	try:
 		settings = frappe.get_single("Navbar Settings")
 		existing = {row.item_label for row in (settings.settings_dropdown or [])}
 		added = False
-		for item in NAVBAR_ITEMS:
+		for item in navbar_items():
 			if item["item_label"] in existing:
 				continue
-			settings.append("settings_dropdown", dict(item))
+			settings.append("settings_dropdown", item)
 			added = True
 		if added:
 			settings.flags.ignore_permissions = True
@@ -206,10 +197,13 @@ def after_install() -> None:
 
 
 def after_migrate() -> None:
-	"""Run after migrate so every provisioned thing stays in place after upgrades."""
+	"""Run after migrate so every provisioned thing stays in place after upgrades.
+
+	The navbar items are not re-added here: migrate has already synced them
+	from the `standard_navbar_items` hook by the time this runs.
+	"""
 	provision_theme_user_role()
 	sync_public_assets()
-	ensure_navbar_items()
 	ensure_desktop_icon()
 
 

@@ -15,7 +15,7 @@ from pathlib import Path
 
 import frappe
 
-from nexus_theme.install import NAVBAR_ITEMS, THEME_USER_ROLE
+from nexus_theme.install import THEME_USER_ROLE, navbar_items
 
 
 def _remove_theme_user_role() -> None:
@@ -62,7 +62,7 @@ def _remove_navbar_items() -> None:
 	if not frappe.db.exists("DocType", "Navbar Settings"):
 		return
 	try:
-		labels = {item["item_label"] for item in NAVBAR_ITEMS}
+		labels = {item["item_label"] for item in navbar_items()}
 		settings = frappe.get_single("Navbar Settings")
 		rows = settings.settings_dropdown or []
 		keep = [row for row in rows if row.item_label not in labels]
