@@ -241,6 +241,14 @@ class TestThemeApi(FrappeTestCase):
 		api.set_user_sound("save", SOUND, 0.5)
 		self.assertEqual(api.get_user_sounds()["mapping"]["save"]["url"], SOUND)
 
+	def test_the_names_frappe_keeps_on_upload_are_accepted(self):
+		# An upload named like this used to be refused after the fact,
+		# stranding the File it had just created.
+		for url in ("/files/Ben's chime & bell.aiff", "/private/files/Ding (1).opus"):
+			with self.subTest(url=url):
+				api.set_user_sound("save", url, 0.5)
+				self.assertEqual(api.get_user_sounds()["mapping"]["save"]["url"], url)
+
 	def test_sound_writes_honour_the_site_switch(self):
 		self._govern(None, 0, [], 0)
 		self.assertRaises(frappe.ValidationError, api.set_user_sound, "save", SOUND, 0.5)

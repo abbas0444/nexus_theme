@@ -525,6 +525,26 @@
 		});
 	}
 
+	// What set_user_sound accepts (api.SOUND_EXTENSIONS) — keep the two lists
+	// the same, or a file the picker lets through is refused after upload.
+	// The mime pattern is for browsers that type the file; the extensions
+	// catch the ones they leave untyped (.opus, .weba, .aiff are common).
+	const AUDIO_FILE_TYPES = [
+		"audio/*",
+		".mp3",
+		".wav",
+		".ogg",
+		".oga",
+		".m4a",
+		".aac",
+		".flac",
+		".webm",
+		".weba",
+		".opus",
+		".aiff",
+		".aif",
+	];
+
 	function openUploader(eventKey, state, rerender) {
 		if (!frappe.ui || !frappe.ui.FileUploader) {
 			frappe.show_alert({
@@ -538,7 +558,7 @@
 			docname: frappe.session.user,
 			folder: "Home/Attachments",
 			allow_multiple: false,
-			restrictions: { allowed_file_types: ["audio/*"] },
+			restrictions: { allowed_file_types: AUDIO_FILE_TYPES },
 			on_success: async (file_doc) => {
 				const existing = state.mapping[eventKey];
 				const volume =
@@ -553,8 +573,9 @@
 						},
 					});
 				} catch (_err) {
+					// The server has already deleted the upload it refused.
 					frappe.show_alert({
-						message: __("Uploaded, but it could not be saved as your sound"),
+						message: __("That file was not accepted as a sound, so it was removed"),
 						indicator: "red",
 					});
 					return;
