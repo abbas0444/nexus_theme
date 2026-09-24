@@ -720,7 +720,7 @@ def _assert_sounds_allowed() -> None:
 def get_user_sounds():
 	"""Return this user's sound configuration.
 
-	{enabled, allowed, mapping: {event: {url, volume}}}
+	{enabled, allowed, login_stamp, mapping: {event: {url, volume}}}
 
 	`enabled` is the user's own switch and mutes everything, stock sounds
 	included. `allowed` is the site's "Allow User Sounds" setting: off means
@@ -728,11 +728,17 @@ def get_user_sounds():
 	Frappe's own sounds keep playing — the site turned off customisation,
 	not audio. A mapping entry may have no url, when the user only set a
 	volume for an event that keeps its stock sound.
+
+	`login_stamp` is the user's last_login. The Desk plays the login sound
+	when it sees a stamp it has not played for, which is once per sign-in
+	rather than once per page load or tab.
 	"""
 	user = frappe.session.user
+	login_stamp = frappe.db.get_value("User", user, "last_login")
 	payload = {
 		"enabled": 1,
 		"allowed": 1,
+		"login_stamp": str(login_stamp) if login_stamp else None,
 		"mapping": {},
 	}
 	if not _settings()["allow_user_sounds"]:

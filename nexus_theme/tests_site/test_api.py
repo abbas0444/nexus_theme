@@ -279,6 +279,10 @@ class TestThemeApi(FrappeTestCase):
 		self._govern(None, 0, [], 1)
 		self.assertEqual(api.get_user_sounds()["mapping"]["save"]["url"], SOUND)
 
+	def test_the_login_stamp_is_the_users_last_login(self):
+		frappe.db.set_value("User", ADMIN, "last_login", "2026-09-24 09:30:00")
+		self.assertEqual(api.get_user_sounds()["login_stamp"], "2026-09-24 09:30:00")
+
 	# ------------------------------------------------------------------
 	# Role provisioning
 	# ------------------------------------------------------------------
