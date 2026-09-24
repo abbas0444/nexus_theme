@@ -22,6 +22,9 @@
 			this.mapping = {}; // { user_event_key: { url, volume } }
 			this._listeners = new Set();
 			this._patched = false;
+			// Set when applyMapping ran before every <audio> element it wanted
+			// existed, so the swap is retried the next time a sound is played.
+			this._pendingSwap = false;
 		}
 
 		/**
@@ -48,7 +51,18 @@
 		/** Swap the src of Frappe's `<audio id="sound-X">` elements with user uploads. */
 		applyMapping(mapping) {
 			this.mapping = mapping || {};
+			this._swapElements();
+			this._notify();
+		}
 
+		/**
+		 * The DOM half of applyMapping, kept separate so it can run again
+		 * later. desk.html prints app_include_js before the <audio> elements,
+		 * so on page load this runs while getElementById still finds nothing;
+		 * the wrapper in patchPlaySound retries it before the first play, and
+		 * init() retries it on DOMContentLoaded.
+		 */
+		_swapElements() {
 			// Put the shipped file back on anything no longer mapped. Without
 			// this, "Reset All to Default" cleared the mapping but every <audio>
 			// element kept its custom src until the next full reload.
@@ -59,40 +73,56 @@
 			);
 			document.querySelectorAll("audio[data-sm-original-src]").forEach((el) => {
 				if (stillMapped.has(el.id)) return;
-				el.src = el.dataset.smOriginalSrc;
-				el.load && el.load();
+				this._restoreOriginal(el);
 			});
 
+			let missing = false;
 			for (const [userKey, def] of Object.entries(this.mapping)) {
 				if (!def || !def.url) continue;
 				const frappeKey = frappeKeyFor(userKey);
 				const el = document.getElementById("sound-" + frappeKey);
-				if (el) {
-					this._rememberOriginal(el);
+				if (!el) {
+					missing = true;
+					continue;
+				}
+				this._rememberOriginal(el);
+				if (el.getAttribute("src") !== def.url) {
 					el.src = def.url;
 					el.load && el.load();
 				}
 			}
-			this._notify();
+			this._pendingSwap = missing;
 		}
 
 		/**
 		 * Remember every <audio> element's shipped src the first time we touch
 		 * it, so clearing a custom sound can put the default back immediately
-		 * instead of requiring a page reload.
+		 * instead of requiring a page reload. Frappe's elements carry no src
+		 * attribute at all — the file is a <source> child — so the remembered
+		 * value is usually "", which _restoreOriginal reads as "drop the
+		 * attribute and let the child take over again".
 		 */
 		_rememberOriginal(el) {
 			if (!el || el.dataset.smOriginalSrc !== undefined) return;
 			el.dataset.smOriginalSrc = el.getAttribute("src") || "";
 		}
 
+		_restoreOriginal(el) {
+			if (!el || el.dataset.smOriginalSrc === undefined) return;
+			if (el.dataset.smOriginalSrc) {
+				el.src = el.dataset.smOriginalSrc;
+			} else {
+				// Setting src="" would leave the element with an empty resource
+				// and silence it until reload; removing the attribute makes the
+				// browser re-run source selection on the <source> children.
+				el.removeAttribute("src");
+			}
+			el.load && el.load();
+		}
+
 		resetMappingFor(name) {
 			delete this.mapping[name];
-			const el = document.getElementById("sound-" + frappeKeyFor(name));
-			if (el && el.dataset.smOriginalSrc !== undefined) {
-				el.src = el.dataset.smOriginalSrc;
-				el.load && el.load();
-			}
+			this._restoreOriginal(document.getElementById("sound-" + frappeKeyFor(name)));
 			this._notify();
 		}
 
@@ -131,6 +161,9 @@
 				) {
 					return;
 				}
+				// Custom files that could not be swapped in yet (see
+				// _swapElements) go on now, before the element is played.
+				if (self._pendingSwap) self._swapElements();
 				const audio = document.getElementById("sound-" + name);
 				if (!audio) return;
 				try {
@@ -399,15 +432,30 @@
 	const mgr = new SoundManager();
 	window.SoundManager = mgr;
 
+	// desk.html prints the <audio id="sound-*"> elements after every
+	// app_include_js, so while this bundle runs on page load none of them
+	// exist yet. Anything that touches them waits for the parser to finish.
+	const whenAudioElementsExist = (fn) => {
+		if (document.readyState === "loading") {
+			document.addEventListener("DOMContentLoaded", fn, { once: true });
+		} else {
+			fn();
+		}
+	};
+
 	const init = async () => {
 		mgr.patchPlaySound();
 		mgr.wireRealtimeNotification();
 		mgr.wireMissingFieldsSound();
 		mgr.wireLogoutSound();
 		await mgr.loadFromServer();
-		// Login sound runs after mapping is applied so user's custom file (if any)
-		// is already swapped onto the <audio id="sound-login"> element.
-		mgr.wireLoginSound();
+		whenAudioElementsExist(() => {
+			if (mgr._pendingSwap) mgr._swapElements();
+			// Login sound runs after mapping is applied so user's custom file
+			// (if any) is already swapped onto the <audio id="sound-login">
+			// element.
+			mgr.wireLoginSound();
+		});
 	};
 
 	// Patch as soon as frappe.utils exists; otherwise wait for frappe.ready.
