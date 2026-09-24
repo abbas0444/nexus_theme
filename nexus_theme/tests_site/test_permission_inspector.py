@@ -368,11 +368,89 @@ class TestPermissionInspector(FrappeTestCase):
 			frappe.db.delete("Custom DocPerm", {"parent": target})
 			frappe.clear_cache(doctype=target)
 
-	def test_clearing_every_basic_right_removes_the_rule(self):
+	def test_clearing_every_right_removes_the_rule(self):
+		# Role A's rule is Read alone, so unticking Read leaves nothing: that
+		# is "remove the rule", as the stock manager's Remove does.
 		out = api.save_changes([{"doctype": DT, "role": ROLE_A, "ptype": "read", "value": 0}])
 		self.assertEqual(out["applied"][0]["action"], "removed")
 		self.assertFalse(frappe.db.exists("Custom DocPerm", {"parent": DT, "role": ROLE_A}))
 		self.assertNotIn(ROLE_A, self.user_row()["s"]["read"])
+
+	def test_unticking_the_last_basic_right_never_takes_the_other_rights_with_it(self):
+		# Read + Delete + Print, then Read off: Frappe refuses a rule with no
+		# basic right ("No basic permissions set"). Deleting the row instead
+		# would silently revoke Delete and Print, which nobody asked for.
+		api.save_changes(
+			[{"doctype": DT, "role": ROLE_A, "ptype": p, "value": 1} for p in ("delete", "print")]
+		)
+		self.assertTrue(self.engine_says("delete"))
+		with self.assertRaises(frappe.ValidationError) as cm:
+			api.save_changes([{"doctype": DT, "role": ROLE_A, "ptype": "read", "value": 0}])
+		self.assertIn("Delete", str(cm.exception))
+		row = frappe.db.get_value(
+			"Custom DocPerm",
+			{"parent": DT, "role": ROLE_A, "permlevel": 0},
+			["read", "delete", "print"],
+			as_dict=True,
+		)
+		self.assertEqual(dict(row), {"read": 1, "delete": 1, "print": 1})
+		self.assertTrue(self.engine_says("delete"))
+		# Clearing everything is a different request, and that one removes the rule.
+		out = api.save_changes(
+			[{"doctype": DT, "role": ROLE_A, "ptype": p, "value": 0} for p in ("read", "delete", "print")]
+		)
+		self.assertEqual(out["applied"][0]["action"], "removed")
+		self.assertFalse(frappe.db.exists("Custom DocPerm", {"parent": DT, "role": ROLE_A}))
+		self.assertFalse(self.engine_says("delete"))
+
+	def test_a_rule_cannot_begin_without_a_basic_right(self):
+		# Error Log has no rule for Role A. Delete alone is not a rule Frappe
+		# accepts, so it is refused up front rather than silently dropped.
+		target = "Error Log"
+		frappe.db.delete("Custom DocPerm", {"parent": target})
+		try:
+			with self.assertRaises(frappe.ValidationError) as cm:
+				api.save_changes([{"doctype": target, "role": ROLE_A, "ptype": "delete", "value": 1}])
+			self.assertIn("no rule", str(cm.exception))
+			self.assertFalse(frappe.db.exists("Custom DocPerm", {"parent": target, "role": ROLE_A}))
+		finally:
+			frappe.db.delete("Custom DocPerm", {"parent": target})
+			frappe.clear_cache(doctype=target)
+
+	def test_a_rule_with_field_level_rules_above_it_cannot_be_removed(self):
+		# check_level_zero_is_set: a level-1 rule needs a level-0 rule for the
+		# same role. Removing the level-0 one would orphan it and make every
+		# later save of this DocType's permissions fail.
+		api.save_changes(
+			[{"doctype": DT, "role": ROLE_B, "ptype": "write", "value": 0}]
+		)  # copies to Custom DocPerm
+		level1 = frappe.new_doc("Custom DocPerm")
+		level1.update(dict.fromkeys(RIGHTS, 0))
+		level1.update(
+			{
+				"parent": DT,
+				"parenttype": "DocType",
+				"parentfield": "permissions",
+				"role": ROLE_A,
+				"permlevel": 1,
+				"read": 1,
+			}
+		)
+		level1.insert(ignore_permissions=True)
+		with self.assertRaises(frappe.ValidationError) as cm:
+			api.save_changes([{"doctype": DT, "role": ROLE_A, "ptype": "read", "value": 0}])
+		self.assertIn("level 1", str(cm.exception))
+		self.assertEqual(
+			frappe.get_all(
+				"Custom DocPerm", {"parent": DT, "role": ROLE_A}, pluck="permlevel", order_by="permlevel"
+			),
+			[0, 1],
+		)
+		# Once the field-level rule is gone the same request goes through.
+		frappe.delete_doc("Custom DocPerm", level1.name, ignore_permissions=True, force=True)
+		out = api.save_changes([{"doctype": DT, "role": ROLE_A, "ptype": "read", "value": 0}])
+		self.assertEqual(out["applied"][0]["action"], "removed")
+		self.assertFalse(frappe.db.exists("Custom DocPerm", {"parent": DT, "role": ROLE_A}))
 
 	def test_the_last_rule_cannot_be_removed(self):
 		frappe.db.delete("Custom DocPerm", {"parent": DT})
@@ -386,14 +464,16 @@ class TestPermissionInspector(FrappeTestCase):
 		self.assertEqual(
 			frappe.get_all("Custom DocPerm", {"parent": DT}, pluck="role"), ["System Manager"], applied
 		)
-		self.assertRaises(
-			frappe.ValidationError,
-			api.save_changes,
-			[
-				{"doctype": DT, "role": "System Manager", "ptype": p, "value": 0}
-				for p in ("read", "write", "create", "submit", "cancel", "amend")
-			],
-		)
+		# Every right of that rule cleared, Delete included, so the only thing
+		# standing in the way is that it is the last rule.
+		with self.assertRaises(frappe.ValidationError) as cm:
+			api.save_changes(
+				[
+					{"doctype": DT, "role": "System Manager", "ptype": p, "value": 0}
+					for p in ("read", "write", "create", "submit", "cancel", "amend", "delete")
+				]
+			)
+		self.assertIn("at least one", str(cm.exception))
 		self.assertEqual(frappe.db.count("Custom DocPerm", {"parent": DT}), 1)
 
 	def test_a_failed_batch_leaves_nothing_behind(self):

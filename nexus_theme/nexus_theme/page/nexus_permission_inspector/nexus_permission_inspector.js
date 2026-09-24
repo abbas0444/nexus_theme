@@ -70,6 +70,10 @@ frappe.pages["nexus-permission-inspector"].on_page_show = function (wrapper) {
 	// which would push the table itself off the screen.
 	const ROLES_SHOWN = 12;
 	const STATE_TEXT = { 1: __("Yes"), 0: __("No"), 2: __("Own only"), na: "–" };
+	// The rights Frappe's validator needs at least one of for a rule to exist
+	// (check_atleast_one_set). A rule left with none of these is refused by
+	// the server unless every right is gone, which removes the rule.
+	const BASIC = ["select", "read", "write", "create", "submit", "cancel"];
 
 	// Frappe's rule dependencies. Ticking a flag pulls in what it needs;
 	// clearing one drops what needed it. The server applies the same rules.
@@ -1098,6 +1102,61 @@ frappe.pages["nexus-permission-inspector"].on_page_show = function (wrapper) {
 			this.rerender_row(doctype);
 			this.update_dirty();
 			this.refresh_summary();
+			const problems = this.rule_problems(doctype);
+			if (problems.length) {
+				frappe.show_alert({ message: this.problem_text(problems[0]), indicator: "orange" }, 8);
+			}
+		}
+
+		// ------------------------------------------------------------------
+		// What the server will refuse (mirrors api._apply_rule_changes)
+		// ------------------------------------------------------------------
+
+		// The rule a role would end up with after the pending edits, or null
+		// when the pending edits do not touch that role on that record type.
+		pending_rules(doctype) {
+			const seen = new Map();
+			this.pending.forEach((ch) => {
+				if (doctype && ch.doctype !== doctype) return;
+				seen.set(`${ch.doctype}${ch.role}`, { doctype: ch.doctype, role: ch.role });
+			});
+			return Array.from(seen.values());
+		}
+
+		// A rule left with rights but none of the basic ones is what Frappe
+		// calls "No basic permissions set"; the server refuses it rather than
+		// deleting the row, since that would also take away the leftovers.
+		rule_problems(doctype) {
+			const out = [];
+			this.pending_rules(doctype).forEach(({ doctype: dt, role }) => {
+				const row = this.row_index.get(dt);
+				if (!row) return;
+				const grants = this.role_grants(row, role);
+				if (!grants.size || BASIC.some((k) => grants.has(k))) return;
+				out.push({
+					doctype: dt,
+					role,
+					leftover: Array.from(grants).map((k) => this.label(k)),
+					has_rule: !!(row.r && row.r[role]),
+				});
+			});
+			return out;
+		}
+
+		problem_text(p) {
+			// Rendered as HTML by show_alert and msgprint, so escape the names.
+			const basics = BASIC.map((k) => this.label(k)).join(", ");
+			const leftover = esc(p.leftover.join(", "));
+			if (!p.has_rule) {
+				return __(
+					"<b>{0}</b> has no rule on <b>{1}</b> yet. Tick {2} (or another of {3}) before {4}; Frappe will not save a rule without one.",
+					[esc(p.role), esc(p.doctype), this.label("read"), basics, leftover]
+				);
+			}
+			return __(
+				"<b>{0}</b> on <b>{1}</b> would keep {2} but none of {3}. Frappe does not allow that: untick {2} too to remove the rule entirely, or keep one of {3}.",
+				[esc(p.role), esc(p.doctype), leftover, basics]
+			);
 		}
 
 		// The user view never guesses: the admin picks which role changes.
@@ -1211,16 +1270,36 @@ frappe.pages["nexus-permission-inspector"].on_page_show = function (wrapper) {
 					if (g.on.length) bits.push(__("will be able to {0}", [g.on.join(", ")]));
 					if (g.off.length)
 						bits.push(__("will no longer be able to {0}", [g.off.join(", ")]));
-					return __("Everyone with the role <b>{0}</b> {1} on <b>{2}</b>.", [
+					let line = __("Everyone with the role <b>{0}</b> {1} on <b>{2}</b>.", [
 						esc(g.role),
 						bits.join(` ${__("and")} `),
 						esc(g.doctype),
 					]);
+					// Every right cleared is what the server treats as "remove
+					// the rule", exactly as the stock manager's Remove does.
+					const row = this.row_index.get(g.doctype);
+					if (row && !this.role_grants(row, g.role).size) {
+						line += ` ${__("Their rule on this record type will be removed.")}`;
+					}
+					return line;
 				});
 		}
 
 		confirm_and_save() {
 			if (!this.pending.size) return;
+			const problems = this.rule_problems();
+			if (problems.length) {
+				// The server would refuse these; say so here, where the admin
+				// can still change their mind, instead of after a failed save.
+				frappe.msgprint({
+					title: __("Cannot save yet"),
+					indicator: "orange",
+					message: `<ul class="nxpi-dialog-list">${problems
+						.map((p) => `<li>${this.problem_text(p)}</li>`)
+						.join("")}</ul>`,
+				});
+				return;
+			}
 			const lines = this.change_lines();
 			const html = `<div class="nxpi-dialog"><p>${__(
 				"You are about to change these role permissions:"
