@@ -126,7 +126,7 @@
 {%- macro card_head(title, subtitle) -%}
 <div class="nxlogin-card-head">
 	<h1 class="nxlogin-title">{{ title }}</h1>
-	{% if subtitle %}<p class="nxlogin-subtitle">{{ subtitle }}</p>{% endif %}
+	{% if subtitle %}<p class="nxlogin-subtitle">{{ subtitle | e }}</p>{% endif %}
 </div>
 {%- endmacro -%}
 
