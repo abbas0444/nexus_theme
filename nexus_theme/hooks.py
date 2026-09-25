@@ -93,6 +93,9 @@ app_include_js = [
 	# which it registers with. The page's own script and styles live in
 	# nexus_theme/page/nexus_home and load only when it is opened.
 	"home_page.bundle.js",
+	# Tags sidebar items with their module's tint key. Only scans while a
+	# theme with icon tints is showing; the colours are in sidebar_skin.
+	"sidebar_tints.bundle.js",
 ]
 
 # Login page and public website. The stylesheet is inert unless
