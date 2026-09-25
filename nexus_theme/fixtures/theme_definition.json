@@ -55,9 +55,10 @@
   "enable_hover_lift": 1,
   "border_radius": "4px",
   "sidebar_style": "Solid",
-  "sidebar_bg": "#1d4ed8",
+  "sidebar_bg": "#111317",
   "sidebar_pattern": 0,
-  "icon_tints": 0
+  "icon_tints": 0,
+  "sidebar_active_bg": "#1e3a6e"
  },
  {
   "doctype": "Theme Definition",
