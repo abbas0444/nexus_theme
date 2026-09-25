@@ -60,7 +60,7 @@ def series(version: str | None) -> tuple[int, int] | None:
 	try:
 		major = int(parts[0])
 		minor = int(parts[1]) if len(parts) > 1 else 0
-	except TypeError, ValueError:
+	except (TypeError, ValueError):
 		return None
 	return (major, minor)
 
