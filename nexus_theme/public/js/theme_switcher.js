@@ -635,7 +635,37 @@
 			`--mock-border:${escapeHtml(v("border", "#e5e7eb"))}`,
 			`--mock-radius:${escapeHtml(radius)}`,
 			`--mock-font-family:${escapeHtml(fontFamily)}`,
-		].join(";");
+		];
+
+		// Sidebar skin: the same resolution the live Desk uses (see
+		// NexusSidebarSkin in theme_manager.js), so what the preview shows is
+		// what Apply paints. Nothing is set for Plain, and the mockup keeps
+		// its stock sidebar.
+		const skinApi = window.NexusSidebarSkin;
+		const skin = skinApi ? skinApi.resolve(t) : null;
+		let skinAttrs = "";
+		if (skin) {
+			style.push(
+				`--mock-sidebar-bg:${escapeHtml(skin.bg)}`,
+				`--mock-sidebar-bg-end:${escapeHtml(skin.bgEnd)}`,
+				`--mock-sidebar-text:${escapeHtml(skin.text)}`,
+				`--mock-sidebar-active-bg:${escapeHtml(skin.activeBg)}`
+			);
+			skinAttrs += ` data-sidebar-style="${escapeHtml(skin.style.toLowerCase())}"`;
+			if (skin.style !== "Tinted" && skinApi.on(t.sidebar_pattern)) {
+				skinAttrs += ` data-sidebar-pattern="1"`;
+			}
+		}
+		if (skinApi && skinApi.on(t.icon_tints)) skinAttrs += ` data-icon-tints="1"`;
+		// Frappe v15 has no left sidebar: the skin goes on its top bar.
+		const frappeMajor = parseInt(
+			(window.frappe && frappe.boot && frappe.boot.versions && frappe.boot.versions.frappe) ||
+				"16",
+			10
+		);
+		if (frappeMajor && frappeMajor < 16) skinAttrs += ` data-desk="v15"`;
+		// A fixed sample of the module tints, one per mock item.
+		const tint = (hex) => `<span class="tpm-sideicon" style="--tpm-tint:${hex}"></span>`;
 
 		const themeName = escapeHtml(v("theme_name", __("Preview")));
 
@@ -645,7 +675,7 @@
           <span>${escapeHtml(__("Live Preview"))}</span>
           <span class="theme-preview-themename">${themeName}</span>
         </div>
-        <div class="theme-preview-mockup" style="${style}">
+        <div class="theme-preview-mockup" style="${style.join(";")}"${skinAttrs}>
           <div class="tpm-navbar">
             <div class="tpm-logo"></div>
             <div class="tpm-navlinks">
@@ -656,10 +686,12 @@
           </div>
           <div class="tpm-body">
             <div class="tpm-sidebar">
-              <div class="tpm-sideitem is-active">${escapeHtml(__("Dashboard"))}</div>
-              <div class="tpm-sideitem">${escapeHtml(__("Customers"))}</div>
-              <div class="tpm-sideitem">${escapeHtml(__("Invoices"))}</div>
-              <div class="tpm-sideitem">${escapeHtml(__("Items"))}</div>
+              <div class="tpm-sideitem is-active">${tint("#2563eb")}${escapeHtml(
+					__("Dashboard")
+				)}</div>
+              <div class="tpm-sideitem">${tint("#16a34a")}${escapeHtml(__("Customers"))}</div>
+              <div class="tpm-sideitem">${tint("#ea580c")}${escapeHtml(__("Invoices"))}</div>
+              <div class="tpm-sideitem">${tint("#4f46e5")}${escapeHtml(__("Items"))}</div>
             </div>
             <div class="tpm-content">
               <div class="tpm-row tpm-row-form">
