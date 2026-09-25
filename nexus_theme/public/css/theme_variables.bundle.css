@@ -576,6 +576,31 @@ html[data-app-theme] .btn-primary:focus {
   box-shadow: var(--theme-shadow-sm);
 }
 
+/* ---- Light primary ----
+   The "something is switched on" button: a list with filters applied, a
+   sort that is not the default. Core paints it from fixed grays that no
+   theme reaches, so on a themed Desk it came out as a mid-gray block with
+   the accent-coloured count on it — unreadable on dark themes. A wash of
+   the accent over the surface keeps the "on" meaning, and the theme's own
+   text colour keeps it legible whatever the accent is. */
+html[data-app-theme] .btn-primary-light,
+html[data-app-theme] .btn.btn-primary-light {
+  background-color: color-mix(in srgb, var(--theme-accent) 14%, var(--theme-bg-surface)) !important;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 38%, var(--theme-border)) !important;
+  color: var(--theme-text-primary) !important;
+  box-shadow: none !important;
+}
+
+html[data-app-theme] .btn-primary-light:hover,
+html[data-app-theme] .btn.btn-primary-light:hover {
+  background-color: color-mix(in srgb, var(--theme-accent) 22%, var(--theme-bg-surface)) !important;
+}
+
+html[data-app-theme] .btn-primary-light .icon,
+html[data-app-theme] .btn-primary-light svg {
+  --icon-stroke: var(--theme-text-primary);
+}
+
 /* The pressed state needs !important because core sets it that way twice:
    `.btn:active` forces --control-bg, and `.btn.btn-primary:active` forces
    --invert-neutral with --gray-100 text. Neither is themed, so without
