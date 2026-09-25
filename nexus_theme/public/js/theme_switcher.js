@@ -119,6 +119,7 @@
 			custom_cls: "theme-studio-isolated",
 			fields: [
 				{ fieldtype: "HTML", fieldname: "preview" },
+				{ fieldtype: "HTML", fieldname: "density" },
 				{ fieldtype: "HTML", fieldname: "gallery" },
 				{ fieldtype: "Section Break", label: __("Customize") },
 				{ fieldtype: "HTML", fieldname: "editor" },
@@ -454,6 +455,59 @@
 			$preview.html(buildPreviewHTML(selectedTheme, overrides));
 		};
 
+		// ---- Density ----
+		// Compact / Comfortable / Spacious, between the preview and the
+		// gallery. Unlike a theme it is not a candidate: it is independent
+		// of whatever the gallery has selected, so a click saves and applies
+		// at once rather than waiting on Apply, and the Reset button leaves
+		// it alone. Drawn from NexusDensity (density.js), which owns the
+		// attribute, the cache and the server call.
+		const $density = dialog.fields_dict.density.$wrapper;
+		const renderDensity = () => {
+			const nd = window.NexusDensity;
+			if (!nd) {
+				$density.empty();
+				return;
+			}
+			const current = nd.get();
+			const options = nd
+				.modes()
+				.map((m) => {
+					const on = m.key === current;
+					return `<button type="button" class="nx-density-option${on ? " is-active" : ""}"
+						role="radio" aria-checked="${on ? "true" : "false"}"
+						data-density="${escapeHtml(m.key)}" title="${escapeHtml(m.description)}">${escapeHtml(
+							m.label
+						)}</button>`;
+				})
+				.join("");
+			$density.html(`
+				<div class="nx-density-row">
+					<span class="nx-density-label">${__("Density")}</span>
+					<div class="nx-density-seg" role="radiogroup" aria-label="${__("Density")}">${options}</div>
+				</div>`);
+		};
+		renderDensity();
+		$density.on("click", ".nx-density-option", async function () {
+			const key = $(this).attr("data-density");
+			if (!window.NexusDensity || key === NexusDensity.get()) return;
+			const mode = NexusDensity.modes().find((m) => m.key === key);
+			try {
+				await NexusDensity.set(key);
+				frappe.show_alert({
+					message: __("Density set to {0}", [mode ? mode.label : key]),
+					indicator: "green",
+				});
+			} catch (_err) {
+				frappe.show_alert({ message: __("Could not save density"), indicator: "red" });
+			}
+			renderDensity();
+		});
+		// Another tab, or the command palette, may change it while the
+		// dialog is open; the control must not say otherwise.
+		const onDensityChange = () => renderDensity();
+		document.addEventListener("nexus-density-change", onDensityChange);
+
 		// ---- Gallery ----
 		const $gallery = dialog.fields_dict.gallery.$wrapper;
 		const selectedName = selectedTheme ? selectedTheme.name : null;
@@ -526,6 +580,7 @@
 		// Take the whole thing down once the close animation is done.
 		dialog.$wrapper.on("hidden.bs.modal", () => {
 			if (unsubscribe) unsubscribe();
+			document.removeEventListener("nexus-density-change", onDensityChange);
 			if (loginPreviewDialog) loginPreviewDialog.$wrapper.remove();
 			dialog.$wrapper.remove();
 		});
