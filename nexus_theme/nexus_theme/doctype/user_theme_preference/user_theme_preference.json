@@ -13,7 +13,8 @@
   "theme_mode",
   "dark_theme",
   "overrides_json",
-  "density"
+  "density",
+  "sidebar_collapsed"
  ],
  "fields": [
   {
@@ -72,11 +73,18 @@
    "in_list_view": 1,
    "label": "Density",
    "options": "\nCompact\nComfortable\nSpacious"
+  },
+  {
+   "default": "0",
+   "description": "Keep the Desk's left sidebar folded down to an icon-only rail (Frappe 15: keep the page's side section hidden). Independent of the theme. Toggle it with Ctrl+Shift+B.",
+   "fieldname": "sidebar_collapsed",
+   "fieldtype": "Check",
+   "label": "Collapse Sidebar"
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-25 10:00:00",
+ "modified": "2026-09-25 12:00:00",
  "modified_by": "Administrator",
  "module": "Nexus Theme",
  "name": "User Theme Preference",
