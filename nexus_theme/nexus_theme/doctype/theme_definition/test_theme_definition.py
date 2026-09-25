@@ -42,6 +42,10 @@ class TestThemeDefinition(FrappeTestCase):
 		for name in self._made:
 			if frappe.db.exists("Theme Definition", name):
 				frappe.db.delete("User Theme Preference", {"active_theme": name})
+				# A test theme flagged default is refused by on_trash, which is
+				# the guard under test elsewhere; drop the flag first so the
+				# cleanup itself never trips it.
+				frappe.db.set_value("Theme Definition", name, "is_default", 0, update_modified=False)
 				frappe.delete_doc("Theme Definition", name, force=True, ignore_permissions=True)
 		for email in (THEME_USER, OTHER_USER):
 			if frappe.db.exists("User", email):
@@ -264,15 +268,19 @@ class TestThemeDefinition(FrappeTestCase):
 	def test_editing_an_applied_theme_clears_its_users_bootinfo(self):
 		doc = self._custom("nxt-test-applied")
 		doc.insert()
+		# A user of our own: Administrator may already have a preference row
+		# on the site, and there can only ever be one per user.
+		_theme_user(THEME_USER)
 		pref = frappe.new_doc("User Theme Preference")
-		pref.user = ADMIN
+		pref.user = THEME_USER
 		pref.active_theme = doc.name
+		pref.flags.ignore_permissions = True
 		pref.save()
 		try:
 			with patch("nexus_theme.api._invalidate_bootinfo") as cleared:
 				doc.accent = "#123456"
 				doc.save()
-			cleared.assert_called_once_with(ADMIN)
+			cleared.assert_called_once_with(THEME_USER)
 		finally:
 			frappe.delete_doc("User Theme Preference", pref.name, force=True, ignore_permissions=True)
 
