@@ -35,7 +35,13 @@
   "login_subheadline",
   "login_points",
   "login_stat",
-  "login_stat_note"
+  "login_stat_note",
+  "home_page_section",
+  "use_nexus_home",
+  "home_layout",
+  "column_break_home",
+  "home_show_greeting",
+  "home_show_shortcuts"
  ],
  "fields": [
   {
@@ -221,12 +227,53 @@
    "fieldtype": "Select",
    "label": "Default Density",
    "options": "Compact\nComfortable\nSpacious"
+  },
+  {
+   "fieldname": "home_page_section",
+   "fieldtype": "Section Break",
+   "label": "Home Page"
+  },
+  {
+   "default": "0",
+   "description": "Opens the Desk on the app's own home page: a greeting, a few shortcuts and a tile for every workspace the person can open, with their open to-dos counted on it. It takes over the address the Desk opens with no page named (/app, or /desk on Frappe 16); every other page is unchanged. Off means Frappe's own home, untouched. The page itself is always at /app/nexus-home.",
+   "fieldname": "use_nexus_home",
+   "fieldtype": "Check",
+   "label": "Use the Nexus Home Page"
+  },
+  {
+   "default": "Grid",
+   "depends_on": "use_nexus_home",
+   "description": "How the workspace tiles are laid out.",
+   "fieldname": "home_layout",
+   "fieldtype": "Select",
+   "label": "Home Layout",
+   "options": "Grid\nCompact list"
+  },
+  {
+   "fieldname": "column_break_home",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "depends_on": "use_nexus_home",
+   "description": "\"Good morning, …\" by the person's own clock, above the shortcuts.",
+   "fieldname": "home_show_greeting",
+   "fieldtype": "Check",
+   "label": "Show Greeting"
+  },
+  {
+   "default": "1",
+   "depends_on": "use_nexus_home",
+   "description": "Create New, Reports and Notifications buttons.",
+   "fieldname": "home_show_shortcuts",
+   "fieldtype": "Check",
+   "label": "Show Shortcuts"
   }
  ],
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-09-25 10:00:00.000000",
+ "modified": "2026-09-25 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Nexus Theme",
  "name": "Theme Settings",
