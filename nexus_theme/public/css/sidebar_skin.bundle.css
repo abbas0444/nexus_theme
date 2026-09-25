@@ -1,0 +1,295 @@
+/* ==========================================================================
+   Sidebar skin and module icon tints
+   ==========================================================================
+
+   A theme's sidebar can be Plain (Frappe's own), Tinted, Solid or Gradient.
+   theme_manager.js resolves the colours — the same derivation the server
+   validates against WCAG AA (utils/sidebar_skin.py) — and hands them over
+   as four variables plus two attributes on <html>:
+
+     --theme-sidebar-bg          the sidebar colour (start of a gradient)
+     --theme-sidebar-bg-end      the far end of a gradient, else the same
+     --theme-sidebar-text        text and icons on the sidebar
+     --theme-sidebar-active-bg   the current item's highlight
+     html[data-sidebar-style="tinted|solid|gradient"]
+     html[data-sidebar-pattern="1"]
+
+   Plain sets none of them, so every rule below matches nothing and the
+   sidebar is exactly what it was before this file existed. The same goes
+   for Frappe's own look, where no Nexus theme is showing at all.
+
+   Where the skin lands:
+     Frappe v16 — the left app sidebar, .body-sidebar.
+     Frappe v15 — there is no left app sidebar; the brand bar on top
+       (.sticky-top > header.navbar) takes the skin, and the workspace
+       list (.desk-sidebar) marks its current item in the sidebar colour.
+       `header.navbar` under .sticky-top is the Desk's own navbar only:
+       the previews in Frappe's Switch Theme dialog use a plain div.
+
+   Dropdowns that live inside a skinned bar are put back on the theme's
+   own colours, or they would inherit light-on-light text.
+   ========================================================================== */
+
+/* ---- v16: the sidebar surface ----------------------------------------- */
+
+html[data-app-theme][data-sidebar-style] .body-sidebar {
+  background-color: var(--theme-sidebar-bg) !important;
+  color: var(--theme-sidebar-text);
+  /* The tokens Frappe's sidebar.scss and the Espresso ramps read, local
+     to the sidebar so nothing outside it moves. */
+  --surface-menu-bar: var(--theme-sidebar-bg);
+  --sidebar-hover-color: color-mix(in srgb, var(--theme-sidebar-text) 12%, transparent);
+  --sidebar-active-color: var(--theme-sidebar-active-bg);
+  --sidebar-border-color: color-mix(in srgb, var(--theme-sidebar-text) 14%, var(--theme-sidebar-bg));
+  --icon-stroke: var(--theme-sidebar-text);
+  --text-color: var(--theme-sidebar-text);
+  --text-muted: color-mix(in srgb, var(--theme-sidebar-text) 78%, transparent);
+  --ink-gray-9: var(--theme-sidebar-text);
+  --ink-gray-8: var(--theme-sidebar-text);
+  --ink-gray-7: var(--theme-sidebar-text);
+  --ink-gray-6: var(--theme-sidebar-text);
+  --ink-gray-5: color-mix(in srgb, var(--theme-sidebar-text) 78%, transparent);
+  --ink-gray-4: color-mix(in srgb, var(--theme-sidebar-text) 70%, transparent);
+  --ink-gray-2: color-mix(in srgb, var(--theme-sidebar-text) 30%, transparent);
+  border-right-color: var(--sidebar-border-color) !important;
+}
+
+/* Gradient: top to bottom, from the sidebar colour to its darker self. The
+   end colour is computed in JS; color-mix is the fallback for a variable
+   that has not been set (a stale cache from before this release). */
+html[data-app-theme][data-sidebar-style="gradient"] .body-sidebar {
+  background-image: linear-gradient(
+    180deg,
+    var(--theme-sidebar-bg) 0%,
+    var(--theme-sidebar-bg-end, color-mix(in srgb, var(--theme-sidebar-bg) 72%, #000)) 100%
+  ) !important;
+}
+
+/* Pattern: a few soft waves along the bottom. Drawn through a mask in the
+   text colour, so it is light on a dark sidebar and dark on a light one,
+   and kept faint. It never moves, so reduced motion has nothing to stop.
+   z-index -1 sits it above the sidebar's own background but under every
+   item: .body-sidebar is positioned with a z-index, so it is the stacking
+   context the pseudo-element is painted in. */
+html[data-app-theme][data-sidebar-pattern="1"] .body-sidebar::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 220px;
+  max-height: 45%;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--theme-sidebar-text);
+  opacity: 0.09;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 220' preserveAspectRatio='none'%3E%3Cpath d='M0 92c40-22 80 22 120 0s80-22 120 0v128H0z' opacity='.45'/%3E%3Cpath d='M0 132c40-20 80 20 120 0s80-20 120 0v88H0z' opacity='.7'/%3E%3Cpath d='M0 172c40-18 80 18 120 0s80-18 120 0v48H0z'/%3E%3C/svg%3E")
+    bottom / 100% 100% no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 220' preserveAspectRatio='none'%3E%3Cpath d='M0 92c40-22 80 22 120 0s80-22 120 0v128H0z' opacity='.45'/%3E%3Cpath d='M0 132c40-20 80 20 120 0s80-20 120 0v88H0z' opacity='.7'/%3E%3Cpath d='M0 172c40-18 80 18 120 0s80-18 120 0v48H0z'/%3E%3C/svg%3E")
+    bottom / 100% 100% no-repeat;
+}
+
+/* ---- v16: items, header, footer ---------------------------------------- */
+
+html[data-app-theme][data-sidebar-style] .body-sidebar .standard-sidebar-item .item-anchor,
+html[data-app-theme][data-sidebar-style] .body-sidebar .sidebar-item-label,
+html[data-app-theme][data-sidebar-style] .body-sidebar .sidebar-header,
+html[data-app-theme][data-sidebar-style] .body-sidebar .header-title,
+html[data-app-theme][data-sidebar-style] .body-sidebar .onboarding-sidebar,
+html[data-app-theme][data-sidebar-style] .body-sidebar .sidebar-user-button,
+html[data-app-theme][data-sidebar-style] .body-sidebar .collapse-sidebar-link {
+  color: var(--theme-sidebar-text) !important;
+}
+
+html[data-app-theme][data-sidebar-style] .body-sidebar .header-subtitle,
+html[data-app-theme][data-sidebar-style] .body-sidebar .sidebar-user-button .text-secondary,
+html[data-app-theme][data-sidebar-style] .body-sidebar .section-break,
+html[data-app-theme][data-sidebar-style] .body-sidebar .section-break .sidebar-item-label {
+  color: var(--theme-sidebar-text) !important;
+  opacity: 0.8;
+}
+
+html[data-app-theme][data-sidebar-style] .body-sidebar .divider {
+  border-top-color: var(--sidebar-border-color);
+}
+
+/* Hover: a wash of the text colour, which reads on any sidebar colour.
+   Beats theme_variables' accent wash, which is tuned for the plain one. */
+html[data-app-theme][data-sidebar-style] .body-sidebar .standard-sidebar-item:not(.active-sidebar):not(.selected):hover,
+html[data-app-theme][data-sidebar-style] .body-sidebar .sidebar-header:not(.active-sidebar):hover {
+  background-color: color-mix(in srgb, var(--theme-sidebar-text) 12%, transparent) !important;
+  color: var(--theme-sidebar-text) !important;
+}
+
+/* The current item. A hairline ring keeps it visible where it sits on the
+   darker end of a gradient, which is close to its own colour. */
+html[data-app-theme][data-sidebar-style] .body-sidebar .standard-sidebar-item.active-sidebar,
+html[data-app-theme][data-sidebar-style] .body-sidebar .sidebar-header.active-sidebar {
+  background-color: var(--theme-sidebar-active-bg) !important;
+  color: var(--theme-sidebar-text) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-sidebar-text) 22%, transparent);
+  font-weight: 600;
+}
+
+html[data-app-theme][data-sidebar-style] .body-sidebar .standard-sidebar-item.active-sidebar .item-anchor,
+html[data-app-theme][data-sidebar-style] .body-sidebar .standard-sidebar-item.active-sidebar .sidebar-item-label {
+  color: var(--theme-sidebar-text) !important;
+}
+
+/* Tinted keeps Frappe's raised pill: the page colour with its soft shadow. */
+html[data-app-theme][data-sidebar-style="tinted"] .body-sidebar .standard-sidebar-item.active-sidebar,
+html[data-app-theme][data-sidebar-style="tinted"] .body-sidebar .sidebar-header.active-sidebar {
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
+}
+
+/* The collapse toggle straddles the sidebar edge; dressed as part of it. */
+html[data-app-theme][data-sidebar-style] .body-sidebar .sidebar-toggle-btn {
+  background: var(--theme-sidebar-bg) !important;
+  border-color: var(--sidebar-border-color) !important;
+  color: var(--theme-sidebar-text) !important;
+  --icon-stroke: var(--theme-sidebar-text) !important;
+}
+
+html[data-app-theme][data-sidebar-style] .body-sidebar .sidebar-toggle-btn:hover {
+  background: var(--theme-sidebar-active-bg) !important;
+}
+
+/* ---- v16: what opens inside the sidebar keeps the theme's colours ------ */
+/* The notification panel is rendered inside .body-sidebar and floats over
+   the page; so do the edit-mode buttons. They must not inherit the skin. */
+html[data-app-theme][data-sidebar-style] .body-sidebar .notifications-list,
+html[data-app-theme][data-sidebar-style] .body-sidebar .dropdown-menu,
+html[data-app-theme][data-sidebar-style] .body-sidebar .frappe-menu,
+html[data-app-theme][data-sidebar-style] .body-sidebar .popover,
+html[data-app-theme][data-sidebar-style] .body-sidebar .btn {
+  color: var(--theme-text-primary);
+  --icon-stroke: var(--theme-text-primary);
+  --text-color: var(--theme-text-primary);
+  --text-muted: var(--theme-text-muted);
+  --ink-gray-9: var(--theme-text-primary);
+  --ink-gray-8: var(--theme-text-primary);
+  --ink-gray-7: var(--theme-text-primary);
+  --ink-gray-6: var(--theme-text-primary);
+  --ink-gray-5: var(--theme-text-muted);
+  --ink-gray-4: var(--theme-text-muted);
+  --ink-gray-2: var(--theme-border);
+  --sidebar-hover-color: color-mix(in srgb, var(--theme-accent) 12%, var(--theme-bg-surface));
+}
+
+html[data-app-theme][data-sidebar-style] .body-sidebar .btn-primary {
+  color: var(--theme-button-text);
+}
+
+/* ---- v15: the brand bar ------------------------------------------------ */
+
+html[data-app-theme][data-sidebar-style] .sticky-top > header.navbar {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--theme-sidebar-bg) !important;
+  border-bottom-color: color-mix(in srgb, var(--theme-sidebar-bg) 80%, #000) !important;
+  color: var(--theme-sidebar-text) !important;
+  --icon-stroke: var(--theme-sidebar-text);
+  --text-color: var(--theme-sidebar-text);
+}
+
+/* Left to right, or right to left under an RTL layout, so the bar always
+   starts at the brand. */
+html[data-app-theme][data-sidebar-style="gradient"] .sticky-top > header.navbar {
+  background-image: linear-gradient(
+    to right,
+    var(--theme-sidebar-bg),
+    var(--theme-sidebar-bg-end, color-mix(in srgb, var(--theme-sidebar-bg) 72%, #000))
+  ) !important;
+}
+
+html[dir="rtl"][data-app-theme][data-sidebar-style="gradient"] .sticky-top > header.navbar {
+  background-image: linear-gradient(
+    to left,
+    var(--theme-sidebar-bg),
+    var(--theme-sidebar-bg-end, color-mix(in srgb, var(--theme-sidebar-bg) 72%, #000))
+  ) !important;
+}
+
+html[data-app-theme][data-sidebar-pattern="1"] .sticky-top > header.navbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--theme-sidebar-text);
+  opacity: 0.08;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 48' preserveAspectRatio='none'%3E%3Cpath d='M0 30c20-10 40 10 60 0s40-10 60 0v18H0z' opacity='.6'/%3E%3Cpath d='M0 38c20-8 40 8 60 0s40-8 60 0v10H0z'/%3E%3C/svg%3E")
+    bottom left / 240px 100% repeat-x;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 48' preserveAspectRatio='none'%3E%3Cpath d='M0 30c20-10 40 10 60 0s40-10 60 0v18H0z' opacity='.6'/%3E%3Cpath d='M0 38c20-8 40 8 60 0s40-8 60 0v10H0z'/%3E%3C/svg%3E")
+    bottom left / 240px 100% repeat-x;
+}
+
+/* Links, breadcrumbs and icon buttons on the bar. Frappe's .text-muted and
+   theme_variables' nav-link rule are both !important, hence the weight. */
+html[data-app-theme][data-sidebar-style] .sticky-top > header.navbar .nav-link,
+html[data-app-theme][data-sidebar-style] .sticky-top > header.navbar .nav-link span,
+html[data-app-theme][data-sidebar-style] .sticky-top > header.navbar .nav-link.text-muted,
+html[data-app-theme][data-sidebar-style] .sticky-top > header.navbar #navbar-breadcrumbs,
+html[data-app-theme][data-sidebar-style] .sticky-top > header.navbar #navbar-breadcrumbs a,
+html[data-app-theme][data-sidebar-style] .sticky-top > header.navbar #navbar-breadcrumbs li {
+  color: var(--theme-sidebar-text) !important;
+}
+
+html[data-app-theme][data-sidebar-style] .sticky-top > header.navbar .vertical-bar {
+  border-right-color: color-mix(in srgb, var(--theme-sidebar-text) 30%, transparent);
+}
+
+/* The search box stays an ordinary input — the theme's input colours —
+   with an edge that shows against the bar, so what is typed and the
+   results under it read the same as anywhere else on the Desk. */
+html[data-app-theme][data-sidebar-style] .sticky-top > header.navbar .search-bar input,
+html[data-app-theme][data-sidebar-style] .sticky-top > header.navbar #navbar-search {
+  background-color: var(--theme-bg-input) !important;
+  color: var(--theme-text-primary) !important;
+  border: 1px solid color-mix(in srgb, var(--theme-sidebar-text) 28%, transparent) !important;
+}
+
+html[data-app-theme][data-sidebar-style] .sticky-top > header.navbar .search-bar {
+  --icon-stroke: var(--theme-text-muted);
+}
+
+html[data-app-theme][data-sidebar-style] .sticky-top > header.navbar .search-bar svg {
+  stroke: var(--theme-text-muted);
+}
+
+/* Menus hanging off the bar (notifications, help, the avatar menu) and the
+   search results are back on the theme's own colours. */
+html[data-app-theme][data-sidebar-style] .sticky-top > header.navbar .dropdown-menu,
+html[data-app-theme][data-sidebar-style] .sticky-top > header.navbar .awesomplete > ul {
+  color: var(--theme-text-primary);
+  --icon-stroke: var(--theme-text-primary);
+  --text-color: var(--theme-text-primary);
+}
+
+html[data-app-theme][data-sidebar-style] .sticky-top > header.navbar .dropdown-menu .nav-link,
+html[data-app-theme][data-sidebar-style] .sticky-top > header.navbar .dropdown-menu .nav-link span {
+  color: var(--theme-text-primary) !important;
+}
+
+/* ---- v15: the workspace list marks its current item -------------------- */
+/* The list sits on the page, not on the skin, so the text keeps the theme's
+   colours; the current item takes a wash of the sidebar colour and a bar
+   on its leading edge (inline-start, so RTL mirrors it). */
+html[data-app-theme][data-sidebar-style] .desk-sidebar .standard-sidebar-item.selected {
+  background-color: color-mix(in srgb, var(--theme-sidebar-bg) 16%, transparent) !important;
+  box-shadow: inset 3px 0 0 var(--theme-sidebar-bg);
+}
+
+html[dir="rtl"][data-app-theme][data-sidebar-style] .desk-sidebar .standard-sidebar-item.selected {
+  box-shadow: inset -3px 0 0 var(--theme-sidebar-bg);
+}
+
+/* A Tinted colour is already a pale wash; 16% of it would vanish. */
+html[data-app-theme][data-sidebar-style="tinted"] .desk-sidebar .standard-sidebar-item.selected {
+  background-color: var(--theme-sidebar-bg) !important;
+  box-shadow: inset 3px 0 0 var(--theme-accent);
+}
+
+html[dir="rtl"][data-app-theme][data-sidebar-style="tinted"] .desk-sidebar .standard-sidebar-item.selected {
+  box-shadow: inset -3px 0 0 var(--theme-accent);
+}

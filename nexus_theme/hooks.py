@@ -52,6 +52,10 @@ app_include_css = [
 	# Mini rail. Keyed off html[data-nexus-rail-host], which only
 	# sidebar_rail.js sets, and only on screens wide enough for it.
 	"sidebar_rail.bundle.css",
+	# Per-theme sidebar skin (Tinted / Solid / Gradient) and module icon
+	# tints. Last so it wins ties with the rules above; inert until
+	# theme_manager.js sets html[data-sidebar-style] or [data-icon-tints].
+	"sidebar_skin.bundle.css",
 ]
 app_include_js = [
 	"theme_manager.bundle.js",
