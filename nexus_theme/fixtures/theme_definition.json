@@ -234,9 +234,10 @@
   "enable_hover_lift": 1,
   "border_radius": "4px",
   "sidebar_style": "Gradient",
-  "sidebar_bg": "#a21caf",
-  "sidebar_pattern": 1,
-  "icon_tints": 0
+  "sidebar_bg": "#1b1030",
+  "sidebar_pattern": 0,
+  "icon_tints": 0,
+  "sidebar_active_bg": "#7e1f8f"
  },
  {
   "doctype": "Theme Definition",

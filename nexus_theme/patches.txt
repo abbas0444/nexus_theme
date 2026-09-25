@@ -15,3 +15,4 @@ nexus_theme.patches.v1_7.create_theme_settings
 nexus_theme.patches.v1_8.retire_shadowed_inspector_page
 nexus_theme.patches.v2_1.set_home_page_defaults
 nexus_theme.patches.v2_1.sync_sidebar_skin
+nexus_theme.patches.v2_1.retune_cyberpunk_neon
