@@ -20,6 +20,19 @@
 	// plus a soft drop shadow, while on dark surfaces a black shadow is
 	// invisible and the edge has to come from a light hairline instead.
 	const DARK_ATTR = "data-app-dark";
+	// Sidebar skin (sidebar_skin.bundle.css). Both are absent for Plain, so
+	// a Plain theme paints exactly what it painted before the skin existed.
+	const SIDEBAR_STYLE_ATTR = "data-sidebar-style";
+	const SIDEBAR_PATTERN_ATTR = "data-sidebar-pattern";
+	// Per-module icon colours (sidebar_tints.js tags the items, the CSS
+	// only draws them while this attribute is on).
+	const ICON_TINTS_ATTR = "data-icon-tints";
+	const SIDEBAR_VARS = [
+		"--theme-sidebar-bg",
+		"--theme-sidebar-bg-end",
+		"--theme-sidebar-text",
+		"--theme-sidebar-active-bg",
+	];
 	const ROOT = document.documentElement;
 
 	const VAR_MAP = {
@@ -40,6 +53,145 @@
 		transition_duration: "--theme-transition-duration",
 		border_radius: "--theme-border-radius",
 	};
+
+	// ------------------------------------------------------------------
+	// Sidebar skin: the colours a sidebar actually paints
+	// ------------------------------------------------------------------
+	// A step-for-step mirror of utils/sidebar_skin.py. The server validates
+	// the derived colours against WCAG AA, so the Desk must derive the very
+	// same ones — same weights, same rounding, same fallbacks. Exposed as
+	// window.NexusSidebarSkin for the Studio's editor and preview.
+	const SkinMath = (function () {
+		const STYLES = ["Plain", "Tinted", "Solid", "Gradient"];
+		const TINT_WEIGHT = 0.14;
+		const GRADIENT_END_WEIGHT = 0.72;
+		const ACTIVE_WEIGHTS = [0.18, 0.14, 0.1];
+		const ACTIVE_SHADE_WEIGHT = 0.8;
+		const HEX_RE = /^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
+
+		function isHex(v) {
+			return typeof v === "string" && HEX_RE.test(v.trim());
+		}
+
+		// Six lowercase hex digits; alpha is dropped as contrast.py does.
+		function norm(v) {
+			let h = String(v).trim().slice(1);
+			if (h.length === 4) h = h.slice(0, 3);
+			else if (h.length === 8) h = h.slice(0, 6);
+			if (h.length === 3) {
+				h = h
+					.split("")
+					.map((c) => c + c)
+					.join("");
+			}
+			return h.toLowerCase();
+		}
+
+		function channels(v) {
+			const h = norm(v);
+			return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
+		}
+
+		function luminance(v) {
+			const lin = (c) => {
+				c = c / 255;
+				return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+			};
+			const [r, g, b] = channels(v).map(lin);
+			return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+		}
+
+		function ratio(fg, bg) {
+			const a = luminance(fg);
+			const b = luminance(bg);
+			return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+		}
+
+		function mix(color, other, weight) {
+			const w = Math.min(1, Math.max(0, weight));
+			const a = channels(color);
+			const b = channels(other);
+			return (
+				"#" +
+				a
+					.map((c, i) => Math.round(c * w + b[i] * (1 - w)))
+					.map((n) => n.toString(16).padStart(2, "0"))
+					.join("")
+			);
+		}
+
+		function pickText(backgrounds, preferred) {
+			const bgs = backgrounds.filter(Boolean);
+			if (!bgs.length) return preferred || "#000000";
+			const worst = (fg) => Math.min(...bgs.map((bg) => ratio(fg, bg)));
+			if (isHex(preferred) && worst(preferred) >= 4.5) return preferred;
+			return worst("#ffffff") >= worst("#000000") ? "#ffffff" : "#000000";
+		}
+
+		function pick(values, key, fallback) {
+			const v = values[key];
+			return isHex(v) ? v.trim() : fallback;
+		}
+
+		function normalizeStyle(v) {
+			return STYLES.includes(v) ? v : "Plain";
+		}
+
+		/** { style, bg, bgEnd, text, activeBg } or null for Plain. */
+		function resolve(values) {
+			values = values || {};
+			const style = normalizeStyle(values.sidebar_style);
+			if (style === "Plain") return null;
+			const accent = pick(values, "accent", "#4f46e5");
+			const surface =
+				pick(values, "bg_surface", null) || pick(values, "bg_primary", "#ffffff");
+			const page = pick(values, "bg_primary", surface);
+
+			let bg = pick(values, "sidebar_bg", null);
+			if (!bg) bg = style === "Tinted" ? mix(accent, surface, TINT_WEIGHT) : accent;
+			const bgEnd = style === "Gradient" ? mix(bg, "#000000", GRADIENT_END_WEIGHT) : bg;
+
+			let text = pick(values, "sidebar_text", null);
+			if (!text) text = pickText([bg, bgEnd], pick(values, "text_primary", null));
+
+			let activeBg = pick(values, "sidebar_active_bg", null);
+			if (!activeBg) {
+				if (style === "Tinted") {
+					activeBg = page;
+				} else {
+					for (const w of ACTIVE_WEIGHTS) {
+						const candidate = mix(text, bg, w);
+						if (ratio(text, candidate) >= 4.5) {
+							activeBg = candidate;
+							break;
+						}
+					}
+					if (!activeBg) {
+						const lightText = ratio(text, "#000000") >= ratio(text, "#ffffff");
+						activeBg = mix(bg, lightText ? "#000000" : "#ffffff", ACTIVE_SHADE_WEIGHT);
+					}
+				}
+			}
+			return { style, bg, bgEnd, text, activeBg };
+		}
+
+		/** The contrast checks theme_definition.py makes, for the badge. */
+		function checks(values) {
+			const skin = resolve(values);
+			if (!skin) return [];
+			const rows = [{ surface: "sidebar", fg: skin.text, bg: skin.bg }];
+			if (skin.bgEnd !== skin.bg) {
+				rows.push({ surface: "gradient end", fg: skin.text, bg: skin.bgEnd });
+			}
+			rows.push({ surface: "active item", fg: skin.text, bg: skin.activeBg });
+			return rows.map((r) => Object.assign(r, { ratio: ratio(r.fg, r.bg) }));
+		}
+
+		const on = (v) => !!(v && v !== "0");
+
+		return { STYLES, resolve, checks, ratio, mix, pickText, normalizeStyle, on };
+	})();
+	window.NexusSidebarSkin = SkinMath;
 
 	/** Who the Desk is signed in as; null outside a booted Desk. */
 	function bootUser() {
@@ -463,7 +615,37 @@
 				const v = merged[field];
 				if (v != null && v !== "") ROOT.style.setProperty(cssVar, String(v));
 			}
+			this._applySidebarSkin(merged);
 			this._notify();
+		}
+
+		/**
+		 * Paint the sidebar skin of `merged` (theme + overrides), or take it
+		 * off for Plain. The colours are resolved here rather than in CSS so
+		 * the text colour can be picked for contrast against the real
+		 * background, exactly as the server validated it.
+		 */
+		_applySidebarSkin(merged) {
+			this._clearSidebarSkin();
+			ROOT.setAttribute(ICON_TINTS_ATTR, SkinMath.on(merged.icon_tints) ? "1" : "0");
+			const skin = SkinMath.resolve(merged);
+			if (!skin) return;
+			ROOT.style.setProperty("--theme-sidebar-bg", skin.bg);
+			ROOT.style.setProperty("--theme-sidebar-bg-end", skin.bgEnd);
+			ROOT.style.setProperty("--theme-sidebar-text", skin.text);
+			ROOT.style.setProperty("--theme-sidebar-active-bg", skin.activeBg);
+			ROOT.setAttribute(SIDEBAR_STYLE_ATTR, skin.style.toLowerCase());
+			// The pattern is only drawn on the strong styles; a stray flag on a
+			// Tinted theme stays off rather than half-applying.
+			if (SkinMath.on(merged.sidebar_pattern) && skin.style !== "Tinted") {
+				ROOT.setAttribute(SIDEBAR_PATTERN_ATTR, "1");
+			}
+		}
+
+		_clearSidebarSkin() {
+			ROOT.removeAttribute(SIDEBAR_STYLE_ATTR);
+			ROOT.removeAttribute(SIDEBAR_PATTERN_ATTR);
+			for (const cssVar of SIDEBAR_VARS) ROOT.style.removeProperty(cssVar);
 		}
 
 		_clearAppTheme() {
@@ -477,6 +659,8 @@
 			ROOT.removeAttribute(APP_ATTR);
 			ROOT.removeAttribute(HOVER_ATTR);
 			ROOT.removeAttribute(DARK_ATTR);
+			ROOT.removeAttribute(ICON_TINTS_ATTR);
+			this._clearSidebarSkin();
 			// Hand `data-theme` back to Frappe rather than guessing: its own
 			// resolver knows how to expand "automatic" via the media query.
 			if (window.frappe && frappe.ui && typeof frappe.ui.set_theme === "function") {
