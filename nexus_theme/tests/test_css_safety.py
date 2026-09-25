@@ -7,6 +7,7 @@ import unittest
 
 from nexus_theme.utils.css_safety import (
 	COLOR_FIELDS,
+	FLAG_FIELDS,
 	STYLE_FIELDS,
 	is_safe_value,
 	sanitize_overrides,
@@ -145,6 +146,51 @@ class TestSanitizeOverrides(unittest.TestCase):
 
 	def test_style_fields_tuple_is_exposed(self):
 		self.assertIn("font_family", STYLE_FIELDS)
+
+	def test_sidebar_flags_are_coerced(self):
+		self.assertEqual(
+			sanitize_overrides({"sidebar_pattern": "1", "icon_tints": "0"}),
+			{"sidebar_pattern": 1, "icon_tints": 0},
+		)
+		self.assertEqual(sanitize_overrides({"icon_tints": "url(x)"}), {"icon_tints": 1})
+
+	def test_sidebar_values_survive_or_drop_like_the_rest(self):
+		clean = sanitize_overrides(
+			{
+				"sidebar_style": "Gradient",
+				"sidebar_bg": "#123456",
+				"sidebar_text": "red",
+				"sidebar_active_bg": "",
+			}
+		)
+		# An empty colour is kept: it is how the Studio says "back to auto".
+		self.assertEqual(
+			clean,
+			{"sidebar_style": "Gradient", "sidebar_bg": "#123456", "sidebar_active_bg": ""},
+		)
+		self.assertEqual(sanitize_overrides({"sidebar_style": "Neon"}), {})
+
+
+class TestSidebarFields(unittest.TestCase):
+	def test_sidebar_colours_are_colour_fields(self):
+		for field in ("sidebar_bg", "sidebar_text", "sidebar_active_bg"):
+			self.assertIn(field, COLOR_FIELDS)
+			self.assertTrue(is_safe_value(field, "#1a2b3c"), field)
+			self.assertTrue(is_safe_value(field, ""), field)
+			self.assertFalse(is_safe_value(field, "#fff;background:url(x)"), field)
+
+	def test_sidebar_style_accepts_only_the_four_styles(self):
+		self.assertIn("sidebar_style", STYLE_FIELDS)
+		for ok in ("Plain", "Tinted", "Solid", "Gradient", " Solid "):
+			self.assertTrue(is_safe_value("sidebar_style", ok), ok)
+		for bad in ("solid", "Neon", "Solid;x:y", 'Solid"', "Gradient)"):
+			self.assertFalse(is_safe_value("sidebar_style", bad), bad)
+
+	def test_flags_are_not_css_values(self):
+		# A flag's value is never injected as CSS, so is_safe_value has no
+		# pattern for it and refuses it — only sanitize_overrides lets it in.
+		for flag in FLAG_FIELDS:
+			self.assertFalse(is_safe_value(flag, "1"), flag)
 
 
 if __name__ == "__main__":

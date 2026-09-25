@@ -265,6 +265,44 @@ class TestThemeApi(FrappeTestCase):
 			before,
 		)
 
+	def test_the_sidebar_skin_travels_with_an_export(self):
+		original = self._save_custom("nxt-test-sidebar-export")
+		frappe.db.set_value(
+			"Theme Definition",
+			original,
+			{"sidebar_style": "Solid", "sidebar_bg": "#1d4ed8", "icon_tints": 1},
+		)
+		payload = api.export_theme(original)
+		self.assertEqual(payload["theme"]["sidebar_style"], "Solid")
+
+		imported = api.import_theme(payload, share_public=0)["name"]
+		self._made.append(imported)
+		got = frappe.db.get_value(
+			"Theme Definition", imported, ["sidebar_style", "sidebar_bg", "icon_tints"], as_dict=True
+		)
+		self.assertEqual((got.sidebar_style, got.sidebar_bg, got.icon_tints), ("Solid", "#1d4ed8", 1))
+
+	def test_clearing_a_sidebar_colour_goes_back_to_auto(self):
+		"""Empty means "derive it" for the sidebar colours, so a resave with
+		one cleared has to clear it on the row — other fields keep theirs."""
+		name = self._save_custom("nxt-test-sidebar-clear")
+		frappe.db.set_value("Theme Definition", name, {"sidebar_style": "Solid", "sidebar_bg": "#1d4ed8"})
+		api.save_custom_theme(
+			dict(_portable(name), theme_key=name, sidebar_bg="", accent=""),
+			share_public=0,
+		)
+		got = frappe.db.get_value("Theme Definition", name, ["sidebar_bg", "accent"], as_dict=True)
+		self.assertFalse(got.sidebar_bg)
+		self.assertTrue(got.accent)
+
+	def test_sidebar_overrides_are_kept_and_cleaned(self):
+		api.set_active_theme(
+			_bundled(0),
+			overrides={"sidebar_style": "Tinted", "sidebar_pattern": "1", "sidebar_bg": "url(x)"},
+		)
+		got = api.get_active_theme()["overrides"]
+		self.assertEqual(got, {"sidebar_style": "Tinted", "sidebar_pattern": 1})
+
 	# ------------------------------------------------------------------
 	# Sounds
 	# ------------------------------------------------------------------

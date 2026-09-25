@@ -31,6 +31,9 @@ _SIZE_RE = re.compile(r"^\d+(?:\.\d+)?(?:px|rem|em|pt)$")
 _DURATION_RE = re.compile(r"^\d+(?:\.\d+)?m?s$")
 _RADIUS_RE = re.compile(r"^\d+(?:\.\d+)?(?:px|rem|em|%)$")
 _WEIGHT_RE = re.compile(r"^[1-9]\d{0,2}$")
+# The sidebar skin is one of a fixed set of words. It reaches the page as an
+# attribute value on <html>, so it is held to the list rather than a shape.
+_SIDEBAR_STYLE_RE = re.compile(r"^(?:Plain|Tinted|Solid|Gradient)$")
 
 # Theme Definition fields that must hold a hex color.
 COLOR_FIELDS = (
@@ -45,6 +48,11 @@ COLOR_FIELDS = (
 	"button_bg",
 	"button_text",
 	"button_hover_bg",
+	# Sidebar skin. All three are optional: empty means "derive it" (see
+	# utils/sidebar_skin.py), which is_safe_value() already allows.
+	"sidebar_bg",
+	"sidebar_text",
+	"sidebar_active_bg",
 )
 
 # Non-color style fields → the pattern their value must match.
@@ -54,7 +62,13 @@ _STYLE_VALIDATORS = {
 	"transition_duration": _DURATION_RE,
 	"border_radius": _RADIUS_RE,
 	"font_weight_base": _WEIGHT_RE,
+	"sidebar_style": _SIDEBAR_STYLE_RE,
 }
+
+# On/off switches a preference may carry. Never rendered as a CSS value:
+# sanitize_overrides() coerces each to 1/0, and the client turns that into
+# an attribute on <html>.
+FLAG_FIELDS = ("enable_hover_lift", "is_dark", "sidebar_pattern", "icon_tints")
 
 # Public tuple of the non-color style fields, for callers that want to iterate.
 STYLE_FIELDS = tuple(_STYLE_VALIDATORS)
@@ -90,8 +104,8 @@ def sanitize_overrides(overrides: dict) -> dict:
 	for key, val in overrides.items():
 		if (key in COLOR_FIELDS or key in _STYLE_VALIDATORS) and is_safe_value(key, val):
 			clean[key] = val
-		elif key in ("enable_hover_lift", "is_dark"):
-			# Flags, not CSS: both are coerced to 1/0 here and rendered as an
+		elif key in FLAG_FIELDS:
+			# Flags, not CSS: each is coerced to 1/0 here and rendered as an
 			# attribute on <html>, never as a value. `is_dark` travels with a
 			# palette's colours on purpose — a dark palette over a theme whose
 			# polarity still says light paints a black sidebar on a light Desk,

@@ -41,7 +41,15 @@
   "transition_duration",
   "border_radius",
   "column_break_motion",
-  "enable_hover_lift"
+  "enable_hover_lift",
+  "sidebar_section",
+  "sidebar_style",
+  "sidebar_pattern",
+  "icon_tints",
+  "column_break_sidebar",
+  "sidebar_bg",
+  "sidebar_text",
+  "sidebar_active_bg"
  ],
  "fields": [
   {
@@ -233,11 +241,64 @@
    "fieldname": "enable_hover_lift",
    "fieldtype": "Check",
    "label": "Enable Hover Lift"
+  },
+  {
+   "fieldname": "sidebar_section",
+   "fieldtype": "Section Break",
+   "label": "Sidebar"
+  },
+  {
+   "default": "Plain",
+   "description": "Plain keeps Frappe's own sidebar. Tinted washes it with the accent; Solid and Gradient paint it in a strong colour.",
+   "fieldname": "sidebar_style",
+   "fieldtype": "Select",
+   "label": "Sidebar Style",
+   "options": "Plain\nTinted\nSolid\nGradient"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:['Solid','Gradient'].includes(doc.sidebar_style)",
+   "description": "A faint wave along the bottom of a Solid or Gradient sidebar.",
+   "fieldname": "sidebar_pattern",
+   "fieldtype": "Check",
+   "label": "Sidebar Pattern"
+  },
+  {
+   "default": "0",
+   "description": "Give each sidebar item's icon a colour of its own, by module.",
+   "fieldname": "icon_tints",
+   "fieldtype": "Check",
+   "label": "Module Icon Tints"
+  },
+  {
+   "fieldname": "column_break_sidebar",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.sidebar_style && doc.sidebar_style !== 'Plain'",
+   "description": "Leave empty to use the accent (a light tint of it for Tinted).",
+   "fieldname": "sidebar_bg",
+   "fieldtype": "Color",
+   "label": "Sidebar Background"
+  },
+  {
+   "depends_on": "eval:doc.sidebar_style && doc.sidebar_style !== 'Plain'",
+   "description": "Leave empty to pick black or white, whichever reads better.",
+   "fieldname": "sidebar_text",
+   "fieldtype": "Color",
+   "label": "Sidebar Text"
+  },
+  {
+   "depends_on": "eval:doc.sidebar_style && doc.sidebar_style !== 'Plain'",
+   "description": "The current item's highlight. Leave empty to derive it.",
+   "fieldname": "sidebar_active_bg",
+   "fieldtype": "Color",
+   "label": "Sidebar Active Item"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-24 00:00:00",
+ "modified": "2026-09-25 00:00:00",
  "modified_by": "Administrator",
  "module": "Nexus Theme",
  "name": "Theme Definition",

@@ -108,6 +108,66 @@ class TestThemeDefinition(FrappeTestCase):
 		self.assertRaises(frappe.ValidationError, doc.insert)
 
 	# ------------------------------------------------------------------
+	# Sidebar skin
+	# ------------------------------------------------------------------
+
+	def _sidebar_default(self, key: str, **values):
+		"""A default-flagged theme, where low contrast throws."""
+		doc = frappe.get_doc(
+			{
+				"doctype": "Theme Definition",
+				"theme_name": key,
+				"theme_key": key,
+				"is_default": 1,
+				"text_primary": "#1f2328",
+				"bg_primary": "#ffffff",
+				"bg_surface": "#f6f8fa",
+				"accent": "#0969da",
+				"button_text": "#ffffff",
+				"button_bg": "#0969da",
+				**values,
+			}
+		)
+		self._made.append(key)
+		return doc
+
+	def test_new_theme_defaults_to_the_plain_sidebar(self):
+		doc = self._sidebar_default("nxt-test-sidebar-plain")
+		doc.insert(ignore_permissions=True)
+		self.assertEqual(doc.sidebar_style, "Plain")
+		self.assertFalse(doc.sidebar_pattern)
+		self.assertFalse(doc.icon_tints)
+
+	def test_unknown_sidebar_style_is_rejected(self):
+		doc = self._sidebar_default("nxt-test-sidebar-neon", sidebar_style="Neon")
+		self.assertRaises(frappe.ValidationError, doc.insert, ignore_permissions=True)
+
+	def test_sidebar_colour_must_be_hex(self):
+		doc = self._sidebar_default(
+			"nxt-test-sidebar-url", sidebar_style="Solid", sidebar_bg="url(https://x)"
+		)
+		self.assertRaises(frappe.ValidationError, doc.insert, ignore_permissions=True)
+
+	def test_auto_sidebar_text_passes_on_the_accent(self):
+		doc = self._sidebar_default("nxt-test-sidebar-auto", sidebar_style="Gradient")
+		doc.insert(ignore_permissions=True)
+		self.assertFalse(doc.sidebar_text)
+
+	def test_unreadable_sidebar_text_blocks_a_default_theme(self):
+		doc = self._sidebar_default("nxt-test-sidebar-bad", sidebar_style="Solid", sidebar_text="#3b82f6")
+		self.assertRaises(frappe.ValidationError, doc.insert, ignore_permissions=True)
+
+	def test_unreadable_sidebar_text_only_warns_on_a_custom_theme(self):
+		doc = self._custom(
+			"nxt-test-sidebar-warn",
+			sidebar_style="Solid",
+			sidebar_bg="#0969da",
+			sidebar_text="#3b82f6",
+		)
+		doc.insert()
+		self.assertTrue(frappe.db.exists("Theme Definition", "nxt-test-sidebar-warn"))
+
+	# ------------------------------------------------------------------
 	# What a Theme User may claim on a theme
 	# ------------------------------------------------------------------
 

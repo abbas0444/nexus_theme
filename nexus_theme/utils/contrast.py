@@ -42,3 +42,48 @@ def contrast_ratio(fg: str, bg: str) -> float:
 
 def passes_aa(fg: str, bg: str, large_text: bool = False) -> bool:
 	return contrast_ratio(fg, bg) >= (3.0 if large_text else 4.5)
+
+
+def mix_hex(color: str, other: str, weight: float) -> str:
+	"""`weight` of `color` mixed with the rest of `other`, as #rrggbb.
+
+	The sRGB mix CSS's color-mix(in srgb, …) performs, rounded the same way
+	on both sides: theme_manager.js derives the sidebar's tint and gradient
+	end with the identical formula, so the colours validated here are the
+	colours the Desk paints.
+	"""
+	a = _normalize_hex(color)
+	b = _normalize_hex(other)
+	weight = min(1.0, max(0.0, float(weight)))
+	out = []
+	for i in (0, 2, 4):
+		ca = int(a[i : i + 2], 16)
+		cb = int(b[i : i + 2], 16)
+		# Half rounds up, as Math.round does in the browser — Python's round()
+		# goes to even and would drift one step from the client on a tie.
+		out.append(int(ca * weight + cb * (1 - weight) + 0.5))
+	return "#" + "".join(f"{c:02x}" for c in out)
+
+
+def pick_text_color(backgrounds, preferred: str | None = None) -> str:
+	"""A text colour that reads on every one of `backgrounds`.
+
+	`preferred` (usually the theme's own text colour) wins whenever it clears
+	AA on all of them, so a sidebar keeps the theme's voice where it can.
+	Otherwise the answer is pure white or pure black, whichever has the
+	better worst case — a gradient has two ends and the text sits on both.
+	"""
+	bgs = [b for b in (backgrounds or []) if b]
+	if not bgs:
+		return preferred or "#000000"
+
+	def worst(fg: str) -> float:
+		return min(contrast_ratio(fg, bg) for bg in bgs)
+
+	if preferred:
+		try:
+			if worst(preferred) >= 4.5:
+				return preferred
+		except ValueError:
+			pass
+	return "#ffffff" if worst("#ffffff") >= worst("#000000") else "#000000"

@@ -7,6 +7,7 @@ from frappe.model.document import Document
 from nexus_theme.preferences import is_privileged
 from nexus_theme.utils.contrast import contrast_ratio, passes_aa
 from nexus_theme.utils.css_safety import COLOR_FIELDS, STYLE_FIELDS, is_safe_value
+from nexus_theme.utils.sidebar_skin import SIDEBAR_STYLES, sidebar_contrast_failures
 
 _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 
@@ -23,6 +24,7 @@ class ThemeDefinition(Document):
 		self._validate_theme_key()
 		self._validate_style_fields()
 		self._validate_contrast()
+		self._validate_sidebar_contrast()
 
 	def _validate_ownership(self):
 		"""What a Theme User may claim on a theme.
@@ -69,6 +71,8 @@ class ThemeDefinition(Document):
 				label = self.meta.get_label(field) or field
 				if field in COLOR_FIELDS:
 					hint = _("must be a hex color such as #1a2b3c")
+				elif field == "sidebar_style":
+					hint = _("must be one of {0}").format(", ".join(SIDEBAR_STYLES))
 				else:
 					hint = _("contains characters that are not allowed")
 				frappe.throw(_("{0} {1}.").format(_(label), hint))
@@ -151,6 +155,25 @@ class ThemeDefinition(Document):
 					frappe.throw(msg)
 				else:
 					frappe.msgprint(msg, indicator="orange", title=_("Low Contrast"))
+
+	def _validate_sidebar_contrast(self):
+		"""The sidebar text has to read on the sidebar it is painted on.
+
+		Judged on the effective colours — an empty sidebar colour is derived
+		from the accent, and an empty text colour picked for contrast — on
+		every surface the text sits on: the sidebar, the far end of a
+		gradient, and the active item. Plain is Frappe's own sidebar and is
+		covered by the checks above. Same severity as those: a shipped theme
+		must pass, a custom one is warned.
+		"""
+		for surface, ratio in sidebar_contrast_failures(self.as_dict()):
+			msg = _("sidebar_text on {0}: contrast ratio is {1} (WCAG minimum is {2}).").format(
+				surface, f"{ratio:.2f}", "4.5:1"
+			)
+			if self.is_default:
+				frappe.throw(msg)
+			else:
+				frappe.msgprint(msg, indicator="orange", title=_("Low Contrast"))
 
 
 # ---------------------------------------------------------------------------
