@@ -18,6 +18,9 @@ CACHE_KEY = "nexus_theme_settings"
 DEFAULTS = {
 	"site_default_theme": None,
 	"apply_to_website": 0,
+	# Vertical spacing for anyone without a density of their own.
+	# Comfortable is Frappe's own spacing, so an untouched site is unchanged.
+	"default_density": "Comfortable",
 	"allow_custom_themes": 1,
 	"allow_public_sharing": 1,
 	"restrict_theme_choice": 0,

@@ -10,6 +10,7 @@ from nexus_theme.preferences import (
 	repair_owner,
 	repair_owner_after_save,
 )
+from nexus_theme.utils.density import label_for, normalize_density
 
 
 class UserThemePreference(Document):
@@ -25,6 +26,21 @@ class UserThemePreference(Document):
 		assert_own_row(self)
 		repair_owner(self)
 
+		# Density is independent of the theme and is kept through every
+		# branch below: opting out of our themes, or having none yet, says
+		# nothing about how much room the person wants their rows to take.
+		# Stored as the Select label; a key ("compact") from the API or a
+		# stray case from the form is put into that shape here.
+		if self.density:
+			key = normalize_density(self.density)
+			if not key:
+				frappe.throw(
+					_("{0} is not a density. Choose Compact, Comfortable or Spacious.").format(self.density)
+				)
+			self.density = label_for(key)
+		else:
+			self.density = None
+
 		if self.use_frappe_theme:
 			# An explicit opt-out: the user picked Frappe's own theme over any
 			# of ours, the site default included. Nothing of ours may stay on
@@ -36,9 +52,19 @@ class UserThemePreference(Document):
 			return
 
 		# `active_theme` is not marked required on the DocType because the
-		# opt-out row above legitimately has none. Enforce it here instead.
+		# opt-out row above legitimately has none — and so does a row that
+		# carries only a density: someone who picked Compact before ever
+		# picking a theme, or whose theme was deleted from under them. That
+		# row means "no theme opinion" and reads exactly like having no row,
+		# site default included, so nothing theme-shaped may linger on it.
+		# A row with neither is an empty row, and is refused as before.
 		if not self.active_theme:
-			frappe.throw(_("Pick a theme, or tick Use Frappe's Built-in Theme."))
+			if not self.density:
+				frappe.throw(_("Pick a theme, or tick Use Frappe's Built-in Theme."))
+			self.dark_theme = None
+			self.theme_mode = "Single"
+			self.overrides_json = "{}"
+			return
 
 		if self.overrides_json:
 			try:

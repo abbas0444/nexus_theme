@@ -10,6 +10,7 @@
   "site_default_theme",
   "column_break_defaults",
   "apply_to_website",
+  "default_density",
   "governance_section",
   "allow_custom_themes",
   "allow_public_sharing",
@@ -212,12 +213,20 @@
    "fieldname": "login_brand_logo",
    "fieldtype": "Attach Image",
    "label": "Login Brand Logo"
+  },
+  {
+   "default": "Comfortable",
+   "description": "Vertical spacing for users who have not chosen a density of their own in Theme Studio. Comfortable is Frappe's own spacing.",
+   "fieldname": "default_density",
+   "fieldtype": "Select",
+   "label": "Default Density",
+   "options": "Compact\nComfortable\nSpacious"
   }
  ],
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-09-07 21:40:00.000000",
+ "modified": "2026-09-25 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Nexus Theme",
  "name": "Theme Settings",

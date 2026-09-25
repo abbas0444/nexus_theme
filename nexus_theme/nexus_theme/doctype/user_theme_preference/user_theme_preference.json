@@ -12,7 +12,8 @@
   "active_theme",
   "theme_mode",
   "dark_theme",
-  "overrides_json"
+  "overrides_json",
+  "density"
  ],
  "fields": [
   {
@@ -63,11 +64,19 @@
    "fieldname": "overrides_json",
    "fieldtype": "Long Text",
    "label": "Overrides (JSON)"
+  },
+  {
+   "description": "How much vertical room the Desk gives rows, fields and buttons. Independent of the theme. Leave it empty to follow the site's Default Density in Theme Settings.",
+   "fieldname": "density",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Density",
+   "options": "\nCompact\nComfortable\nSpacious"
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-03 19:30:00",
+ "modified": "2026-09-25 10:00:00",
  "modified_by": "Administrator",
  "module": "Nexus Theme",
  "name": "User Theme Preference",
