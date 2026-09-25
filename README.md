@@ -76,6 +76,8 @@ nothing configured beyond picking a theme:
 
 ![ERPNext's Selling workspace in a Nexus theme](docs/images/selling-dashboard.png)
 
+*The Selling workspace in Cyberpunk Neon: a deep violet sidebar, a magenta active item and buttons, cyan links.*
+
 ---
 
 ## Table of Contents
@@ -604,7 +606,8 @@ Tick **Use the Nexus Login Page** and `/login` becomes a two-column screen: your
 
 *Every word on that panel is yours to write. The screenshots show a site that filled
 the Panel Headline in with its own name; a fresh install shows a plain "Welcome back"
-until you type something else.*
+until you type something else. The site default here is Midnight Indigo, so the panel
+wears its indigo sidebar colour.*
 
 **It follows the theme.** The page is painted from the **Site Default Theme**: background, text, inputs, the accent, the button and the corner radius all come from that theme, and the panel is painted in the colour the theme is known by: its sidebar colour when the theme has a Solid or Gradient sidebar, otherwise its accent, with a glow of the button colour in the corner. So a theme looks like one product from the sign-in screen to the Desk. Set a light theme and the page is light; set a dark one and it is dark. Someone who has already applied a theme of their own on the Desk sees the login page in *their* theme, because the browser remembers it; the page repaints before it is shown, so there is no flash of the wrong colours. With no site default theme set, the page uses a neutral light palette.
 
