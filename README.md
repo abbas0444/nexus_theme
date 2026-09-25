@@ -6,7 +6,7 @@
 
 **Make your workspace yours.** Colours, sounds, a themed sign-in screen and a clear view of who can do what, all inside your ERPNext / Frappe Desk. Pick one of 17 ready-made themes or build your own, choose the sounds the Desk plays, give the login page your own look, and let administrators see and change permissions in plain language.
 
-![ERPNext 16](https://img.shields.io/badge/ERPNext-16-blue) ![Frappe 16](https://img.shields.io/badge/Frappe-16-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey) ![Version 2.0.0](https://img.shields.io/badge/version-2.0.0-green)
+![ERPNext 16](https://img.shields.io/badge/ERPNext-16-blue) ![Frappe 16](https://img.shields.io/badge/Frappe-16-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey) ![Version 2.1.0](https://img.shields.io/badge/version-2.1.0-green)
 
 **One branch per framework version.** You are looking at
 [`version-16`](https://github.com/abbas0444/nexus_theme/tree/version-16), the build for
@@ -14,6 +14,21 @@ Frappe / ERPNext **16**. Running Frappe / ERPNext **15**? Use
 [`version-15`](https://github.com/abbas0444/nexus_theme/tree/version-15).
 
 </div>
+
+---
+
+## What's New in 2.1
+
+The sidebar was the plainest part of the Desk. Not any more:
+
+- **Sidebar skins.** A theme can paint the sidebar **Tinted**, **Solid** or **Gradient**, with an optional wave pattern. Most bundled themes come with one; tune yours in Theme Studio under **Sidebar**. Every combination is checked for readable text before it is saved. See [section 4.11](#411-sidebar-skins).
+- **Module icon colours.** Accounting blue, Selling green, Buying orange, HR teal and so on: the sidebar's icons in their module's colour, so you can tell where you are at a glance. Part of the skin, one tick box.
+- **Mini rail.** **Ctrl+Shift+B** (or Frappe's own chevron) folds the sidebar down to its icons. Hover it to peek at the labels without the page moving. Remembered per person, on every device. See [section 3.2](#32-the-mini-rail-ctrlshiftb).
+- **Home page.** An optional landing page with a greeting, shortcuts and a tile for every workspace you can open, with a count of your open to-dos. Off until an administrator switches it on. See [section 7.2](#72-the-nexus-home-page).
+
+![Four sidebar skins: Gradient, Solid, Tinted, and Tinted with module icon colours](docs/images/sidebar-skins.png)
+
+Upgrading from 2.0: pull the branch, then `bench --site yoursite.com migrate`, `bench build --app nexus_theme` and `bench restart`. Everyone sees a short "What's new" card once.
 
 ---
 
@@ -44,6 +59,11 @@ Every screenshot below is the app running on a real ERPNext 16 site.
 |---|---|
 | ![The command palette](docs/images/command-palette-search.png) | ![Theme Studio with the Density switch](docs/images/studio-density.png) |
 | Ctrl+K, type a few letters, Enter. Every record type, report, page, theme and action. | Compact, Comfortable or Spacious: how much room rows, fields and buttons get. |
+
+| Sidebar skin + mini rail *(new in 2.1)* | Home page *(new in 2.1)* |
+|---|---|
+| ![A Gradient sidebar skin](docs/images/sidebar-skin-gradient.png) | ![The Nexus home page](docs/images/nexus-home.png) |
+| The theme paints the sidebar; Ctrl+Shift+B folds it to icons. | Greeting, shortcuts and a tile for every workspace you can open. |
 
 | Sign-in screen | Sound Studio |
 |---|---|
@@ -88,6 +108,9 @@ Nexus Theme is one Frappe app with three tools inside it. Install it once and ev
 | **Sound Studio** | Everyone who uses the Desk | Choose the sound the Desk plays on login, save, submit, cancel, delete, errors, email, alerts and notifications. Use a bundled preset or upload your own, set the volume, or mute everything. |
 | **Command Palette** | Everyone who uses the Desk | Ctrl+K / ⌘K. Type a few letters to go anywhere on the Desk, search documents, switch your theme or density, or open the studios. |
 | **Density modes** | Everyone who uses the Desk | Compact, Comfortable or Spacious spacing for rows, fields and buttons, chosen per person in Theme Studio. |
+| **Sidebar skins** | Everyone who uses the Desk | Tinted, Solid or Gradient sidebars with an optional pattern and module icon colours, part of each theme. |
+| **Mini rail** | Everyone who uses the Desk | Ctrl+Shift+B folds the sidebar to its icons; hover to peek. Remembered per person. |
+| **Home page** | System Managers switch it on; everyone sees it | A landing page with a greeting, shortcuts and a tile for every workspace you can open. Off by default. |
 | **Permission Inspector** | System Managers | Pick a person or a role and see, record type by record type, what they may View, Edit, Create, Delete, Submit and Cancel, which role gives them that, and change it safely from the same screen. |
 | **Theme Settings** | System Managers | Site-wide controls: a default theme for everyone, an allowed list, whether people may build or share themes, the company logo and favicon, and a master switch for sounds. |
 | **Login Page** | System Managers switch it on; everyone sees it | A two-column sign-in screen painted in the site's theme colours, with your logo, your headline and bullet points on a coloured panel. Off by default; Frappe's own login page stays until you turn it on. |
@@ -188,6 +211,20 @@ Matching is forgiving: `od` finds *Order Delivery* and *Sales Order*, `pi` finds
 ![The command palette on a dark theme](docs/images/command-palette-dark.png)
 
 *It follows your theme: here on GitHub Dark, listing the themes to switch to.*
+
+### 3.2 The mini rail (Ctrl+Shift+B)
+
+Press **Ctrl+Shift+B** (⌘⇧B on a Mac), click Frappe's own chevron at the bottom of the sidebar, press Frappe's **Ctrl+/**, or pick *Collapse sidebar* in the command palette. The sidebar folds down to a narrow rail of icons and the page gets the room.
+
+![The sidebar folded to a rail of icons](docs/images/sidebar-rail.png)
+
+Hover the rail for a moment and it opens over the page, labels and all, without the page moving underneath. Move away and it folds back. Tabbing into it with the keyboard opens it too, and Esc closes it.
+
+![Hovering the rail peeks it open over the page](docs/images/sidebar-rail-peek.png)
+
+Your choice is saved for you, not for the browser, so it follows you to every device. Press the same shortcut, or the chevron, to bring the full sidebar back; the chevron always stays visible on the rail.
+
+On a phone-sized screen the rail stays out of the way: Frappe's own drawer takes over. On Frappe 15, which has no app-wide sidebar, the same shortcut and the same saved choice fold the side column of the page you are on.
 
 ---
 
@@ -344,6 +381,25 @@ Click one and the whole Desk changes at once and stays that way on every device 
 *An Item form at Compact and at Spacious. Widths never change, only the vertical room.*
 
 Density is per person. An administrator sets the site's starting point with **Default Density** in Theme Settings; anyone who has not chosen for themselves follows it, and changing it later changes their Desk too. Someone who picked a density keeps it whatever the site default does.
+
+### 4.11 Sidebar skins
+
+Every theme now decides how the sidebar looks. Open Theme Studio, pick a theme, and look under **Customize → Sidebar**:
+
+![The Sidebar group in Theme Studio's editor, with the live preview and contrast check](docs/images/studio-sidebar.png)
+
+| Setting | What it does |
+|---|---|
+| **Sidebar Style** | *Plain* is Frappe's own sidebar, exactly as before. *Tinted* washes it with a light shade of the accent. *Solid* paints it the accent colour. *Gradient* runs the accent into a deeper shade. |
+| **Wave Pattern** | A faint wave at the foot of a Solid or Gradient sidebar |
+| **Module Icon Colours** | Each sidebar icon in its module's colour: Accounting blue, Selling green, Buying orange, Stock indigo, HR teal, Manufacturing purple, Projects cyan, and so on. Anything else gets a steady colour of its own. |
+| **Sidebar Background**, **Sidebar Text**, **Sidebar Active Item** *(Advanced)* | Pick the colours yourself. Leave them on **Auto** and they are worked out from the accent, with the text set to whichever of dark or light reads best. |
+
+The live preview repaints its sidebar as you go, and the contrast check covers the sidebar too: its text against the background, the far end of a gradient, and the highlighted item. A bundled theme that fails is refused; your own theme saves with a warning so you can fix it.
+
+![Gradient, Solid, Tinted, and Tinted with module icon colours](docs/images/sidebar-skins.png)
+
+Most bundled themes come with a skin: the dark ones Gradient or Solid, several light ones Tinted with icon colours on. GitHub Light and High Contrast stay Plain. Choosing Frappe's own look, or a Plain theme, leaves the sidebar exactly as Frappe draws it. On Frappe 15 the skin paints the top bar instead, since that is where 15 keeps its navigation.
 
 ---
 
@@ -509,6 +565,7 @@ Open **Nexus Theme → Theme Settings** or `/app/theme-settings`. Every option i
 | **Site Default Theme** | Applied to everyone who has not chosen a theme. Leave blank to keep Frappe's stock look. People who chose Frappe's own look on purpose are left alone. |
 | **Apply to Login & Website** | Also applies the site default theme to the login page and the public website, not only the Desk. |
 | **Default Density** | Compact, Comfortable or Spacious for everyone who has not chosen a density of their own in Theme Studio. Comfortable is Frappe's own spacing. |
+| **Use the Nexus Home Page** + **Home Layout**, **Show Greeting**, **Show Shortcuts** | Opens the Desk on the Nexus home page (see 7.2). Off by default. |
 | **Allow Custom Themes** | Lets people build and save their own themes in Theme Studio. |
 | **Allow Public Sharing** | Lets people share a custom theme with everyone on the site. |
 | **Restrict Theme Choice** + **Allowed Themes** | Shows only the listed themes in Theme Studio. Anyone already using another theme keeps it; they are not reset. |
@@ -557,6 +614,23 @@ All of the wording lives in one place, in the **Login Page** section of Theme Se
 - *Locked-down branding:* set a Site Default Theme, tick Restrict Theme Choice and list the approved themes, untick Allow Public Sharing.
 - *No custom sounds on this site:* untick Allow User Sounds. Frappe's own sounds still play; people who want silence untick **Enable sounds** in Sound Studio, or **Mute Sounds** in their Frappe settings.
 
+### 7.2 The Nexus home page
+
+Tick **Use the Nexus Home Page** in Theme Settings and the Desk opens on a home page instead of Frappe's own landing, for every Desk user:
+
+![The Nexus home page](docs/images/nexus-home.png)
+
+- **A greeting** by time of day, with the date. Untick **Show Greeting** to leave it out.
+- **Shortcuts**: *Create New* (the command palette, ready for the name of what to create), *Reports* and *Notifications*. Untick **Show Shortcuts** to leave them out.
+- **A tile for every workspace the person can open**, taken from the same list Frappe's own sidebar uses, so nobody sees anything they could not already reach. A small badge counts their open to-dos in that module.
+- **Home Layout**: *Grid* for tiles, or *Compact list* for a denser list.
+
+It follows the theme, the density and right-to-left languages:
+
+![The home page on a dark theme](docs/images/nexus-home-dark.png)
+
+Untick the box and the Desk goes straight back to Frappe's own landing on the next page load. Frappe's own desktop is always one click away through **All apps** on the home page. Anyone can also open the page on purpose at `/app/nexus-home`, or from the command palette with *Open Home*.
+
 ---
 
 ## 8. The Record Types Behind It All
@@ -589,6 +663,7 @@ Open one and you see exactly the values Theme Studio edits, in four groups: **Id
 | **Public** | Ticked means everyone on the site sees it under *Public Themes* |
 | **Restrict to Roles** | Leave empty to show it to everyone. Fill it in and only those roles see the theme. |
 | **Colors / Buttons / Typography** | The eleven colours, the font family, the base size and weight, and the corner radius |
+| **Sidebar** | Sidebar Style (Plain, Tinted, Solid, Gradient), Sidebar Pattern, Module Icon Tints, and optional Sidebar Background, Text and Active Item colours. Empty colours are worked out from the accent. |
 
 **When to create a new one by hand**
 
@@ -626,6 +701,7 @@ One row per person, named after their account. It is what makes your theme follo
 | **Dark Theme** | The theme used after dark when Mode is *Automatic* |
 | **Overrides** | Any colours they changed by hand on top of the theme, stored as JSON |
 | **Density** | Compact, Comfortable or Spacious. Empty means "follow the site's Default Density". A row may hold only a density and no theme. |
+| **Collapse Sidebar** | Ticked while this person keeps the sidebar folded to a rail. A row may hold only this and no theme. |
 
 **When to create a new one:** never, in normal use. The row appears by itself the first time someone presses **Apply** in Theme Studio, and updates every time they change something.
 
@@ -673,6 +749,12 @@ An administrator might open one to **silence one person** (untick **Enabled**) o
 **I want to open Sales Invoice without touching the mouse.** Ctrl+K, type `sal inv`, Enter. For a new one, type `new sal inv`.
 
 **I want more rows on my screen.** Theme Studio → Density → **Compact**. Or Ctrl+K, type `compact`, Enter.
+
+**I want the whole width for a big report.** Ctrl+Shift+B folds the sidebar to a rail. Press it again to bring it back.
+
+**I want a coloured sidebar.** Theme Studio → pick a theme → Customize → Sidebar → Sidebar Style **Gradient** → Apply. Tick **Module Icon Colours** too if you like.
+
+**I want everyone to land on a home page.** Theme Settings → Use the Nexus Home Page → Save.
 
 **I want dark mode at night and light in the day.** Theme Studio → Auto Light/Dark → pick one of each → Mode: Automatic → Save.
 
@@ -748,7 +830,7 @@ All methods live in `nexus_theme.api` and are whitelisted, so they work from `fr
 ```python
 # Themes
 get_available_themes()                       # defaults, owned, public
-get_active_theme()                           # theme, mode, dark theme, overrides, dark_overrides, density, source
+get_active_theme()                           # theme, mode, dark theme, overrides, dark_overrides, density, sidebar_collapsed, source
 set_active_theme(theme_name, overrides=None) # apply a theme (+ overrides); returns the half it went to
 set_theme_mode("Automatic", dark_theme="dracula")
 clear_active_theme()                         # back to Frappe's own look
@@ -759,6 +841,13 @@ import_theme(payload, share_public=0)
 get_recommended_palettes()                   # the 8 curated palettes
 get_login_preview()                          # brand + words for the login preview
 generate_palette(seed="#8c6f3f", is_dark=0)  # 3 accessible variants from one colour
+
+# Mini rail
+get_sidebar_collapsed()                      # {collapsed: 0|1}
+set_sidebar_collapsed(1)                     # fold the sidebar to a rail for this person
+
+# Home page
+get_home_data()                              # greeting name, tiles (with to-do counts), settings
 
 # Density
 get_density()                                # {density: "compact", source: "user"|"site_default"|"default"}
@@ -815,9 +904,14 @@ NexusCommandPalette.register({  // add a command of your own; returns an unregis
 	run: () => frappe.set_route("period-closing-voucher", "new"),
 });
 window.openNexusWhatsNew();     // show the "What's new" card again
+
+NexusRail.isCollapsed();        // true while the sidebar is a rail
+NexusRail.set(true);            // fold it (saved per person); returns a Promise
+NexusRail.toggle();
+window.openNexusHome();         // go to the Nexus home page
 ```
 
-The palette fires `register` commands under **Actions**. Density changes raise a `nexus-density-change` event on `document` with `{ detail: { density } }`.
+The palette fires `register` commands under **Actions**. Density changes raise a `nexus-density-change` event on `document` with `{ detail: { density } }`, and the rail raises `nexus-rail-change` with `{ detail: { collapsed } }`. A theme's sidebar skin is exposed as `html[data-sidebar-style]` (`tinted`, `solid`, `gradient`; absent for Plain) and the CSS variables `--theme-sidebar-bg`, `--theme-sidebar-bg-end`, `--theme-sidebar-text` and `--theme-sidebar-active-bg`.
 
 ### 12.4 Tests
 
@@ -852,6 +946,8 @@ bench build --app nexus_theme      # rebuild the JS/CSS bundles after editing pu
 - **Deleting a theme in use is allowed** for your own themes; users of it fall back to the site default. A theme that is the site default or on the allowed list must be taken out of Theme Settings first.
 - **Permission changes are site-wide.** The Permission Inspector edits roles, and a role is shared by everyone who holds it. The confirmation dialog states this before every save.
 - **The Nexus login page is a switch, not a default.** Installing the app changes nothing about `/login`. An administrator turns the page on in Theme Settings, and can turn it off again the same way; if it ever cannot render, Frappe's own page is served.
+- **Ctrl+Shift+B folds the sidebar.** Ctrl+B was already taken (bold text, and "new document" in list views). Some browsers use Ctrl+Shift+B for their bookmarks bar; on the Desk the sidebar takes it, and Frappe's own Ctrl+/ does the same job.
+- **A Plain theme leaves the sidebar alone.** Sidebar skins only apply to themes that choose one, and never while you use Frappe's own look.
 - **Ctrl+K belongs to the command palette now.** On Frappe 16 it used to focus the search bar; Ctrl+G still opens global search and the bar is still there to click.
 - **Comfortable density is exactly the old spacing.** Installing 2.0 changes nothing on screen until someone picks Compact or Spacious, or an administrator sets a different Default Density.
 - **"Set User Permissions" is not a flag in Frappe v16.** It was removed in an earlier version. The inspector shows the flags v16 actually has, including Mask and custom permission types.

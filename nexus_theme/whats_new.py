@@ -23,6 +23,29 @@ from frappe import _
 # card only shows that button when the global exists on the page.
 RELEASES = [
 	{
+		"version": "2.1.0",
+		"title": "Nexus Theme 2.1",
+		"summary": "The sidebar gets a look of its own, folds away when you want the room, and the Desk can open on a home page.",
+		"items": [
+			{
+				"heading": "Sidebar skins",
+				"text": "Themes can now paint the sidebar: Tinted, Solid or Gradient, with an optional wave pattern and module icons in their own colours. Most bundled themes have one already; tune yours in Theme Studio under Sidebar. Every combination is checked for readable text.",
+				"command": "openThemeSwitcher",
+				"command_label": "Open Theme Studio",
+			},
+			{
+				"heading": "Mini rail",
+				"text": "Press Ctrl+Shift+B, or Frappe's own chevron, to fold the sidebar down to its icons. Hover the rail to peek at the labels without losing your place. Your choice is remembered on every device.",
+			},
+			{
+				"heading": "Home page",
+				"text": "An administrator can switch on a Nexus home page in Theme Settings: a greeting, shortcuts to create a document, reports and notifications, and a tile for every workspace you can open, with a count of your open to-dos.",
+				"command": "openNexusHome",
+				"command_label": "Open Home",
+			},
+		],
+	},
+	{
 		"version": "2.0.0",
 		"title": "Nexus Theme 2.0",
 		"summary": "Two things people asked for most: a command palette, and room to breathe — or less of it.",
