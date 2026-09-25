@@ -12,7 +12,7 @@ other installed app.
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-APP_PAGES = ("theme-studio", "sound-studio", "nexus-permission-inspector")
+APP_PAGES = ("theme-studio", "sound-studio", "nexus-permission-inspector", "nexus-home")
 
 
 def desk_slug(name: str) -> str:

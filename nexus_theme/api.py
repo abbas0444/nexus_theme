@@ -898,6 +898,13 @@ def extend_boot_session(bootinfo):
 		bootinfo["nexus_theme_whats_new"] = boot_payload()
 	except Exception:
 		frappe.log_error(title="theme: boot_session whats_new failed")
+	try:
+		# The Nexus Home settings, and — only when an admin turned the page
+		# on — the Desk's landing page. A failure here leaves Frappe's own
+		# home_page exactly as boot built it.
+		_apply_home_boot(bootinfo)
+	except Exception:
+		frappe.log_error(title="theme: boot_session home failed")
 
 
 # ---------------------------------------------------------------------------
@@ -1170,3 +1177,237 @@ def check_app_permission() -> bool:
 		return True
 	roles = frappe.get_roles()
 	return "Theme User" in roles or "System Manager" in roles
+
+
+# ---------------------------------------------------------------------------
+# Nexus Home
+# ---------------------------------------------------------------------------
+# An optional landing page for the Desk (Page "nexus-home"): a greeting,
+# three shortcuts and a tile per workspace. Off by default; see
+# utils/home.py for the rules and the page folder for the UI.
+
+HOME_CACHE_SECONDS = 60
+
+
+def _home_settings() -> dict:
+	"""The four Home Page settings, with defaults for unset values.
+
+	A value is None when the field has no stored row yet (code deployed,
+	migrate not run): the flags then read as their defaults rather than 0.
+	"""
+	from nexus_theme.utils.home import normalize_layout
+
+	settings = _settings()
+
+	def flag(key: str, default: int) -> int:
+		value = settings.get(key)
+		return default if value is None else (1 if value else 0)
+
+	return {
+		"enabled": flag("use_nexus_home", 0),
+		"show_greeting": flag("home_show_greeting", 1),
+		"show_shortcuts": flag("home_show_shortcuts", 1),
+		"layout": normalize_layout(settings.get("home_layout")),
+	}
+
+
+def _is_desk_user(user: str | None = None) -> bool:
+	user = user or frappe.session.user
+	if not user or user == "Guest":
+		return False
+	if user == "Administrator":
+		return True
+	return frappe.get_cached_value("User", user, "user_type") == "System User"
+
+
+def _home_takes_over(bootinfo) -> bool:
+	"""Whether this boot may land on the Nexus home page.
+
+	Only for a Desk user on a site whose setup is finished: until then
+	Frappe's boot points home_page at "setup-wizard", and both routers
+	send every route there, so taking the landing over would strand the
+	person outside the wizard. The same check is repeated on the value
+	boot already chose, for a setup that reports complete but still asks
+	for the wizard.
+	"""
+	if not _is_desk_user():
+		return False
+	if not frappe.is_setup_complete():
+		return False
+	return bootinfo.get("home_page") != "setup-wizard"
+
+
+def _apply_home_boot(bootinfo) -> None:
+	"""Put the Home Page settings in boot and, when on, make the page the
+	Desk's landing.
+
+	Both Desk routers render an empty route (/app on Frappe 15, /desk on
+	Frappe 16) as `frappe.views.pageview.show("")`, which opens the page
+	named by `frappe.boot.home_page`. Frappe's boot fills that from the
+	`desktop:home_page` default — "Workspaces" on 15, "desktop" on 16 —
+	and runs the boot_session hooks afterwards, so replacing the value
+	here is all it takes. Nothing is stored: turning the setting off puts
+	Frappe's own value back on the next boot.
+
+	Frappe's original is kept in `frappe_home` so the page can link back
+	to it (Frappe 16's Desktop icon grid is still at /desk/desktop).
+	"""
+	from nexus_theme.utils.home import HOME_PAGE
+
+	home = _home_settings()
+	home["page"] = HOME_PAGE
+	home["frappe_home"] = bootinfo.get("home_page")
+	home["active"] = 0
+
+	if home["enabled"] and _home_takes_over(bootinfo):
+		from frappe.desk.desk_page import get as get_desk_page
+
+		try:
+			# Also confirms the Page exists and this user may open it; a
+			# site that has the code but not the migrated Page record keeps
+			# Frappe's home.
+			page = get_desk_page(HOME_PAGE)
+		except Exception:
+			# desk_page.get flags the response 403 before raising; this
+			# is boot, not a page request, so take both back.
+			frappe.clear_last_message()
+			frappe.local.response.pop("403", None)
+			page = None
+		if page:
+			bootinfo["home_page"] = HOME_PAGE
+			home["active"] = 1
+			# Frappe ships its own home page inside boot to save the first
+			# round-trip; do the same for ours.
+			docs = bootinfo.get("docs")
+			if isinstance(docs, list):
+				docs.append(page)
+
+	bootinfo["nexus_home"] = home
+
+
+def _home_cache():
+	# frappe.cache is an object on current Frappe and was a callable before.
+	cache = frappe.cache
+	return cache if hasattr(cache, "get_value") else cache()
+
+
+def _workspace_pages() -> list:
+	"""The workspaces this user may open, from the function the Desk
+	sidebar itself is built from.
+
+	Frappe 16 renamed it (get_workspaces); Frappe 15 has
+	get_workspace_sidebar_items. Either applies the same checks the
+	sidebar does — roles on the workspace, blocked modules, domains — so
+	the home page can never show a workspace the sidebar would not.
+	"""
+	from frappe.desk import desktop
+
+	if hasattr(desktop, "get_workspaces"):
+		found = desktop.get_workspaces()
+	else:
+		found = desktop.get_workspace_sidebar_items()
+	return (found or {}).get("pages") or []
+
+
+def _open_todo_counts(user: str) -> dict:
+	"""Open to-dos assigned to `user`, counted per reference DocType, in one
+	grouped query."""
+	from frappe.query_builder.functions import Count
+
+	todo = frappe.qb.DocType("ToDo")
+	rows = (
+		frappe.qb.from_(todo)
+		.select(todo.reference_type, Count(todo.name))
+		.where(todo.allocated_to == user)
+		.where(todo.status == "Open")
+		.where(todo.reference_type.isnotnull())
+		.where(todo.reference_type != "")
+		.groupby(todo.reference_type)
+		.run()
+	)
+	return {row[0]: int(row[1] or 0) for row in rows if row[0]}
+
+
+def _build_home_data(user: str) -> dict:
+	from nexus_theme.utils.home import build_tiles, counts_by_module, first_name_for
+
+	first_name, full_name = frappe.db.get_value("User", user, ["first_name", "full_name"]) or (None, None)
+
+	module_counts = {}
+	try:
+		todo_counts = _open_todo_counts(user)
+		if todo_counts:
+			doctype_modules = {
+				d.name: d.module
+				for d in frappe.get_all(
+					"DocType",
+					filters={"name": ["in", list(todo_counts)]},
+					fields=["name", "module"],
+				)
+			}
+			module_counts = counts_by_module(todo_counts, doctype_modules)
+	except Exception:
+		# Badges are a nicety; the tiles must still come back without them.
+		frappe.log_error(title="theme: home to-do counts failed")
+
+	try:
+		tiles = build_tiles(_workspace_pages(), module_counts, user=user)
+	except Exception:
+		# The page falls back to the workspaces in boot when this is empty.
+		frappe.log_error(title="theme: home workspaces failed")
+		tiles = []
+
+	return {
+		"greeting_name": first_name_for(first_name, full_name, user),
+		"tiles": tiles,
+		"open_todos": sum(module_counts.values()),
+		"unread_notifications": frappe.db.count("Notification Log", {"for_user": user, "read": 0}),
+	}
+
+
+@frappe.whitelist()
+def get_home_data():
+	"""Everything the Nexus home page draws, for the signed-in Desk user.
+
+	Returns {greeting_name, tiles, open_todos, unread_notifications,
+	settings}. Tiles come only from the workspaces the Desk sidebar would
+	already offer this user (see _workspace_pages); each carries the
+	number of open to-dos assigned to the user whose document belongs to
+	that workspace's module.
+
+	Cached per user and language for a minute: the page is the Desk's
+	landing and may be opened many times an hour, and a to-do count a
+	minute old is fine for a badge.
+	"""
+	user = frappe.session.user
+	if not _is_desk_user(user):
+		frappe.throw(_("The home page is for Desk users."), frappe.PermissionError)
+
+	key = f"nexus_theme:home:{user}:{frappe.local.lang or ''}"
+	data = None
+	try:
+		data = _home_cache().get_value(key)
+	except Exception:
+		data = None
+	if not isinstance(data, dict):
+		data = _build_home_data(user)
+		try:
+			_home_cache().set_value(key, data, expires_in_sec=HOME_CACHE_SECONDS)
+		except Exception:
+			pass
+
+	out = dict(data)
+	# Settings are read fresh, not cached with the tiles, so an admin who
+	# changes the layout sees it on the next visit.
+	out["settings"] = _home_settings()
+	return out
+
+
+def clear_home_cache(user: str | None = None) -> None:
+	"""Forget a user's cached home data (tests, and anything that knows
+	the tiles just changed)."""
+	user = user or frappe.session.user
+	try:
+		_home_cache().delete_keys(f"nexus_theme:home:{user}:")
+	except Exception:
+		pass
