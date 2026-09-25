@@ -1,0 +1,134 @@
+/* ==================================================================
+   Mini rail (sidebar_rail.js)
+   ------------------------------------------------------------------
+   Frappe 16 already draws the collapsed sidebar: `.body-sidebar` is a
+   narrow in-flow column while `.body-sidebar-container` lacks
+   `.expanded`, and an absolute overlay with a same-width placeholder
+   behind it while it has it (desk/sidebar.scss). This file only adds
+   to that, and only while sidebar_rail.js has marked the page with
+   <html data-nexus-rail data-nexus-rail-host>, which it does on screens
+   wide enough for the rail — never on a phone, where Frappe's drawer
+   stays exactly as it is:
+
+   * a rail width that follows the density mode, with the icons kept
+     centred in it;
+   * the expand chevron always visible while collapsed (Frappe shows it
+     only on hover), so the way back is never hidden;
+   * the hover "peek": .nexus-rail-peek opens the rail as an overlay
+     over the page while a placeholder holds its column, so nothing
+     under it moves;
+   * no width animation for anyone who asked for reduced motion;
+   * on Frappe 15, the page side section kept hidden before the script
+     has reached it, so a collapsed sidebar does not flash open.
+
+   Colours are Frappe's own sidebar variables, which the active Nexus
+   theme (if any) redefines, so light, dark and no theme all work.
+   Horizontal edges use logical properties: in a right-to-left Desk the
+   rail sits on the right and everything here mirrors with it.
+   ================================================================== */
+
+html[data-nexus-rail-host="v16"] {
+  /* Frappe draws the rail 50px wide, with 8px either side of a 34px
+     column of icons. The rail keeps that column and only changes the
+     space around it. */
+  --nx-rail-width: 56px;
+  --nx-rail-inner: 34px;
+}
+
+html[data-nexus-rail-host="v16"][data-density="compact"] {
+  --nx-rail-width: 50px; /* Frappe's own */
+}
+
+html[data-nexus-rail-host="v16"][data-density="spacious"] {
+  --nx-rail-width: 60px;
+}
+
+@media (min-width: 768px) {
+  /* ---- The rail itself (collapsed, not peeking) ---- */
+  html[data-nexus-rail-host="v16"]
+    .body-sidebar-container:not(.expanded)
+    .body-sidebar {
+    width: var(--nx-rail-width);
+    padding-inline: calc((var(--nx-rail-width) - var(--nx-rail-inner)) / 2);
+  }
+
+  /* The way back out: Frappe fades the chevron in only while the
+     pointer is over the sidebar. Collapsed, it stays in view. */
+  html[data-nexus-rail-host="v16"]
+    .body-sidebar-container:not(.expanded)
+    .body-sidebar
+    .collapse-sidebar-link:not(.hidden) {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* ---- Peek: the rail opened as an overlay ---- */
+  html[data-nexus-rail-host="v16"]
+    .body-sidebar-container.nexus-rail-peek:not(.expanded)
+    .body-sidebar-placeholder {
+    /* Holds the rail's column while the sidebar floats above it. */
+    display: flex;
+    width: var(--nx-rail-width);
+  }
+
+  html[data-nexus-rail-host="v16"]
+    .body-sidebar-container.nexus-rail-peek:not(.expanded)
+    .body-sidebar {
+    /* Frappe's expanded sidebar is positioned the same way: out of the
+       flow, at the spot it held in it. */
+    position: absolute;
+    width: var(--sidebar-width, 220px);
+    /* Frappe's expanded padding. */
+    padding-inline: 8px;
+    box-shadow: var(--shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.18));
+  }
+
+  /* Frappe hides these with inline styles when it collapses; the peek
+     shows the sidebar as it looks open, so they come back while it
+     lasts. */
+  html[data-nexus-rail-host="v16"]
+    .body-sidebar-container.nexus-rail-peek:not(.expanded)
+    .avatar-name-email {
+    display: block !important;
+  }
+
+  html[data-nexus-rail-host="v16"]
+    .body-sidebar-container.nexus-rail-peek:not(.expanded)
+    .onboarding-sidebar
+    span,
+  html[data-nexus-rail-host="v16"]
+    .body-sidebar-container.nexus-rail-peek:not(.expanded)
+    .promotional-banner-title {
+    display: inline !important;
+  }
+
+  /* While peeking the labels are on screen, so the rail's hover
+     tooltips (Bootstrap, appended to <body>) would only repeat them. */
+  html[data-nexus-rail-peek] .tooltip {
+    display: none !important;
+  }
+}
+
+/* ---- Motion ----
+   Frappe already eases the width over 0.3s, which carries the rail's
+   own width and the peek. For reduced motion it just switches. */
+@media (prefers-reduced-motion: reduce) {
+  html[data-nexus-rail-host="v16"] .body-sidebar,
+  html[data-nexus-rail-host="v16"] .body-sidebar *,
+  html[data-nexus-rail-host="v16"] .body-sidebar-placeholder {
+    transition: none !important;
+  }
+}
+
+/* ---- Frappe 15: the page side section ----
+   sidebar_rail.js hides and shows each page's section through jQuery,
+   which leaves an inline display on it. Until it has, a collapsed
+   preference keeps any untouched section hidden, so a page seen for
+   the first time does not open and then snap shut. Below 992px Frappe
+   turns the section into an overlay of its own, and it is left alone. */
+@media (min-width: 992px) {
+  html[data-nexus-rail-host="v15"][data-nexus-rail="collapsed"]
+    .layout-side-section:not([style*="display"]) {
+    display: none;
+  }
+}
