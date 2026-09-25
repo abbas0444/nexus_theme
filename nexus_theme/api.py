@@ -46,7 +46,18 @@ THEME_FIELDS = [
 	"transition_duration",
 	"enable_hover_lift",
 	"border_radius",
+	"sidebar_style",
+	"sidebar_bg",
+	"sidebar_text",
+	"sidebar_active_bg",
+	"sidebar_pattern",
+	"icon_tints",
 ]
+
+# Optional colours whose empty value means something: "derive it". Saving a
+# theme with one of these cleared has to clear it on the row as well, where
+# every other field treats an empty value as "leave it as it is".
+_CLEARABLE_FIELDS = ("sidebar_bg", "sidebar_text", "sidebar_active_bg")
 
 
 def _settings():
@@ -499,6 +510,8 @@ def save_custom_theme(payload, share_public=0):
 			continue
 		if field in payload and payload[field] not in (None, ""):
 			setattr(doc, field, payload[field])
+		elif field in _CLEARABLE_FIELDS and field in payload:
+			setattr(doc, field, None)
 
 	doc.theme_key = theme_key
 	doc.theme_name = payload["theme_name"]
