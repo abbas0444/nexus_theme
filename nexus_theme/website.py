@@ -15,7 +15,7 @@ website renders exactly as before.
 import frappe
 
 from nexus_theme.login_page import public_file
-from nexus_theme.utils.web_css import VAR_MAP, css_url, theme_css_rules
+from nexus_theme.utils.web_css import BRAND_FIELDS, VAR_MAP, css_url, theme_css_rules
 
 
 def update_website_context(context):
@@ -35,7 +35,7 @@ def update_website_context(context):
 		theme = frappe.db.get_value(
 			"Theme Definition",
 			settings["site_default_theme"],
-			[*VAR_MAP, "is_dark"],
+			[*VAR_MAP, *BRAND_FIELDS, "is_dark"],
 			as_dict=True,
 		)
 		if theme:

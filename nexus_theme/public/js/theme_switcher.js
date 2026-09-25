@@ -751,6 +751,14 @@
 			`--nxlp-muted:${escapeHtml(v("text_muted", "#6b7280"))}`,
 			`--nxlp-accent:${escapeHtml(v("accent", "#7c3aed"))}`,
 			`--nxlp-accent-hover:${escapeHtml(v("accent_hover", "#6d28d9"))}`,
+			// Same rule as web_css.brand_color(): a Solid or Gradient sidebar's
+			// colour is the theme's brand, and the real page paints its panel
+			// with it.
+			`--nxlp-brand:${escapeHtml(
+				/^(solid|gradient)$/i.test(String(v("sidebar_style", "")))
+					? v("sidebar_bg", v("accent", "#7c3aed"))
+					: v("accent", "#7c3aed")
+			)}`,
 			`--nxlp-btn-bg:${escapeHtml(v("button_bg", v("accent", "#7c3aed")))}`,
 			`--nxlp-btn-text:${escapeHtml(v("button_text", "#ffffff"))}`,
 			`--nxlp-btn-hover:${escapeHtml(v("button_hover_bg", v("accent_hover", "#6d28d9")))}`,

@@ -20,6 +20,27 @@ from nexus_theme.utils.css_safety import (
 # escape for `<` is not something a URL ever needs).
 _URL_UNSAFE_RE = re.compile(r"[\x00-\x1f\x7f<>]")
 
+# The sidebar fields a public page needs to know the theme's brand colour.
+# Fetched beside VAR_MAP by the login page and the website hook.
+BRAND_FIELDS = ("sidebar_style", "sidebar_bg")
+
+
+def brand_color(theme: dict) -> str | None:
+	"""The colour a theme wears as its identity, when it has one of its own.
+
+	A Solid or Gradient sidebar is the largest block of colour on the Desk,
+	so it is what people recognise the theme by — not the accent, which in
+	many themes is a small link and focus colour. The login page's panel
+	uses this so that signing in and the Desk look like one product; with a
+	Plain or Tinted sidebar there is no such block and the accent stands in.
+	"""
+	style = str((theme or {}).get("sidebar_style") or "").strip().lower()
+	if style not in ("solid", "gradient"):
+		return None
+	colour = (theme.get("sidebar_bg") or "").strip() or (theme.get("accent") or "").strip()
+	return colour if colour and is_safe_value("accent", colour) else None
+
+
 # Theme Definition field -> the CSS custom property the stylesheets read.
 # Mirrors VAR_MAP in public/js/theme_manager.js; test_website_theming.py
 # asserts the two stay in step.
@@ -82,6 +103,10 @@ def theme_css_rules(theme: dict) -> str:
 	# color-scheme makes the browser's own chrome — scrollbars, form control
 	# defaults, autofill — match the theme. It is the CSS equivalent of the
 	# polarity attribute the Desk sets on <html>.
+	brand = brand_color(theme)
+	if brand:
+		declarations.append(f"--theme-brand:{brand}")
+
 	declarations.append("color-scheme:" + ("dark" if theme.get("is_dark") else "light"))
 	return "/* nexus_theme-web-vars */:root{" + ";".join(declarations) + "}"
 

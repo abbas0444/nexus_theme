@@ -25,7 +25,7 @@ import os
 import frappe
 from frappe.website.page_renderers.template_page import TemplatePage
 
-from nexus_theme.utils.web_css import VAR_MAP, theme_css_rules
+from nexus_theme.utils.web_css import BRAND_FIELDS, VAR_MAP, theme_css_rules
 
 APP_NAME = "nexus_theme"
 TEMPLATE_PATH = os.path.join("templates", "nexus_login", "nexus_login.html")
@@ -263,7 +263,9 @@ def _resolve_theme(settings: dict) -> dict | None:
 	if not name:
 		return None
 	try:
-		return frappe.db.get_value("Theme Definition", name, [*VAR_MAP, "is_dark"], as_dict=True)
+		return frappe.db.get_value(
+			"Theme Definition", name, [*VAR_MAP, *BRAND_FIELDS, "is_dark"], as_dict=True
+		)
 	except Exception:
 		return None
 
@@ -319,6 +321,17 @@ _REMEMBERED_THEME_JS = """
     Object.keys(overrides).forEach(function (field) {
       put(field, overrides[field]);
     });
+
+    // The theme's brand colour, as web_css.brand_color() works it out: a
+    // Solid or Gradient sidebar's colour, else nothing (the page falls back
+    // to the accent). Cleared first, so the site default's never lingers
+    // under a visitor whose own theme has no brand block.
+    root.style.removeProperty("--theme-brand");
+    var style = String(theme.sidebar_style || "").toLowerCase();
+    if (style === "solid" || style === "gradient") {
+      var brand = theme.sidebar_bg || theme.accent;
+      if (brand && COLOR.test(String(brand))) root.style.setProperty("--theme-brand", String(brand));
+    }
 
     var polarity = theme.is_dark ? "dark" : "light";
     root.style.setProperty("color-scheme", polarity);
