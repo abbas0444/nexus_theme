@@ -1,0 +1,425 @@
+/* ==================================================================
+   Nexus Home (/app/nexus-home) — built by nexus_home.js
+   ------------------------------------------------------------------
+   Colours come through a handful of --nxh-* tokens on the page root:
+
+   * By default they read Frappe's own tokens (--card-bg, --text-color,
+     --border-color …), which Frappe redefines under [data-theme="dark"],
+     so the page follows Frappe's light/dark switch with no theme active.
+
+   * While one of the app's themes is showing (html[data-app-theme]) they
+     point at the theme's tokens instead — surface, radius, font, shadow
+     ladder — the same way the command palette does.
+
+   Spacing scales with --nx-density-scale from density.bundle.css (1 when
+   no density is set). Logical properties throughout, so RTL needs no
+   overrides. Motion stops under prefers-reduced-motion.
+   ================================================================== */
+
+.nxh {
+  --nxh-bg: var(--card-bg, var(--fg-color, #ffffff));
+  --nxh-surface: var(--subtle-fg, var(--bg-color, #f7f8fa));
+  --nxh-text: var(--text-color, #1f2937);
+  --nxh-muted: var(--text-muted, #6b7280);
+  --nxh-border: var(--border-color, #e5e7eb);
+  --nxh-accent: var(--primary, var(--primary-color, #2490ef));
+  --nxh-radius: var(--border-radius-lg, 12px);
+  --nxh-shadow: var(--card-shadow, var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1)));
+  --nxh-shadow-hover: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
+  --nxh-ring: 0 0 0 3px color-mix(in srgb, var(--nxh-accent) 30%, transparent);
+  --nxh-font: inherit;
+  --nxh-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --nxh-space: calc(16px * var(--nx-density-scale, 1));
+  /* Tint mix: how much of the tile's hue colours its icon well. */
+  --nxh-tint-mix: 14%;
+
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--nxh-space) * 1.5);
+  max-width: 1120px;
+  margin-inline: auto;
+  padding-block: calc(var(--nxh-space) * 1.25) calc(var(--nxh-space) * 2.5);
+  font-family: var(--nxh-font);
+  color: var(--nxh-text);
+}
+
+html[data-theme="dark"] .nxh {
+  --nxh-tint-mix: 24%;
+}
+
+/* The app's theme is showing: take its tokens wholesale. */
+html[data-app-theme] .nxh {
+  --nxh-bg: var(--theme-bg-primary);
+  --nxh-surface: var(--theme-bg-surface);
+  --nxh-text: var(--theme-text-primary);
+  --nxh-muted: var(--theme-text-muted);
+  --nxh-border: var(--theme-border);
+  --nxh-accent: var(--theme-accent);
+  --nxh-radius: var(--theme-border-radius);
+  --nxh-shadow: var(--theme-shadow-sm);
+  --nxh-shadow-hover: var(--theme-shadow-md);
+  --nxh-ring: var(--theme-ring-strong);
+  --nxh-font: var(--theme-font-family);
+  --nxh-ease: var(--theme-ease);
+}
+
+.nxh [hidden] {
+  display: none !important;
+}
+
+/* ---- Greeting ---- */
+
+.nxh-hero {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--nxh-space) * 0.25);
+}
+
+.nxh-date {
+  margin: 0;
+  font-size: var(--text-sm, 12px);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--nxh-accent);
+}
+
+.nxh-greeting {
+  margin: 0;
+  font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.1rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--nxh-text);
+  overflow-wrap: anywhere;
+}
+
+.nxh-subtitle {
+  margin: 0;
+  font-size: var(--text-md, 14px);
+  color: var(--nxh-muted);
+}
+
+/* ---- Cards and section headings ---- */
+
+.nxh-card {
+  padding: var(--nxh-space);
+  background: var(--nxh-bg);
+  border: 1px solid var(--nxh-border);
+  border-radius: var(--nxh-radius);
+  box-shadow: var(--nxh-shadow);
+}
+
+.nxh-card-title {
+  margin: 0 0 calc(var(--nxh-space) * 0.75);
+  font-size: var(--text-base, 14px);
+  font-weight: 600;
+  color: var(--nxh-text);
+}
+
+.nxh-apps-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--nxh-space);
+}
+
+.nxh-apps-all {
+  font-size: var(--text-sm, 12px);
+  color: var(--nxh-muted);
+  text-decoration: none;
+}
+
+.nxh-apps-all:hover,
+.nxh-apps-all:focus-visible {
+  color: var(--nxh-accent);
+  text-decoration: underline;
+}
+
+/* ---- Shortcuts ---- */
+
+.nxh-shortcut-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--nxh-space) * 0.625);
+}
+
+.nxh-shortcut {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: calc(36px * var(--nx-density-scale, 1));
+  padding-block: calc(8px * var(--nx-density-scale, 1));
+  padding-inline: 12px 14px;
+  font: inherit;
+  font-size: var(--text-md, 14px);
+  font-weight: 500;
+  color: var(--nxh-text);
+  background: var(--nxh-surface);
+  border: 1px solid var(--nxh-border);
+  border-radius: calc(var(--nxh-radius) * 0.75);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    border-color 150ms var(--nxh-ease),
+    background-color 150ms var(--nxh-ease),
+    color 150ms var(--nxh-ease);
+}
+
+.nxh-shortcut:hover {
+  color: var(--nxh-text);
+  text-decoration: none;
+  border-color: color-mix(in srgb, var(--nxh-accent) 45%, var(--nxh-border));
+  background: color-mix(in srgb, var(--nxh-accent) 7%, var(--nxh-surface));
+}
+
+.nxh-shortcut:focus-visible,
+.nxh-tile:focus-visible {
+  outline: none;
+  box-shadow: var(--nxh-ring);
+  border-color: var(--nxh-accent);
+}
+
+.nxh-shortcut-icon {
+  display: inline-flex;
+  color: var(--nxh-accent);
+}
+
+.nxh-shortcut-icon:empty {
+  display: none;
+}
+
+.nxh-shortcut .nxh-badge {
+  position: static;
+  margin-inline-start: 2px;
+}
+
+/* ---- Workspace tiles ---- */
+
+.nxh-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: calc(var(--nxh-space) * 0.75);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nxh-tile-slot {
+  display: flex;
+  min-width: 0;
+}
+
+.nxh-tile {
+  --nxh-hue: var(--nxh-accent);
+
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(10px * var(--nx-density-scale, 1));
+  min-width: 0;
+  min-height: calc(120px * var(--nx-density-scale, 1));
+  padding: var(--nxh-space) calc(var(--nxh-space) * 0.75);
+  color: var(--nxh-text);
+  text-align: center;
+  text-decoration: none;
+  background: var(--nxh-bg);
+  border: 1px solid var(--nxh-border);
+  border-radius: var(--nxh-radius);
+  box-shadow: var(--nxh-shadow);
+  transition:
+    transform 160ms var(--nxh-ease),
+    box-shadow 160ms var(--nxh-ease),
+    border-color 160ms var(--nxh-ease);
+}
+
+.nxh-tile:hover {
+  color: var(--nxh-text);
+  text-decoration: none;
+  transform: translateY(-2px);
+  box-shadow: var(--nxh-shadow-hover);
+  border-color: color-mix(in srgb, var(--nxh-hue) 40%, var(--nxh-border));
+}
+
+.nxh-tile-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: calc(44px * var(--nx-density-scale, 1));
+  height: calc(44px * var(--nx-density-scale, 1));
+  border-radius: calc(var(--nxh-radius) * 0.9);
+  color: var(--nxh-hue);
+  background: color-mix(in srgb, var(--nxh-hue) var(--nxh-tint-mix), transparent);
+}
+
+.nxh-tile-icon svg {
+  stroke: currentColor;
+}
+
+.nxh-tile-letter {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.nxh-tile-label {
+  max-width: 100%;
+  font-size: var(--text-md, 14px);
+  font-weight: 500;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.nxh-badge {
+  position: absolute;
+  inset-block-start: 8px;
+  inset-inline-end: 8px;
+  min-width: 20px;
+  height: 20px;
+  padding-inline: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+  background: var(--nxh-accent);
+  border-radius: 999px;
+}
+
+.nxh-empty {
+  margin: 0;
+  padding: var(--nxh-space);
+  color: var(--nxh-muted);
+  text-align: center;
+  border: 1px dashed var(--nxh-border);
+  border-radius: var(--nxh-radius);
+}
+
+/* Placeholder tiles while the first call is out. */
+.nxh-tile-skeleton {
+  pointer-events: none;
+  box-shadow: none;
+  background: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--nxh-text) 6%, transparent) 50%,
+      transparent 100%
+    )
+    var(--nxh-surface);
+  background-size: 200% 100%;
+  animation: nxh-shimmer 1.2s linear infinite;
+}
+
+@keyframes nxh-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* ---- Compact list layout (Theme Settings → Home Layout) ---- */
+
+.nxh[data-layout="list"] .nxh-tiles {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: calc(var(--nxh-space) * 0.5);
+}
+
+.nxh[data-layout="list"] .nxh-tile {
+  flex-direction: row;
+  justify-content: flex-start;
+  min-height: 0;
+  padding-block: calc(10px * var(--nx-density-scale, 1));
+  padding-inline: 12px 40px;
+  text-align: start;
+}
+
+.nxh[data-layout="list"] .nxh-tile-icon {
+  width: calc(32px * var(--nx-density-scale, 1));
+  height: calc(32px * var(--nx-density-scale, 1));
+}
+
+.nxh[data-layout="list"] .nxh-tile-label {
+  -webkit-line-clamp: 1;
+}
+
+.nxh[data-layout="list"] .nxh-tile .nxh-badge {
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+}
+
+.nxh[data-layout="list"] .nxh-tile-skeleton {
+  min-height: calc(52px * var(--nx-density-scale, 1));
+}
+
+/* ---- Tint palette: one hue per slot (utils/home.TINT_COUNT = 8) ---- */
+
+.nxh-tint-0 { --nxh-hue: #6366f1; }
+.nxh-tint-1 { --nxh-hue: #0ea5e9; }
+.nxh-tint-2 { --nxh-hue: #10b981; }
+.nxh-tint-3 { --nxh-hue: #f59e0b; }
+.nxh-tint-4 { --nxh-hue: #f43f5e; }
+.nxh-tint-5 { --nxh-hue: #8b5cf6; }
+.nxh-tint-6 { --nxh-hue: #14b8a6; }
+.nxh-tint-7 { --nxh-hue: #f97316; }
+
+/* Lighter hues on dark surfaces, so the icon keeps its contrast. */
+html[data-theme="dark"] .nxh-tint-0 { --nxh-hue: #a5b4fc; }
+html[data-theme="dark"] .nxh-tint-1 { --nxh-hue: #7dd3fc; }
+html[data-theme="dark"] .nxh-tint-2 { --nxh-hue: #6ee7b7; }
+html[data-theme="dark"] .nxh-tint-3 { --nxh-hue: #fcd34d; }
+html[data-theme="dark"] .nxh-tint-4 { --nxh-hue: #fda4af; }
+html[data-theme="dark"] .nxh-tint-5 { --nxh-hue: #c4b5fd; }
+html[data-theme="dark"] .nxh-tint-6 { --nxh-hue: #5eead4; }
+html[data-theme="dark"] .nxh-tint-7 { --nxh-hue: #fdba74; }
+
+/* ---- Phone width: two tiles per row ---- */
+
+@media (max-width: 575.98px) {
+  .nxh-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nxh[data-layout="list"] .nxh-tiles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nxh-tile {
+    min-height: calc(104px * var(--nx-density-scale, 1));
+  }
+
+  .nxh-shortcut {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
+/* ---- Reduced motion ---- */
+
+@media (prefers-reduced-motion: reduce) {
+  .nxh-shortcut,
+  .nxh-tile {
+    transition: none;
+  }
+
+  .nxh-tile:hover {
+    transform: none;
+  }
+
+  .nxh-tile-skeleton {
+    animation: none;
+  }
+}
