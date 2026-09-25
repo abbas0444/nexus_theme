@@ -21,6 +21,11 @@ from nexus_theme.utils.css_safety import (
 	STYLE_FIELDS,
 	is_safe_value,
 )
+from nexus_theme.utils.sidebar_skin import (
+	SIDEBAR_STYLES,
+	resolve_sidebar,
+	sidebar_contrast_failures,
+)
 
 FIXTURE = Path(__file__).resolve().parent.parent / "fixtures" / "theme_definition.json"
 
@@ -123,6 +128,38 @@ class TestFixtureThemes(unittest.TestCase):
 		# without the flag would ship in the file but never be re-exported.
 		for t in self.themes:
 			self.assertEqual(t["is_default"], 1, t["theme_name"])
+
+	def test_every_theme_has_valid_sidebar_fields(self):
+		for t in self.themes:
+			self.assertIn(t.get("sidebar_style"), SIDEBAR_STYLES, t["theme_name"])
+			for flag in ("sidebar_pattern", "icon_tints"):
+				self.assertIn(t.get(flag), (0, 1), f"{t['theme_name']}: {flag}")
+
+	def test_sidebar_text_passes_aa(self):
+		"""theme_definition.py throws on these for default themes, too."""
+		for t in self.themes:
+			failures = sidebar_contrast_failures(t)
+			self.assertEqual(
+				failures,
+				[],
+				f"{t['theme_name']}: sidebar text fails AA on "
+				+ ", ".join(f"{s} ({r:.2f})" for s, r in failures),
+			)
+
+	def test_plain_stays_on_the_themes_that_need_it(self):
+		# github-light mirrors GitHub's own chrome and high-contrast is for
+		# people who need the fewest surprises: both keep Frappe's sidebar.
+		by_key = {t["theme_key"]: t for t in self.themes}
+		for key in ("github-light", "high-contrast"):
+			self.assertEqual(by_key[key]["sidebar_style"], "Plain", key)
+			self.assertIsNone(resolve_sidebar(by_key[key]))
+
+	def test_pattern_only_on_strong_sidebars(self):
+		# The wave is drawn on Solid and Gradient only; a flag anywhere else
+		# would be dead data that the Studio then shows as switched on.
+		for t in self.themes:
+			if t["sidebar_pattern"]:
+				self.assertIn(t["sidebar_style"], ("Solid", "Gradient"), t["theme_name"])
 
 
 if __name__ == "__main__":
