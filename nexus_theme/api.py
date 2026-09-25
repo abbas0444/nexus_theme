@@ -4,6 +4,7 @@ import frappe
 from frappe import _
 
 from nexus_theme.utils import sound_url
+from nexus_theme.utils.density import MODES, label_for, normalize_density, resolve_density
 
 
 def _invalidate_bootinfo(user: str | None = None) -> None:
@@ -224,10 +225,17 @@ def get_active_theme():
 	renders. We must NOT create a preference here: this runs on every
 	`boot_session`, so auto-assigning a theme would both force one on every
 	new user and silently undo `clear_active_theme()` on the next page load.
+
+	`density` rides along in every answer. It is independent of the theme:
+	a row may hold a density and no theme at all (set_density before any
+	theme was picked, or the theme was deleted since), and that row reads
+	as "never chose" for the theme while still answering for the density.
 	"""
 	user = frappe.session.user
 	pref_name = frappe.db.exists("User Theme Preference", {"user": user})
-	if not pref_name:
+	pref = frappe.get_doc("User Theme Preference", pref_name) if pref_name else None
+	density = _resolve_density(pref)[0]
+	if not pref or (not pref.use_frappe_theme and not pref.active_theme):
 		# No preference of their own — fall back to the site default if an
 		# admin set one. Still no row is created: this runs on every boot,
 		# and writing here would both pin the user to today's default and
@@ -243,6 +251,7 @@ def get_active_theme():
 					"dark_overrides": {},
 					"mode": "Single",
 					"source": "site_default",
+					"density": density,
 				}
 		return {
 			"theme": None,
@@ -250,9 +259,9 @@ def get_active_theme():
 			"dark_theme": None,
 			"dark_overrides": {},
 			"mode": "Single",
+			"density": density,
 		}
 
-	pref = frappe.get_doc("User Theme Preference", pref_name)
 	if pref.use_frappe_theme:
 		# A recorded opt-out, not an absence. It must NOT fall through to the
 		# site default above, or picking "Frappe Light" would bring that
@@ -264,6 +273,7 @@ def get_active_theme():
 			"dark_overrides": {},
 			"mode": "Single",
 			"source": "frappe",
+			"density": density,
 		}
 
 	theme = frappe.db.get_value("Theme Definition", pref.active_theme, THEME_FIELDS, as_dict=True)
@@ -288,6 +298,7 @@ def get_active_theme():
 		"dark_overrides": dark_overrides,
 		"mode": mode,
 		"source": "user",
+		"density": density,
 	}
 
 
@@ -583,10 +594,28 @@ def _detach_theme_from_preferences(theme_name: str) -> None:
 	showed as a bare "Failed to delete theme". Whoever had it active goes
 	back to "never chose" (the site default, or Frappe's own theme); whoever
 	paired it as the dark half of an automatic pair drops to a single theme.
+
+	A row that also carries a density is not dropped, only emptied of the
+	theme: the density is the person's own choice and has nothing to do
+	with the theme that is going. A row with nothing else on it goes.
 	"""
-	using = frappe.get_all("User Theme Preference", filters={"active_theme": theme_name}, pluck="user")
-	if using:
-		frappe.db.delete("User Theme Preference", {"active_theme": theme_name})
+	rows = frappe.get_all(
+		"User Theme Preference",
+		filters={"active_theme": theme_name},
+		fields=["name", "user", "density"],
+	)
+	using = [r.user for r in rows]
+	keep = [r.name for r in rows if normalize_density(r.density)]
+	drop = [r.name for r in rows if r.name not in keep]
+	if drop:
+		frappe.db.delete("User Theme Preference", {"name": ["in", drop]})
+	if keep:
+		frappe.db.set_value(
+			"User Theme Preference",
+			{"name": ["in", keep]},
+			{"active_theme": None, "dark_theme": None, "theme_mode": "Single", "overrides_json": "{}"},
+			update_modified=False,
+		)
 
 	pairing = frappe.get_all("User Theme Preference", filters={"dark_theme": theme_name}, pluck="user")
 	if pairing:
@@ -671,12 +700,95 @@ def import_theme(payload, share_public=0):
 	return save_custom_theme(clean, share_public=share_public)
 
 
+# ---------------------------------------------------------------------------
+# Density
+# ---------------------------------------------------------------------------
+# How much vertical room the Desk gives rows, fields and buttons: Compact,
+# Comfortable (Frappe's own spacing) or Spacious. Stored on the same row as
+# the theme but independent of it — see utils/density.py for the modes and
+# the resolution order (user, then the site's default, then Comfortable).
+
+
+def _resolve_density(pref=None) -> tuple[str, str]:
+	"""(key, source) for the session user, given their preference row if
+	it is already loaded. Reads the row off the document rather than the
+	table, so a boot on a site whose migrate has not added the column yet
+	still answers (with the site's default) instead of failing."""
+	user_value = pref.get("density") if pref else None
+	return resolve_density(user_value, _settings()["default_density"])
+
+
+@frappe.whitelist()
+def get_density():
+	"""The density this user's Desk should draw at: {density, source}.
+
+	`density` is a mode key ("compact"); `source` is which layer answered —
+	"user", "site_default" or "default".
+	"""
+	user = frappe.session.user
+	pref_name = frappe.db.exists("User Theme Preference", {"user": user})
+	pref = frappe.get_doc("User Theme Preference", pref_name) if pref_name else None
+	key, source = _resolve_density(pref)
+	return {"density": key, "source": source}
+
+
+@frappe.whitelist()
+def set_density(density: str | None = None):
+	"""Store this user's density. Empty means "follow the site default".
+
+	Takes a key or a label, in any case. No theme is needed and none is
+	touched: the row is created with only a density when the person has
+	never picked a theme, and a row that opted out to Frappe's own theme
+	keeps that opt-out. Clearing the density on a row that holds nothing
+	else removes the row, which reads the same as never having chosen.
+	"""
+	key = normalize_density(density)
+	if density not in (None, "") and not key:
+		frappe.throw(
+			_("{0} is not a density. Choose {1}.").format(density, ", ".join(m["label"] for m in MODES))
+		)
+
+	user = frappe.session.user
+	pref_name = frappe.db.exists("User Theme Preference", {"user": user})
+	if pref_name:
+		pref = frappe.get_doc("User Theme Preference", pref_name)
+	elif key:
+		pref = frappe.new_doc("User Theme Preference")
+		pref.user = user
+	else:
+		# Nothing stored already means "follow the site". Creating a row to
+		# record that would leave a preference the person never expressed.
+		resolved, source = _resolve_density(None)
+		return {"ok": True, "density": resolved, "source": source}
+
+	if not key and not pref.use_frappe_theme and not pref.active_theme:
+		# The density was the only thing on the row; without it the row is
+		# empty, which validate() rightly refuses. Emptiness is "never chose".
+		frappe.delete_doc("User Theme Preference", pref.name, ignore_permissions=False)
+		_invalidate_bootinfo(user)
+		resolved, source = _resolve_density(None)
+		return {"ok": True, "density": resolved, "source": source}
+
+	pref.density = label_for(key) if key else None
+	pref.save(ignore_permissions=False)
+	_invalidate_bootinfo(user)
+	resolved, source = _resolve_density(pref)
+	return {"ok": True, "density": resolved, "source": source}
+
+
 def extend_boot_session(bootinfo):
 	"""Inject active theme and sound map into bootinfo so first paint is themed."""
 	try:
 		bootinfo["active_theme"] = get_active_theme()
 	except Exception:
 		frappe.log_error(title="theme: boot_session active_theme failed")
+	try:
+		# Also present inside active_theme; kept apart so the density still
+		# reaches the Desk when the theme lookup fails, and so the client can
+		# find it without knowing anything about themes.
+		bootinfo["nexus_density"] = get_density()
+	except Exception:
+		frappe.log_error(title="theme: boot_session density failed")
 	try:
 		bootinfo["user_sounds"] = get_user_sounds()
 	except Exception:

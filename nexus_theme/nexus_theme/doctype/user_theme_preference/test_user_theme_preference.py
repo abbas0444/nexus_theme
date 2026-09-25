@@ -113,6 +113,35 @@ class TestUserThemePreference(FrappeTestCase):
 		doc.use_frappe_theme = 1
 		doc.validate()  # the opt-out row legitimately has no theme
 
+	def test_a_row_may_hold_only_a_density(self):
+		"""Density is independent of the theme: set_density() before any
+		theme was picked, or after the theme was deleted, leaves a row with
+		a density and nothing else. That used to be refused as "pick a
+		theme", so the density could not be stored at all."""
+		doc = self._doc(active_theme=None, density="Compact", theme_mode="Automatic", dark_theme="dracula")
+		doc.validate()
+		self.assertEqual(doc.density, "Compact")
+		# Nothing theme-shaped lingers on a row that has no theme.
+		self.assertFalse(doc.dark_theme)
+		self.assertEqual(doc.theme_mode, "Single")
+		self.assertEqual(doc.overrides_json, "{}")
+
+	def test_density_is_normalised_and_checked(self):
+		doc = self._doc(density="compact")
+		doc.validate()
+		self.assertEqual(doc.density, "Compact")  # the Select's own spelling
+		doc = self._doc(density="")
+		doc.validate()
+		self.assertIsNone(doc.density)  # empty means follow the site
+		doc = self._doc(density="dense")
+		self.assertRaises(frappe.ValidationError, doc.validate)
+
+	def test_opting_out_keeps_the_density(self):
+		doc = self._doc(use_frappe_theme=1, density="Spacious")
+		doc.validate()
+		self.assertFalse(doc.active_theme)
+		self.assertEqual(doc.density, "Spacious")
+
 	def test_opting_out_strips_every_theme_field(self):
 		doc = self._doc(
 			use_frappe_theme=1,
