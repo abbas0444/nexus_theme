@@ -293,3 +293,74 @@ html[data-app-theme][data-sidebar-style="tinted"] .desk-sidebar .standard-sideba
 html[dir="rtl"][data-app-theme][data-sidebar-style="tinted"] .desk-sidebar .standard-sidebar-item.selected {
   box-shadow: inset -3px 0 0 var(--theme-accent);
 }
+
+/* ==========================================================================
+   Module icon tints
+   ==========================================================================
+   sidebar_tints.js writes data-nx-tint on each item; ThemeManager sets
+   html[data-icon-tints="1"] for a theme with the switch on. Each key has a
+   light-canvas tint (-l, 600-level, 3:1 or better on white) and a
+   dark-canvas one (-d, 400-level, 3:1 or better on a dark surface). */
+
+html[data-icon-tints="1"] [data-nx-tint="accounting"] { --nx-tint-l: #2563eb; --nx-tint-d: #60a5fa; }
+html[data-icon-tints="1"] [data-nx-tint="selling"] { --nx-tint-l: #16a34a; --nx-tint-d: #4ade80; }
+html[data-icon-tints="1"] [data-nx-tint="buying"] { --nx-tint-l: #ea580c; --nx-tint-d: #fb923c; }
+html[data-icon-tints="1"] [data-nx-tint="stock"] { --nx-tint-l: #4f46e5; --nx-tint-d: #818cf8; }
+html[data-icon-tints="1"] [data-nx-tint="hr"] { --nx-tint-l: #0d9488; --nx-tint-d: #2dd4bf; }
+html[data-icon-tints="1"] [data-nx-tint="manufacturing"] { --nx-tint-l: #9333ea; --nx-tint-d: #c084fc; }
+html[data-icon-tints="1"] [data-nx-tint="projects"] { --nx-tint-l: #0891b2; --nx-tint-d: #22d3ee; }
+html[data-icon-tints="1"] [data-nx-tint="assets"] { --nx-tint-l: #d97706; --nx-tint-d: #fbbf24; }
+html[data-icon-tints="1"] [data-nx-tint="quality"] { --nx-tint-l: #059669; --nx-tint-d: #34d399; }
+html[data-icon-tints="1"] [data-nx-tint="crm"] { --nx-tint-l: #db2777; --nx-tint-d: #f472b6; }
+html[data-icon-tints="1"] [data-nx-tint="support"] { --nx-tint-l: #dc2626; --nx-tint-d: #f87171; }
+html[data-icon-tints="1"] [data-nx-tint="website"] { --nx-tint-l: #475569; --nx-tint-d: #94a3b8; }
+html[data-icon-tints="1"] [data-nx-tint="settings"] { --nx-tint-l: #4b5563; --nx-tint-d: #9ca3af; }
+/* Anything no rule recognises, by a hash of its label. */
+html[data-icon-tints="1"] [data-nx-tint="h0"] { --nx-tint-l: #0284c7; --nx-tint-d: #38bdf8; }
+html[data-icon-tints="1"] [data-nx-tint="h1"] { --nx-tint-l: #7c3aed; --nx-tint-d: #a78bfa; }
+html[data-icon-tints="1"] [data-nx-tint="h2"] { --nx-tint-l: #e11d48; --nx-tint-d: #fb7185; }
+html[data-icon-tints="1"] [data-nx-tint="h3"] { --nx-tint-l: #65a30d; --nx-tint-d: #a3e635; }
+html[data-icon-tints="1"] [data-nx-tint="h4"] { --nx-tint-l: #c026d3; --nx-tint-d: #e879f9; }
+html[data-icon-tints="1"] [data-nx-tint="h5"] { --nx-tint-l: #a16207; --nx-tint-d: #facc15; }
+html[data-icon-tints="1"] [data-nx-tint="h6"] { --nx-tint-l: #1d4ed8; --nx-tint-d: #93c5fd; }
+html[data-icon-tints="1"] [data-nx-tint="h7"] { --nx-tint-l: #15803d; --nx-tint-d: #86efac; }
+
+html[data-app-theme][data-icon-tints="1"] [data-nx-tint] {
+  --nx-tint: var(--nx-tint-l);
+  --nx-chip: color-mix(in srgb, var(--nx-tint) 15%, transparent);
+}
+
+html[data-app-theme][data-app-dark="1"][data-icon-tints="1"] [data-nx-tint] {
+  --nx-tint: var(--nx-tint-d);
+  --nx-chip: color-mix(in srgb, var(--nx-tint) 18%, transparent);
+}
+
+/* On a Solid or Gradient sidebar a 15% wash of the tint would be lost in
+   the colour behind it, so the icon sits on a near-white chip instead and
+   takes the light-canvas tint. */
+html[data-app-theme][data-sidebar-style="solid"][data-icon-tints="1"] .body-sidebar [data-nx-tint],
+html[data-app-theme][data-sidebar-style="gradient"][data-icon-tints="1"] .body-sidebar [data-nx-tint] {
+  --nx-tint: var(--nx-tint-l);
+  --nx-chip: rgba(255, 255, 255, 0.92);
+}
+
+/* The chip is the icon's own box grown by a spread shadow — no padding or
+   size changes, so it cannot move the label or fight the density modes,
+   and it is symmetric under RTL. Frappe colours sidebar icons through
+   `.text-ink-gray-7 current-color` on the <svg>, i.e. through `color`,
+   so both that and --icon-stroke are set on the svg itself. */
+html[data-app-theme][data-icon-tints="1"] [data-nx-tint] .sidebar-item-icon > svg,
+html[data-app-theme][data-icon-tints="1"] [data-nx-tint] .sidebar-item-icon > .icon {
+  --icon-stroke: var(--nx-tint);
+  color: var(--nx-tint) !important;
+  stroke: var(--nx-tint);
+  background-color: var(--nx-chip);
+  border-radius: 5px;
+  box-shadow: 0 0 0 4px var(--nx-chip);
+}
+
+/* v15 private workspaces show a coloured dot instead of an icon; tint it. */
+html[data-app-theme][data-icon-tints="1"] [data-nx-tint] .sidebar-item-icon > .indicator::before {
+  background-color: var(--nx-tint) !important;
+}
+
