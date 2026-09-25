@@ -47,6 +47,7 @@ app_include_css = [
 	"density.bundle.css",
 	"theme_switcher.bundle.css",
 	"sound_studio.bundle.css",
+	"command_palette.bundle.css",
 ]
 app_include_js = [
 	"theme_manager.bundle.js",
@@ -68,6 +69,10 @@ app_include_js = [
 	"studio_page.bundle.js",
 	"sound_manager.bundle.js",
 	"sound_studio.bundle.js",
+	# Ctrl+K / ⌘K command palette. Last on purpose: it takes the key over
+	# from Frappe's awesomebar and reads the openers the bundles above
+	# define (openThemeSwitcher, openSoundStudio, ThemeManager, SoundManager).
+	"command_palette.bundle.js",
 ]
 
 # Login page and public website. The stylesheet is inert unless
