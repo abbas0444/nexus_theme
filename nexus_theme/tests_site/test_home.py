@@ -193,8 +193,15 @@ class TestHomeBoot(FrappeTestCase):
 		frappe.set_user(ADMIN)
 		doc = frappe.get_doc("Theme Settings")
 		self._prev = {f: doc.get(f) for f in HOME_FIELDS}
+		# A freshly installed test site has not been through the setup
+		# wizard, and the home page rightly never takes the landing before
+		# that. Every test here is about a finished site unless it says
+		# otherwise (test_never_before_setup_is_complete patches it back).
+		self._setup_done = patch("frappe.is_setup_complete", return_value=True)
+		self._setup_done.start()
 
 	def tearDown(self):
+		self._setup_done.stop()
 		frappe.set_user(ADMIN)
 		self._set(**self._prev)
 
