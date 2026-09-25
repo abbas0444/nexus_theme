@@ -49,6 +49,9 @@ app_include_css = [
 	"sound_studio.bundle.css",
 	"command_palette.bundle.css",
 	"whats_new.bundle.css",
+	# Mini rail. Keyed off html[data-nexus-rail-host], which only
+	# sidebar_rail.js sets, and only on screens wide enough for it.
+	"sidebar_rail.bundle.css",
 ]
 app_include_js = [
 	"theme_manager.bundle.js",
@@ -78,6 +81,10 @@ app_include_js = [
 	# to a release that has something to say (whats_new.py decides). After
 	# the palette, so the card can register its own command there.
 	"whats_new.bundle.js",
+	# Mini rail: drives Frappe 16's own collapsed sidebar (or Frappe 15's
+	# page side section), stores the choice per user, adds Ctrl+Shift+B and
+	# hover-to-peek. After the palette, whose register() it calls.
+	"sidebar_rail.bundle.js",
 ]
 
 # Login page and public website. The stylesheet is inert unless
