@@ -60,6 +60,10 @@ class TestIsNewTo(unittest.TestCase):
 		self.assertTrue(is_new_to("1.2.0", "2.0.0"))
 		self.assertTrue(is_new_to("1.9.9", "2.0.0"))
 
+	def test_someone_who_saw_2_0_is_told_about_2_1(self):
+		self.assertTrue(is_new_to("2.0.0", "2.1.0"))
+		self.assertEqual(notes_for("2.1.4")["version"], "2.1.0")
+
 	def test_seen_this_series_already(self):
 		self.assertFalse(is_new_to("2.0.0", "2.0.0"))
 		self.assertFalse(is_new_to("2.0.0", "2.0.4"))
