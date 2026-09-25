@@ -222,6 +222,10 @@ Hover the rail for a moment and it opens over the page, labels and all, without 
 
 ![Hovering the rail peeks it open over the page](docs/images/sidebar-rail-peek.png)
 
+The command palette offers it too: type `side`.
+
+![Collapse sidebar in the command palette](docs/images/command-palette-rail.png)
+
 Your choice is saved for you, not for the browser, so it follows you to every device. Press the same shortcut, or the chevron, to bring the full sidebar back; the chevron always stays visible on the rail.
 
 On a phone-sized screen the rail stays out of the way: Frappe's own drawer takes over. On Frappe 15, which has no app-wide sidebar, the same shortcut and the same saved choice fold the side column of the page you are on.
@@ -259,7 +263,11 @@ Click a different card and only the preview changes. The Desk behind it stays as
 |---|---|
 | **Default Themes** | The 17 themes that ship with the app |
 | **My Custom Themes** | Themes you saved. Only you see them, and you can delete them here. |
-| **Public Themes** | Themes your colleagues chose to share with everyone |
+| **Shared by Others** | Themes your colleagues chose to share with everyone |
+
+![My Custom Themes and Shared by Others in the gallery](docs/images/studio-lists.png)
+
+*A custom theme of your own (Brand Blue) sits under My Custom Themes; one a colleague shared shows under Shared by Others.*
 
 The 17 bundled themes are:
 
@@ -333,7 +341,13 @@ Every theme you save is tested first:
 - text on cards must reach **4.5 : 1**
 - button text on buttons must reach **3.0 : 1**
 
+- sidebar text on a Tinted, Solid or Gradient sidebar must reach **4.5 : 1**, against the far end of a gradient and against the highlighted item too
+
 If a check fails you get a clear message naming the pair of colours to fix. You cannot save a theme nobody can read.
+
+The editor shows the result live, above the buttons: every pair, its ratio, and a green *Passes WCAG AA* when all of them do. When one fails, **Auto-fix** nudges the colour until it passes.
+
+![The live contrast check in Theme Studio](docs/images/studio-contrast.png)
 
 ### 4.7 Automatic light and dark
 
@@ -511,7 +525,7 @@ Filters above the table:
 
 A panel opens on the right with:
 
-- **What can Abbas do here?** Every applicable action with a Yes or No in words, checked live with Frappe so it is exactly what the system enforces right now.
+- **What can Abbas do here?** Every applicable action in words, worked out by Frappe's own permission engine from their roles, the way it decides for a record: **Yes**, **No**, **Own only** (only on records they created) or **Shared records only** (no role allows it, but some records were shared with them). A User Permission can still narrow which records a Yes applies to; *Which records?* shows it.
 - **Why?** Each role's rule in words: *Role Accounts User allows: View, Edit, Create, Submit…*
 - **Which records?** Any User Permission that narrows this record type, such as *Only where Company is Acme Ltd*.
 - The **standard rules before they were customised**, if someone changed them.
@@ -616,7 +630,9 @@ All of the wording lives in one place, in the **Login Page** section of Theme Se
 
 ### 7.2 The Nexus home page
 
-Tick **Use the Nexus Home Page** in Theme Settings and the Desk opens on a home page instead of Frappe's own landing, for every Desk user:
+Tick **Use the Nexus Home Page** in Theme Settings and the Desk opens on a home page instead of Frappe's own landing, for every Desk user.
+
+![The Home Page section of Theme Settings](docs/images/dt-theme-settings-home.png)
 
 ![The Nexus home page](docs/images/nexus-home.png)
 
@@ -628,6 +644,10 @@ Tick **Use the Nexus Home Page** in Theme Settings and the Desk opens on a home 
 It follows the theme, the density and right-to-left languages:
 
 ![The home page on a dark theme](docs/images/nexus-home-dark.png)
+
+With **Home Layout** set to *Compact list*, the workspaces are a denser list instead of tiles:
+
+![The home page in the Compact list layout](docs/images/nexus-home-list.png)
 
 Untick the box and the Desk goes straight back to Frappe's own landing on the next page load. Frappe's own desktop is always one click away through **All apps** on the home page. Anyone can also open the page on purpose at `/app/nexus-home`, or from the command palette with *Open Home*.
 
@@ -649,7 +669,7 @@ One row is one theme. The 17 that ship with the app are here, and so is every th
 
 ![The Theme Definition list](docs/images/dt-theme-definition-list.png)
 
-Open one and you see exactly the values Theme Studio edits, in four groups: **Identity**, **Colors**, **Buttons** and **Typography**.
+Open one and you see exactly the values Theme Studio edits, in six groups: **Identity**, **Colors**, **Buttons**, **Typography**, **Motion & Shape** and **Sidebar**.
 
 ![A Theme Definition record](docs/images/dt-theme-definition-form.png)
 
@@ -664,6 +684,8 @@ Open one and you see exactly the values Theme Studio edits, in four groups: **Id
 | **Restrict to Roles** | Leave empty to show it to everyone. Fill it in and only those roles see the theme. |
 | **Colors / Buttons / Typography** | The eleven colours, the font family, the base size and weight, and the corner radius |
 | **Sidebar** | Sidebar Style (Plain, Tinted, Solid, Gradient), Sidebar Pattern, Module Icon Tints, and optional Sidebar Background, Text and Active Item colours. Empty colours are worked out from the accent. |
+
+![The Sidebar group of a Theme Definition](docs/images/dt-theme-definition-sidebar.png)
 
 **When to create a new one by hand**
 
@@ -975,7 +997,7 @@ Check the Enable sounds switch in Sound Settings, then the browser's site permis
 Only System Managers can open it. Ask one to open `/app/nexus-permission-inspector`.
 
 **I changed a permission and the person still cannot do it.**
-Open the record type in the inspector and read **What can they do here?**; it is checked live. If it says Yes, ask the person to reload the page. If it says No, another rule or a User Permission is limiting them; the **Why?** and **Which records?** sections show which.
+Open the record type in the inspector and read **What can they do here?**; it comes from Frappe's own permission engine. If it says Yes, ask the person to reload the page. If it says No, another rule or a User Permission is limiting them; the **Why?** and **Which records?** sections show which.
 
 **I want to undo a permission change.**
 Change it back in the inspector, or open the record type in Frappe's Role Permission Manager and press Restore Original Permissions to return to the standard rules.
