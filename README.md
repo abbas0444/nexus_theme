@@ -25,6 +25,8 @@ Two things people asked for most, and a card on the Desk that tells every user a
 - **Density modes.** **Compact**, **Comfortable** or **Spacious**: how much vertical room rows, fields and buttons get. Yours alone, set in Theme Studio or from the palette; administrators choose the site's starting point in Theme Settings. See [section 4.10](#410-density-compact-comfortable-or-spacious).
 - **A "What's new" card**, shown once per person after an upgrade to a release that has something to say, with a button that takes them to each new feature. It never comes back for patch releases.
 
+![The What's new card on first sign-in after the upgrade](docs/images/whats-new.png)
+
 Upgrading from 1.x: `bench update` (or pull the branch), then `bench --site yoursite.com migrate` and `bench restart`. Nothing changes for anyone until they try the new things; Comfortable is exactly the spacing you have today. Full details in the [Release Notes](https://github.com/abbas0444/nexus_theme/wiki/Release-Notes).
 
 ---
@@ -37,6 +39,11 @@ Every screenshot below is the app running on a real ERPNext site. The screens ar
 |---|---|
 | ![Theme Studio](docs/images/theme-studio.png) | ![Permission Inspector](docs/images/inspector-role.png) |
 | Pick a theme and watch a miniature Desk repaint as you go. | See what a role or a person may do, record type by record type. |
+
+| Command Palette *(new in 2.0)* | Density *(new in 2.0)* |
+|---|---|
+| ![The command palette](docs/images/command-palette-search.png) | ![Theme Studio with the Density switch](docs/images/studio-density.png) |
+| Ctrl+K, type a few letters, Enter. Every record type, report, page, theme and action. | Compact, Comfortable or Spacious: how much room rows, fields and buttons get. |
 
 | Sign-in screen | Sound Studio |
 |---|---|
@@ -157,6 +164,14 @@ The apps screen carries a **Nexus Theme** tile, and the avatar menu in the corne
 
 Press **Ctrl+K** (**⌘K** on a Mac) on any Desk page, or **Ctrl+Shift+P**. A box opens with a search field and, before you type anything, the documents you had open most recently. Start typing and the list narrows as you go; the letters that matched are highlighted. **↑ ↓** move, **Enter** runs, **Esc** closes.
 
+![The command palette, empty: recent documents and actions](docs/images/command-palette.png)
+
+*Open it and the actions are already there: the studios, every theme you may switch to (your current one marked), density, sounds.*
+
+![The command palette after typing "sal inv"](docs/images/command-palette-search.png)
+
+*Type `sal inv`: Sales Invoice, its reports, and New Sales Invoice, with the matched letters highlighted.*
+
 What it can reach, in the order the groups appear:
 
 | Group | What is in it |
@@ -169,6 +184,10 @@ What it can reach, in the order the groups appear:
 Matching is forgiving: `od` finds *Order Delivery* and *Sales Order*, `pi` finds *Purchase Invoice*, and the words you type may come in any order. Nothing is stored; each opening starts empty.
 
 **One thing to know.** On Frappe 16 the Desk used Ctrl+K for its own search bar; the palette takes that shortcut over. **Ctrl+G** still opens Frappe's global search, and the search bar itself is where it always was. On Frappe 15 Ctrl+K was free.
+
+![The command palette on a dark theme](docs/images/command-palette-dark.png)
+
+*It follows your theme: here on GitHub Dark, listing the themes to switch to.*
 
 ---
 
@@ -306,6 +325,8 @@ Click **Reset to Default** at the bottom of Theme Studio, or choose Frappe Light
 
 Just under the preview in Theme Studio is a **Density** switch with three positions. It changes how much vertical room the Desk gives everything — list rows, grid rows, form fields, buttons, inputs, sidebar items, dropdown entries — and nothing else: no colours, no font sizes, no widths.
 
+![The Density switch under the live preview in Theme Studio](docs/images/studio-density.png)
+
 | Mode | For whom |
 |---|---|
 | **Compact** | People who live in lists and grids and want more rows on the screen. About a fifth less height everywhere. |
@@ -313,6 +334,14 @@ Just under the preview in Theme Studio is a **Density** switch with three positi
 | **Spacious** | More air in forms, easier to read on a large screen or with a touch screen. About a fifth more. |
 
 Click one and the whole Desk changes at once and stays that way on every device you sign in from. It is independent of the theme: you can be on Frappe's own look and still be Compact. From the command palette, type `density` and pick a mode.
+
+![The same list in Compact and in Spacious](docs/images/density-list.png)
+
+*The Item list at Compact (left) and Spacious (right): the same twelve rows, a fifth less height or a fifth more.*
+
+![The same form in Compact and in Spacious](docs/images/density-form.png)
+
+*An Item form at Compact and at Spacious. Widths never change, only the vertical room.*
 
 Density is per person. An administrator sets the site's starting point with **Default Density** in Theme Settings; anyone who has not chosen for themselves follows it, and changing it later changes their Desk too. Someone who picked a density keeps it whatever the site default does.
 
