@@ -1,0 +1,377 @@
+/* ==================================================================
+   Density
+   ------------------------------------------------------------------
+   Compact, Comfortable and Spacious: how much vertical room the Desk
+   gives each row, field and button. density.js writes the choice to
+   <html data-density="compact|spacious">; Comfortable writes nothing,
+   and every rule here is keyed off that attribute, so a Desk on
+   Comfortable is pixel-identical to one that has never loaded this
+   file. It is deliberately NOT scoped under data-app-theme — density
+   is a property of the person, not the theme, and applies on Frappe's
+   stock look too.
+
+   How the cascade works:
+
+   * The two blocks at the top define the tokens, one set per mode.
+     Every value below is a token, so a mode is one block to read.
+
+   * A few of the tokens are Frappe's own variables (--input-height,
+     --btn-height, --navbar-height, --page-head-height, …). Frappe
+     defines them on :root at (0,1,0); html[data-density] is (0,1,1)
+     and redefines them for the whole tree, so everything Frappe sizes
+     off them follows without a selector of ours. --navbar-height and
+     --page-head-height move together on purpose: on v16 the navbar is
+     hidden but its variable still sets where form tabs stick, so the
+     two must agree or the tabs sit above or below the page head.
+
+   * Everything else is a selector Frappe sizes with a literal, and
+     each of those rules is written against selectors present in both
+     Frappe 15 and 16, changing only the vertical padding, height or
+     margin — never a width or a horizontal padding. Where Frappe uses
+     !important (grid header cells, dropdown items, editable grid rows)
+     the override does too, at a higher specificity.
+
+   Sizes in the comments are Frappe's own: "15/16" when they differ.
+   ================================================================== */
+
+html[data-density="compact"] {
+  --nx-density-scale: 0.8;
+
+  /* Frappe's own variables */
+  --input-height: 24px; /* 28 */
+  --btn-height: 24px; /* 28 */
+  --navbar-height: 44px; /* 48 */
+  --page-head-height: 44px; /* 60/48 */
+  --list-row-height: 26px; /* 30, list header; v16 only */
+  --timeline-item-bottom-margin: 6px; /* 10 */
+
+  /* Controls */
+  --nx-btn-pad-y: 2px; /* 4 */
+  --nx-icon-btn-pad: 4px; /* 0/6 */
+  --nx-input-pad-y: 3px; /* 6 */
+  --nx-input-xs-height: 22px; /* 26 */
+
+  /* Forms */
+  --nx-field-gap: 10px; /* 16 */
+  --nx-label-gap: 4px; /* 6 */
+  --nx-section-head-pad-y: 6px; /* 6/15 */
+  --nx-section-body-gap: 6px; /* 10/16 */
+  --nx-tab-pad-y: 7px; /* 10 */
+  --nx-modal-section-pad-y: 4px; /* 6/7 */
+
+  /* List view */
+  --nx-list-row-height: 32px; /* 40 */
+  --nx-list-cell-pad-y: 4px; /* 0/5 and 9 */
+  --nx-list-check-pad-y: 6px; /* 10/8 */
+
+  /* Child tables */
+  --nx-grid-head-height: 28px; /* 32 */
+  --nx-grid-head-pad-y: 4px; /* 6 */
+  --nx-grid-row-height: 33px; /* 38/43 */
+  --nx-grid-cell-pad-y: 6px; /* 10 */
+
+  /* Report view (DataTable) */
+  --nx-dt-row-height: 29px; /* 35 */
+  --nx-dt-cell-pad-y: 3px; /* 5 */
+  --nx-dt-input-height: 23px; /* 27 */
+  --nx-dt-check-margin-y: 4px; /* 7 */
+
+  /* Sidebars */
+  --nx-sidebar-item-height: 24px; /* 28, v16 */
+  --nx-sidebar-icon-pad: 5px; /* 7, v16 */
+  --nx-sidebar-nav-pad-y: 2px; /* 4, v16 */
+  --nx-sidebar-anchor-pad-y: 1px; /* 3, v15 */
+  --nx-sidebar-section-gap: 20px; /* 30, v15 */
+
+  /* Menus and workspaces */
+  --nx-dropdown-item-pad-y: 2px; /* 4 */
+  --nx-widget-link-pad-y: 2px; /* 4 */
+  --nx-widget-group-gap: 28px; /* 40 */
+  --nx-quick-item-pad-y: 1px; /* 3 */
+}
+
+html[data-density="spacious"] {
+  --nx-density-scale: 1.2;
+
+  --input-height: 32px;
+  --btn-height: 32px;
+  --navbar-height: 60px;
+  --page-head-height: 60px;
+  --list-row-height: 34px;
+  --timeline-item-bottom-margin: 14px;
+
+  --nx-btn-pad-y: 6px;
+  --nx-icon-btn-pad: 8px;
+  --nx-input-pad-y: 6px;
+  --nx-input-xs-height: 30px;
+
+  --nx-field-gap: 22px;
+  --nx-label-gap: 8px;
+  --nx-section-head-pad-y: 16px;
+  --nx-section-body-gap: 16px;
+  --nx-tab-pad-y: 13px;
+  --nx-modal-section-pad-y: 10px;
+
+  --nx-list-row-height: 48px;
+  --nx-list-cell-pad-y: 11px;
+  --nx-list-check-pad-y: 12px;
+
+  --nx-grid-head-height: 36px;
+  --nx-grid-head-pad-y: 8px;
+  --nx-grid-row-height: 48px;
+  --nx-grid-cell-pad-y: 13px;
+
+  --nx-dt-row-height: 42px;
+  --nx-dt-cell-pad-y: 7px;
+  --nx-dt-input-height: 34px;
+  --nx-dt-check-margin-y: 10px;
+
+  --nx-sidebar-item-height: 32px;
+  --nx-sidebar-icon-pad: 9px;
+  --nx-sidebar-nav-pad-y: 6px;
+  --nx-sidebar-anchor-pad-y: 6px;
+  --nx-sidebar-section-gap: 36px;
+
+  --nx-dropdown-item-pad-y: 6px;
+  --nx-widget-link-pad-y: 6px;
+  --nx-widget-group-gap: 48px;
+  --nx-quick-item-pad-y: 5px;
+}
+
+/* ---- Navbar (v15; hidden on v16) ----
+   Frappe writes the navbar's height as a literal, so the variable
+   above only reaches it through this rule. */
+html[data-density] .navbar {
+  height: var(--navbar-height);
+}
+
+/* ---- Buttons ----
+   Frappe's padding rule is `.btn:not(.btn-md):not(.btn-lg)` at (0,3,0);
+   the same :not() chain here lifts this to (0,4,1) so it wins. Line
+   height stays Bootstrap's 1.5, so a plain button goes 29px -> 25/33. */
+html[data-density] .btn:not(.btn-md):not(.btn-lg) {
+  padding-top: var(--nx-btn-pad-y);
+  padding-bottom: var(--nx-btn-pad-y);
+}
+
+/* An icon button is a --btn-height square; the icon inside is 16px, so
+   the padding has to shrink with the box or the icon spills out. */
+html[data-density] .btn.icon-btn:not(.btn-md):not(.btn-lg) {
+  padding: var(--nx-icon-btn-pad);
+}
+
+/* ---- Inputs ----
+   Height comes from --input-height. A 24px input with Frappe's 6px of
+   vertical padding leaves 12px for 14px text, so the padding gives too.
+   Only real inputs: select.form-control has padding-block: 0 already. */
+html[data-density] input.form-control {
+  padding-top: var(--nx-input-pad-y);
+  padding-bottom: var(--nx-input-pad-y);
+}
+
+html[data-density] .input-xs {
+  height: var(--nx-input-xs-height);
+}
+
+/* ---- Form layout ----
+   The gap under each field is Bootstrap's .form-group margin (16px)
+   and the single biggest lever on a form. The column's last field
+   keeps Frappe's own rule (0 on v15, 8px on v16). Editable grid rows
+   are not under a .form-column, so their zero margin is untouched. */
+html[data-density] .form-column .frappe-control:not(:last-child) {
+  margin-bottom: var(--nx-field-gap);
+}
+
+html[data-density] .control-label {
+  margin-bottom: var(--nx-label-gap);
+}
+
+html[data-density] .form-section .section-head {
+  padding-top: var(--nx-section-head-pad-y);
+  padding-bottom: var(--nx-section-head-pad-y);
+}
+
+html[data-density] .form-section .section-body:first-child {
+  margin-top: var(--nx-section-body-gap);
+}
+
+html[data-density] .form-tabs-list .nav-link {
+  padding-top: var(--nx-tab-pad-y);
+  padding-bottom: var(--nx-tab-pad-y);
+}
+
+/* Dialogs lay their sections out differently: the section itself
+   carries the vertical padding and the head has none, with a little
+   under it when open. Follow that shape rather than the form's. */
+html[data-density] .modal .form-section {
+  padding-top: var(--nx-modal-section-pad-y);
+  padding-bottom: var(--nx-modal-section-pad-y);
+}
+
+html[data-density] .modal .form-section .section-head {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+html[data-density] .modal .form-section .section-head:not(.collapsed) {
+  padding-bottom: var(--nx-modal-section-pad-y);
+}
+
+/* ---- List view ----
+   v15 gives .list-row a fixed 40px and 15px of vertical padding that
+   the centred flex content overflows; v16 gives it no height and pads
+   .level-left / .level-right instead. A fixed height with the cells'
+   own padding scaled works for both: .level centres its children.
+   .level-right stretches so v16's sticky action column keeps its
+   full-height left border. The header row (.list-row-head) is sized
+   by --list-row-height on v16 and by the rule below on v15. */
+html[data-density] .list-row {
+  height: var(--nx-list-row-height);
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+html[data-density] .list-row-head {
+  height: var(--list-row-height);
+}
+
+html[data-density] .list-row .level-left,
+html[data-density] .list-row .level-right {
+  padding-top: var(--nx-list-cell-pad-y);
+  padding-bottom: var(--nx-list-cell-pad-y);
+}
+
+html[data-density] .list-row .level-right {
+  align-self: stretch;
+}
+
+html[data-density] .list-row .select-like,
+html[data-density] .list-row-head .select-like {
+  padding-top: var(--nx-list-check-pad-y);
+  padding-bottom: var(--nx-list-check-pad-y);
+}
+
+/* ---- Child tables ----
+   Header cells carry `padding: … !important` in Frappe, so these do
+   too. `.with-filter` doubles the header for the filter row and is
+   left alone. */
+html[data-density] .grid-heading-row:not(.with-filter) {
+  height: var(--nx-grid-head-height);
+}
+
+html[data-density] .grid-heading-row .grid-static-col,
+html[data-density] .grid-heading-row .row-check,
+html[data-density] .grid-heading-row .row-index {
+  height: var(--nx-grid-head-height);
+  padding-top: var(--nx-grid-head-pad-y) !important;
+  padding-bottom: var(--nx-grid-head-pad-y) !important;
+}
+
+html[data-density] .grid-body .grid-static-col,
+html[data-density] .grid-body .row-check,
+html[data-density] .grid-body .row-index {
+  height: var(--nx-grid-row-height);
+}
+
+/* Static cells: Frappe pads with --grid-padding (10px 8px); the
+   horizontal 8px stays. Editable rows zero the cell padding with
+   !important and put the input in the whole cell, and keep the
+   row-index and Button cells padded with !important, so those two get
+   the same treatment at one class higher. */
+html[data-density] .grid-row > .row .col {
+  padding-top: var(--nx-grid-cell-pad-y);
+  padding-bottom: var(--nx-grid-cell-pad-y);
+}
+
+html[data-density] .grid-body .editable-row .grid-static-col.row-index,
+html[data-density] .grid-body .editable-row .grid-static-col[data-fieldtype="Button"] {
+  padding-top: var(--nx-grid-cell-pad-y) !important;
+  padding-bottom: var(--nx-grid-cell-pad-y) !important;
+}
+
+html[data-density] .grid-body .editable-row textarea {
+  height: var(--nx-grid-row-height) !important;
+}
+
+/* ---- Report view (frappe-datatable) ----
+   Frappe fixes the row at 35px and the cell padding through the
+   library's --dt-spacer-2, which is on both axes; only the vertical
+   padding changes here, so column widths are exactly as before. An
+   editing cell has no padding in Frappe and keeps none: its input
+   is sized to the row instead. */
+html[data-density] .datatable .dt-row {
+  height: var(--nx-dt-row-height);
+}
+
+html[data-density] .datatable .dt-cell__content {
+  padding-top: var(--nx-dt-cell-pad-y);
+  padding-bottom: var(--nx-dt-cell-pad-y);
+}
+
+html[data-density] .datatable .dt-cell__edit input[type="text"],
+html[data-density] .datatable select {
+  height: var(--nx-dt-input-height);
+}
+
+html[data-density] .datatable .checkbox {
+  margin-top: var(--nx-dt-check-margin-y);
+  margin-bottom: var(--nx-dt-check-margin-y);
+}
+
+/* ---- Sidebar, v16 (.body-sidebar) ----
+   Each item is a 28px .item-anchor whose icon is 14px plus 7px of
+   padding on every side; the icon box shrinks with the row so the
+   icon stays centred. The drop-icon is the same square. */
+html[data-density] .body-sidebar .standard-sidebar-item .item-anchor {
+  height: var(--nx-sidebar-item-height);
+}
+
+html[data-density] .body-sidebar .standard-sidebar-item .item-anchor .sidebar-item-icon {
+  padding: var(--nx-sidebar-icon-pad);
+}
+
+html[data-density] .body-sidebar .standard-sidebar-item .sidebar-item-control .drop-icon {
+  width: var(--nx-sidebar-item-height);
+  height: var(--nx-sidebar-item-height);
+}
+
+html[data-density] .body-sidebar .nav-item {
+  padding-top: var(--nx-sidebar-nav-pad-y);
+  padding-bottom: var(--nx-sidebar-nav-pad-y);
+}
+
+/* ---- Sidebar, v15 (.desk-sidebar on the Workspaces page) ----
+   Items have no padding of their own there; the anchor inside has
+   3px, and sections sit 30px apart. */
+html[data-density] .desk-sidebar .standard-sidebar-item .item-anchor {
+  padding-top: var(--nx-sidebar-anchor-pad-y);
+  padding-bottom: var(--nx-sidebar-anchor-pad-y);
+}
+
+html[data-density] .desk-sidebar .standard-sidebar-section {
+  margin-bottom: var(--nx-sidebar-section-gap);
+}
+
+/* ---- Dropdown menus ----
+   Frappe's `.dropdown-item { padding: … !important }` needs the same
+   weight. The navbar's own dropdowns (v15) pad at (0,3,0) !important
+   and are left as they are. */
+html[data-density] .dropdown-item {
+  padding-top: var(--nx-dropdown-item-pad-y) !important;
+  padding-bottom: var(--nx-dropdown-item-pad-y) !important;
+}
+
+/* ---- Workspaces ---- */
+html[data-density] .widget-group {
+  margin-bottom: var(--nx-widget-group-gap);
+}
+
+html[data-density] .widget.links-widget-box .link-item {
+  padding-top: var(--nx-widget-link-pad-y);
+  padding-bottom: var(--nx-widget-link-pad-y);
+}
+
+html[data-density] .quick-list-widget-box .quick-list-item {
+  padding-top: var(--nx-quick-item-pad-y);
+  padding-bottom: var(--nx-quick-item-pad-y);
+}
