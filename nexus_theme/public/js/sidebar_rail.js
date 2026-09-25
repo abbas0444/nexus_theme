@@ -215,6 +215,11 @@
 		seedFrappe();
 		const sb = appSidebar();
 		if (!sb || !wideEnough()) return;
+		// open() and close() end in sidebar_header.toggle_width(), and the
+		// header is only built with the first workspace. Until then there is
+		// nothing to drive: seedFrappe() above has already written the choice
+		// where Frappe reads it when it draws that header.
+		if (!sb.sidebar_header) return;
 		if (!!sb.sidebar_expanded === !state.collapsed) return;
 		if (state.collapsed && !available()) return; // nothing to fold away
 		peek(false);
@@ -571,11 +576,31 @@
 		}
 	}
 
+	/**
+	 * Call `fn` with the running Frappe 16 sidebar as soon as there is one.
+	 *
+	 * Frappe fires app_ready from inside the Application constructor, before
+	 * `frappe.app` has been assigned, so at that moment frappe.app.sidebar
+	 * does not exist yet even though the sidebar has been built. Hooking
+	 * straight away silently hooked nothing: no hover-to-peek, and Frappe's
+	 * own chevron and Ctrl+/ were never saved. The assignment lands as soon
+	 * as the constructor returns, so a few turns of the event loop is
+	 * always enough; the cap only guards against a Desk that never starts.
+	 */
+	function whenAppSidebar(fn, tries = 0) {
+		const sb = appSidebar();
+		if (sb) {
+			fn(sb);
+			return;
+		}
+		if (tries < 100) setTimeout(() => whenAppSidebar(fn, tries + 1), 20);
+	}
+
 	let started = false;
 	function start() {
 		if (started) return;
 		started = true;
-		if (hasAppSidebar()) hookV16(appSidebar());
+		if (hasAppSidebar()) whenAppSidebar(hookV16);
 		else hookV15();
 		bindShortcut();
 		registerCommands();
