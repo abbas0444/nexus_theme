@@ -63,7 +63,78 @@
 			options: ["0ms", "100ms", "150ms", "250ms", "400ms"],
 		},
 		{ key: "enable_hover_lift", label: "Hover Lift", type: "toggle", tier: "basic" },
+
+		// ---- Sidebar group ----
+		// Rendered under their own heading after the fields above. The three
+		// colours are optional: empty means "derive it" (NexusSidebarSkin in
+		// theme_manager.js), so their pickers show the derived colour and an
+		// Auto button puts a hand-picked one back to derived.
+		{
+			key: "sidebar_style",
+			label: "Sidebar Style",
+			type: "select",
+			tier: "basic",
+			group: "sidebar",
+			options: ["Plain", "Tinted", "Solid", "Gradient"],
+		},
+		{
+			key: "sidebar_pattern",
+			label: "Wave Pattern",
+			type: "toggle",
+			tier: "basic",
+			group: "sidebar",
+			// Drawn on the two strong styles only.
+			when: (style) => style === "Solid" || style === "Gradient",
+		},
+		{
+			key: "icon_tints",
+			label: "Module Icon Colours",
+			type: "toggle",
+			tier: "basic",
+			group: "sidebar",
+		},
+		{
+			key: "sidebar_bg",
+			label: "Sidebar Color",
+			type: "color",
+			tier: "advanced",
+			group: "sidebar",
+			optional: true,
+			skinKey: "bg",
+			when: (style) => style !== "Plain",
+		},
+		{
+			key: "sidebar_text",
+			label: "Sidebar Text",
+			type: "color",
+			tier: "advanced",
+			group: "sidebar",
+			optional: true,
+			skinKey: "text",
+			when: (style) => style !== "Plain",
+		},
+		{
+			key: "sidebar_active_bg",
+			label: "Sidebar Active Item",
+			type: "color",
+			tier: "advanced",
+			group: "sidebar",
+			optional: true,
+			skinKey: "activeBg",
+			when: (style) => style !== "Plain",
+		},
 	];
+
+	// The sidebar resolver lives in theme_manager.js, which loads first; the
+	// guard keeps the editor usable (without the sidebar derivations) if it
+	// is ever missing.
+	function sidebarSkin() {
+		return window.NexusSidebarSkin || null;
+	}
+
+	function isOn(v) {
+		return !!(v && v !== "0");
+	}
 
 	const TAB_STORAGE_KEY = "theme:editor_tab";
 	const VALID_TABS = ["basic", "advanced", "palettes", "generate"];
@@ -235,6 +306,13 @@
 
 		const emitPreview = () => onPreview(Object.assign({}, overrides));
 
+		// Theme and overrides together: what the Desk would paint.
+		const mergedValues = () => Object.assign({}, getBase(), overrides);
+		const sidebarStyle = () => {
+			const api = sidebarSkin();
+			return api ? api.normalizeStyle(valueFor("sidebar_style")) : "Plain";
+		};
+
 		// ---- Render orchestrator ----
 		const render = () => {
 			$mount.html(`
@@ -283,11 +361,15 @@
 				return;
 			}
 			const tier = activeTab; // "basic" or "advanced"
+			const style = sidebarStyle();
 			const visible = FIELDS.filter((f) => tier === "advanced" || f.tier === "basic");
+			const main = visible.filter((f) => !f.group);
+			const sidebar = visible.filter((f) => f.group === "sidebar");
 			$pane.html(`
         <div class="theme-editor-grid">
-          ${visible.map((f) => rowHTML(f, valueFor(f.key))).join("")}
+          ${main.map((f) => rowHTML(f, valueFor(f.key))).join("")}
         </div>
+        ${sidebarGroupHTML(sidebar, style)}
         <div class="theme-editor-hint">
           ${
 				tier === "basic"
@@ -304,7 +386,92 @@
 				overrides[key] = value;
 				emitPreview();
 				renderContrast(); // update badge live
+				// The style decides which sidebar controls apply, and every
+				// derived sidebar colour follows the accent and the style.
+				if (key === "sidebar_style" || key === "accent" || key === "text_primary") {
+					refreshSidebarGroup($pane);
+				} else if (key.startsWith("sidebar_") && key !== "sidebar_pattern") {
+					syncDerivedPickers($pane);
+				}
 			});
+			bindSidebarAuto($pane);
+		};
+
+		// ---- Sidebar group ----
+		const sidebarGroupHTML = (fields, style) => {
+			if (!fields.length) return "";
+			const rows = fields
+				.filter((f) => !f.when || f.when(style) || f.type === "toggle")
+				.map((f) => rowHTML(f, valueFor(f.key), style))
+				.join("");
+			const hint =
+				style === "Plain"
+					? __("Plain is Frappe's own sidebar. Pick a style to colour it.")
+					: activeTab === "basic"
+					? __("Colors follow the accent. Switch to Advanced to pick them yourself.")
+					: __(
+							"Leave a color on Auto to derive it from the accent, with readable text."
+					  );
+			return `
+        <div class="theme-editor-group" data-sidebar-group>
+          <div class="theme-editor-group-title">${escapeAttr(__("Sidebar"))}</div>
+          <div class="theme-editor-grid">${rows}</div>
+          <div class="theme-editor-hint">${escapeAttr(hint)}</div>
+        </div>`;
+		};
+
+		// Re-render only the sidebar group, keeping the rest of the pane (and
+		// whatever picker the user is dragging there) untouched.
+		const refreshSidebarGroup = ($pane) => {
+			const $group = $pane.find("[data-sidebar-group]");
+			if (!$group.length) return;
+			const tier = activeTab;
+			const fields = FIELDS.filter(
+				(f) => f.group === "sidebar" && (tier === "advanced" || f.tier === "basic")
+			);
+			const $next = $(sidebarGroupHTML(fields, sidebarStyle()));
+			$group.replaceWith($next);
+			$next.find("[data-field]").on("input change", function () {
+				const key = this.dataset.field;
+				overrides[key] = this.type === "checkbox" ? (this.checked ? 1 : 0) : this.value;
+				emitPreview();
+				renderContrast();
+				if (key === "sidebar_style") refreshSidebarGroup($pane);
+				else if (key !== "sidebar_pattern") syncDerivedPickers($pane);
+			});
+			bindSidebarAuto($pane);
+		};
+
+		// A derived colour moves when another one is picked (text follows the
+		// background), so the Auto pickers are repainted with the new value.
+		const syncDerivedPickers = ($pane) => {
+			const api = sidebarSkin();
+			const skin = api ? api.resolve(mergedValues()) : null;
+			FIELDS.filter((f) => f.optional).forEach((f) => {
+				const $input = $pane.find(`[data-field="${f.key}"]`);
+				if (!$input.length) return;
+				const own = valueFor(f.key);
+				const $row = $input.closest(".theme-editor-row");
+				$row.toggleClass("is-auto", !own);
+				if (!own && skin && document.activeElement !== $input[0]) {
+					$input.val(toHexColor(skin[f.skinKey]));
+				}
+			});
+		};
+
+		const bindSidebarAuto = ($pane) => {
+			$pane
+				.find("[data-auto]")
+				.off("click")
+				.on("click", function (e) {
+					e.preventDefault();
+					// Empty, not deleted: the saved preference has to say "Auto"
+					// too, or a colour stored on the theme itself would come back.
+					overrides[this.dataset.auto] = "";
+					emitPreview();
+					renderContrast();
+					syncDerivedPickers($pane);
+				});
 		};
 
 		const renderPalettes = ($pane) => {
@@ -572,7 +739,27 @@
 		};
 
 		// ---- Field row (color picker / select / toggle) ----
-		const rowHTML = (f, val) => {
+		const rowHTML = (f, val, style) => {
+			if (f.type === "color" && f.optional) {
+				// Show the colour that will actually be painted: the derived one
+				// while the field is on Auto. A <div>, not a <label>: a label
+				// would forward a click on its text to the Auto button.
+				const api = sidebarSkin();
+				const skin = api ? api.resolve(mergedValues()) : null;
+				const shown = val || (skin && skin[f.skinKey]) || "";
+				return `
+          <div class="theme-editor-row theme-editor-row-optional ${val ? "" : "is-auto"}">
+            <span>${escapeAttr(__(f.label))}</span>
+            <span class="theme-editor-optional">
+              <button type="button" class="theme-editor-auto" data-auto="${f.key}"
+                      title="${escapeAttr(__("Derive this color automatically"))}">${escapeAttr(
+					__("Auto")
+				)}</button>
+              <input type="color" data-field="${f.key}" value="${escapeAttr(toHexColor(shown))}"
+                     aria-label="${escapeAttr(__(f.label))}">
+            </span>
+          </div>`;
+			}
 			if (f.type === "color") {
 				return `
           <label class="theme-editor-row">
@@ -581,12 +768,17 @@
           </label>`;
 			}
 			if (f.type === "toggle") {
-				const checked = val ? "checked" : "";
+				// "0" arrives as a string from a cached preference; it is off.
+				const checked = isOn(val) ? "checked" : "";
+				const disabled = f.when && !f.when(style) ? "disabled" : "";
 				return `
-          <label class="theme-editor-row">
+          <label class="theme-editor-row ${disabled ? "is-disabled" : ""}">
             <span>${escapeAttr(__(f.label))}</span>
-            <input type="checkbox" data-field="${f.key}" ${checked}>
+            <input type="checkbox" data-field="${f.key}" ${checked} ${disabled}>
           </label>`;
+			}
+			if (f.key === "sidebar_style") {
+				val = sidebarSkin() ? sidebarSkin().normalizeStyle(val) : val || "Plain";
 			}
 			const opts = (f.options || [])
 				.map(
@@ -638,6 +830,25 @@
 				];
 			} catch (_e) {
 				return;
+			}
+
+			// The sidebar checks theme_definition.py makes (AA on the sidebar,
+			// the far end of a gradient, and the active item). None for Plain.
+			const api = sidebarSkin();
+			if (api) {
+				const surfaceLabels = {
+					sidebar: __("Sidebar text"),
+					"gradient end": __("Sidebar text, gradient end"),
+					"active item": __("Sidebar text, active item"),
+				};
+				for (const c of api.checks(mergedValues())) {
+					pairs.push({
+						label: surfaceLabels[c.surface] || c.surface,
+						fg: c.fg,
+						bg: c.bg,
+						target: 4.5,
+					});
+				}
 			}
 
 			const rows = pairs.map((p) => {
@@ -736,6 +947,18 @@
 				}
 			} catch (_e) {
 				/* skip */
+			}
+
+			// Sidebar: hand-picked colours that fail go back to Auto, whose
+			// text is picked for contrast. The active item first — it is the
+			// one most often chosen close to the sidebar colour — then the
+			// text itself.
+			const api = sidebarSkin();
+			if (api) {
+				const failing = () => api.checks(mergedValues()).some((c) => c.ratio < 4.5);
+				for (const key of ["sidebar_active_bg", "sidebar_text"]) {
+					if (failing() && valueFor(key)) overrides[key] = "";
+				}
 			}
 
 			emitPreview();

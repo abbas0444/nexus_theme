@@ -364,3 +364,156 @@ html[data-app-theme][data-icon-tints="1"] [data-nx-tint] .sidebar-item-icon > .i
   background-color: var(--nx-tint) !important;
 }
 
+/* ==========================================================================
+   Theme Studio preview
+   ==========================================================================
+   The mockup in the Studio (theme_switcher.js buildPreviewHTML) carries
+   the resolved colours as --mock-sidebar-* and the same two attributes as
+   <html>. data-desk="v15" moves the skin to the mockup's top bar, which is
+   where it lands on that Frappe version. */
+
+.theme-preview-mockup[data-sidebar-style] .tpm-sidebar {
+  position: relative;
+  isolation: isolate;
+  background: var(--mock-sidebar-bg) !important;
+  border-right-color: transparent !important;
+}
+
+.theme-preview-mockup[data-sidebar-style="gradient"] .tpm-sidebar {
+  background: linear-gradient(180deg, var(--mock-sidebar-bg), var(--mock-sidebar-bg-end)) !important;
+}
+
+.theme-preview-mockup[data-sidebar-style] .tpm-sideitem {
+  color: var(--mock-sidebar-text) !important;
+  opacity: 0.88;
+}
+
+.theme-preview-mockup[data-sidebar-style] .tpm-sideitem:hover {
+  background: color-mix(in srgb, var(--mock-sidebar-text) 12%, transparent) !important;
+  color: var(--mock-sidebar-text) !important;
+  opacity: 1;
+}
+
+.theme-preview-mockup[data-sidebar-style] .tpm-sideitem.is-active {
+  background: var(--mock-sidebar-active-bg) !important;
+  color: var(--mock-sidebar-text) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mock-sidebar-text) 22%, transparent);
+  opacity: 1;
+}
+
+.theme-preview-mockup[data-sidebar-pattern="1"] .tpm-sidebar::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 60%;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--mock-sidebar-text);
+  opacity: 0.09;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 220' preserveAspectRatio='none'%3E%3Cpath d='M0 92c40-22 80 22 120 0s80-22 120 0v128H0z' opacity='.45'/%3E%3Cpath d='M0 132c40-20 80 20 120 0s80-20 120 0v88H0z' opacity='.7'/%3E%3Cpath d='M0 172c40-18 80 18 120 0s80-18 120 0v48H0z'/%3E%3C/svg%3E")
+    bottom / 100% 100% no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 220' preserveAspectRatio='none'%3E%3Cpath d='M0 92c40-22 80 22 120 0s80-22 120 0v128H0z' opacity='.45'/%3E%3Cpath d='M0 132c40-20 80 20 120 0s80-20 120 0v88H0z' opacity='.7'/%3E%3Cpath d='M0 172c40-18 80 18 120 0s80-18 120 0v48H0z'/%3E%3C/svg%3E")
+    bottom / 100% 100% no-repeat;
+}
+
+/* v15: the top bar wears the skin, the sidebar only marks its item. */
+.theme-preview-mockup[data-desk="v15"][data-sidebar-style] .tpm-sidebar {
+  background: var(--mock-bg-surface) !important;
+  border-right-color: var(--mock-border) !important;
+}
+
+.theme-preview-mockup[data-desk="v15"][data-sidebar-style] .tpm-sidebar::before {
+  content: none;
+}
+
+.theme-preview-mockup[data-desk="v15"][data-sidebar-style] .tpm-sideitem {
+  color: var(--mock-text-muted) !important;
+  opacity: 1;
+}
+
+.theme-preview-mockup[data-desk="v15"][data-sidebar-style] .tpm-sideitem.is-active {
+  background: color-mix(in srgb, var(--mock-sidebar-bg) 16%, transparent) !important;
+  color: var(--mock-accent) !important;
+  box-shadow: inset 3px 0 0 var(--mock-sidebar-bg);
+}
+
+.theme-preview-mockup[data-desk="v15"][data-sidebar-style] .tpm-navbar {
+  background: var(--mock-sidebar-bg) !important;
+  border-bottom-color: transparent !important;
+}
+
+.theme-preview-mockup[data-desk="v15"][data-sidebar-style="gradient"] .tpm-navbar {
+  background: linear-gradient(90deg, var(--mock-sidebar-bg), var(--mock-sidebar-bg-end)) !important;
+}
+
+.theme-preview-mockup[data-desk="v15"][data-sidebar-style] .tpm-navlink,
+.theme-preview-mockup[data-desk="v15"][data-sidebar-style] .tpm-navlink.is-active {
+  color: var(--mock-sidebar-text) !important;
+}
+
+/* Tinted chips in the mockup, when the theme has icon tints on. */
+.theme-preview-mockup .tpm-sideicon {
+  display: none;
+}
+
+.theme-preview-mockup[data-icon-tints="1"] .tpm-sideicon {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-inline-end: 8px;
+  vertical-align: -1px;
+  border-radius: 3px;
+  background: var(--tpm-tint);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tpm-tint) 18%, transparent);
+}
+
+.theme-preview-mockup[data-icon-tints="1"]:not([data-desk="v15"])[data-sidebar-style="solid"] .tpm-sideicon,
+.theme-preview-mockup[data-icon-tints="1"]:not([data-desk="v15"])[data-sidebar-style="gradient"] .tpm-sideicon {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.92);
+}
+
+/* ==========================================================================
+   Theme Studio editor: the Sidebar group
+   ========================================================================== */
+
+.theme-editor-group {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--theme-border, #e5e7eb);
+}
+
+.theme-editor-group-title {
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--theme-text-muted, #6b7280);
+}
+
+.theme-editor-optional {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* "Auto" reads as a state while the colour is derived, and as an action
+   once one has been picked by hand. */
+.theme-editor-row .theme-editor-auto {
+  padding: 2px 8px !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+  border-radius: 999px !important;
+  cursor: pointer;
+}
+
+.theme-editor-row.is-auto .theme-editor-auto {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.theme-editor-row.is-disabled {
+  opacity: 0.5;
+}
