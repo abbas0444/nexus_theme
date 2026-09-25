@@ -804,6 +804,12 @@ def extend_boot_session(bootinfo):
 		}
 	except Exception:
 		frappe.log_error(title="theme: boot_session settings failed")
+	try:
+		from nexus_theme.whats_new import boot_payload
+
+		bootinfo["nexus_theme_whats_new"] = boot_payload()
+	except Exception:
+		frappe.log_error(title="theme: boot_session whats_new failed")
 
 
 # ---------------------------------------------------------------------------

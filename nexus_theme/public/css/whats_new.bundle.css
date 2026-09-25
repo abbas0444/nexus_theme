@@ -1,0 +1,53 @@
+/* ==================================================================
+   "What's new" card shown once after an upgrade (whats_new.js)
+   ------------------------------------------------------------------
+   Drawn inside a stock frappe.ui.Dialog, so the frame, buttons and
+   dark-mode colours come from Frappe. Only the body is ours. Colours
+   lean on Frappe's own variables so the card reads well whether or not
+   a Nexus theme is active.
+   ================================================================== */
+
+.nx-whatsnew {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.nx-whatsnew-summary {
+  font-size: var(--text-md, 14px);
+  color: var(--text-color);
+  line-height: 1.5;
+}
+
+.nx-whatsnew-item {
+  padding: 12px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md, 8px);
+  background: var(--subtle-fg, var(--bg-color));
+}
+
+.nx-whatsnew-item-head {
+  font-weight: 600;
+  margin-block-end: 4px;
+  color: var(--text-color);
+}
+
+.nx-whatsnew-item-text {
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.nx-whatsnew-try {
+  margin-block-start: 10px;
+}
+
+.nx-whatsnew-foot {
+  font-size: var(--text-sm, 12px);
+  color: var(--text-muted);
+  text-align: end;
+}
+
+.nx-whatsnew-foot a {
+  color: var(--text-muted);
+  text-decoration: underline;
+}
