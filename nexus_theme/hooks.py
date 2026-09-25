@@ -42,11 +42,18 @@ add_to_apps_screen = [
 # include js, css files in header of desk.html
 app_include_css = [
 	"theme_variables.bundle.css",
+	# Compact / Comfortable / Spacious. Keyed off html[data-density] and
+	# not off the theme: inert until density.js sets the attribute.
+	"density.bundle.css",
 	"theme_switcher.bundle.css",
 	"sound_studio.bundle.css",
 ]
 app_include_js = [
 	"theme_manager.bundle.js",
+	# Sets html[data-density] from boot before anything draws and exposes
+	# window.NexusDensity. Before theme_switcher, whose Density control
+	# calls it.
+	"density.bundle.js",
 	"theme_switcher.bundle.js",
 	"theme_editor.bundle.js",
 	# Adds every Theme Definition to Frappe's own "Switch Theme" dialog
