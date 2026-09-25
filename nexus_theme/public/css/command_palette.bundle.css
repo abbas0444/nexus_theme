@@ -1,0 +1,317 @@
+/* ==================================================================
+   Command palette (Ctrl+K / ⌘K)
+   ------------------------------------------------------------------
+   One overlay and one panel, built by command_palette.js. Colours come
+   through a handful of --nxt-cp-* tokens declared on the overlay:
+
+   * By default they read Frappe's own tokens (--bg-color, --text-color,
+     --border-color …), which Frappe redefines under [data-theme="dark"],
+     so the palette follows Frappe's light/dark switch on its own.
+
+   * While one of the app's themes is showing (html[data-app-theme]) the
+     block further down points them at the theme's own tokens instead —
+     surface, radius, font and shadow ladder included — so the panel
+     reads as part of the theme rather than a Frappe dialog on top of it.
+
+   Layout uses logical properties throughout so RTL needs no overrides.
+   ================================================================== */
+
+.nxt-cp-overlay {
+  --nxt-cp-backdrop: rgba(17, 24, 39, 0.35);
+  --nxt-cp-bg: var(--bg-color, #ffffff);
+  --nxt-cp-surface: var(--bg-light-gray, #f7f8fa);
+  --nxt-cp-text: var(--text-color, #1f2937);
+  --nxt-cp-muted: var(--text-muted, #6b7280);
+  --nxt-cp-border: var(--border-color, #e5e7eb);
+  --nxt-cp-accent: var(--primary-color, var(--primary, #4f46e5));
+  --nxt-cp-radius: var(--border-radius-lg, 10px);
+  --nxt-cp-shadow: var(--shadow-lg, 0 16px 40px rgba(0, 0, 0, 0.18));
+  --nxt-cp-font: var(--font-stack, inherit);
+  --nxt-cp-kbd-bg: var(--control-bg, #f3f4f6);
+
+  position: fixed;
+  inset: 0;
+  z-index: 1090; /* above Bootstrap's modal (1050) and popovers (1060) */
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-block: clamp(16px, 10vh, 120px) 16px;
+  padding-inline: 16px;
+  background: var(--nxt-cp-backdrop);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  font-family: var(--nxt-cp-font);
+  color: var(--nxt-cp-text);
+  animation: nxt-cp-fade 120ms ease-out;
+}
+
+.nxt-cp-overlay[hidden] {
+  display: none;
+}
+
+html[data-theme="dark"] .nxt-cp-overlay {
+  --nxt-cp-backdrop: rgba(0, 0, 0, 0.6);
+}
+
+/* The app's theme is showing: take its tokens wholesale. */
+html[data-app-theme] .nxt-cp-overlay {
+  --nxt-cp-bg: var(--theme-bg-primary);
+  --nxt-cp-surface: var(--theme-bg-surface);
+  --nxt-cp-text: var(--theme-text-primary);
+  --nxt-cp-muted: var(--theme-text-muted);
+  --nxt-cp-border: var(--theme-border);
+  --nxt-cp-accent: var(--theme-accent);
+  --nxt-cp-radius: var(--theme-border-radius);
+  --nxt-cp-shadow: var(--theme-shadow-xl);
+  --nxt-cp-font: var(--theme-font-family);
+  --nxt-cp-kbd-bg: var(--theme-bg-input);
+}
+
+.nxt-cp {
+  width: min(640px, 100%);
+  max-height: min(70vh, 560px);
+  display: flex;
+  flex-direction: column;
+  background: var(--nxt-cp-bg);
+  color: var(--nxt-cp-text);
+  border: 1px solid var(--nxt-cp-border);
+  border-radius: var(--nxt-cp-radius);
+  box-shadow: var(--nxt-cp-shadow);
+  overflow: hidden;
+  animation: nxt-cp-rise 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ---- Search box ---- */
+
+.nxt-cp-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-block: 10px;
+  padding-inline: 14px;
+  border-block-end: 1px solid var(--nxt-cp-border);
+}
+
+.nxt-cp-search-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--nxt-cp-muted);
+}
+
+.nxt-cp-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding-block: 6px;
+  padding-inline: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.nxt-cp-input::placeholder {
+  color: var(--nxt-cp-muted);
+  opacity: 0.9;
+}
+
+.nxt-cp-input:focus {
+  box-shadow: none;
+}
+
+.nxt-cp-kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding-block: 1px;
+  padding-inline: 5px;
+  border: 1px solid var(--nxt-cp-border);
+  border-block-end-width: 2px;
+  border-radius: 5px;
+  background: var(--nxt-cp-kbd-bg);
+  color: var(--nxt-cp-muted);
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.nxt-cp-shortcut {
+  flex: 0 0 auto;
+}
+
+/* ---- Results ---- */
+
+.nxt-cp-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.nxt-cp-list {
+  margin: 0;
+  padding-block: 6px;
+  padding-inline: 6px;
+  list-style: none;
+}
+
+.nxt-cp-list:empty {
+  display: none;
+}
+
+.nxt-cp-group {
+  padding-block: 10px 4px;
+  padding-inline: 10px;
+  color: var(--nxt-cp-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nxt-cp-group:first-child {
+  padding-block-start: 4px;
+}
+
+.nxt-cp-group-note {
+  margin-inline-start: 8px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.nxt-cp-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-block: 8px;
+  padding-inline: 10px;
+  border-radius: calc(var(--nxt-cp-radius) - 4px);
+  cursor: pointer;
+  line-height: 1.35;
+  transition: background-color 80ms ease;
+}
+
+.nxt-cp-item.is-selected {
+  background: var(--nxt-cp-surface);
+  background: color-mix(in srgb, var(--nxt-cp-accent) 12%, transparent);
+}
+
+.nxt-cp-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.nxt-cp-label mark {
+  padding: 0;
+  background: transparent;
+  color: var(--nxt-cp-accent);
+  font-weight: 600;
+}
+
+.nxt-cp-hint {
+  flex: 0 0 auto;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--nxt-cp-muted);
+  font-size: 12px;
+}
+
+.nxt-cp-empty {
+  padding-block: 28px;
+  padding-inline: 20px;
+  text-align: center;
+}
+
+.nxt-cp-empty-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.nxt-cp-empty-hint {
+  margin-block-start: 6px;
+  color: var(--nxt-cp-muted);
+  font-size: 12px;
+}
+
+/* ---- Footer ---- */
+
+.nxt-cp-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-block: 8px;
+  padding-inline: 14px;
+  border-block-start: 1px solid var(--nxt-cp-border);
+  background: var(--nxt-cp-surface);
+  color: var(--nxt-cp-muted);
+  font-size: 12px;
+}
+
+.nxt-cp-foot-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ---- Small screens ---- */
+
+@media (max-width: 576px) {
+  .nxt-cp-overlay {
+    padding-block: 8px;
+    padding-inline: 8px;
+  }
+  .nxt-cp {
+    max-height: calc(100vh - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+  .nxt-cp-shortcut,
+  .nxt-cp-hint {
+    display: none;
+  }
+  .nxt-cp-foot {
+    gap: 10px;
+  }
+}
+
+/* ---- Motion ---- */
+
+@keyframes nxt-cp-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes nxt-cp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nxt-cp-overlay,
+  .nxt-cp {
+    animation: none;
+  }
+  .nxt-cp-item {
+    transition: none;
+  }
+}
