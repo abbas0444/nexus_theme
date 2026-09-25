@@ -40,6 +40,11 @@ DEFAULTS = {
 	"login_points": None,
 	"login_stat": None,
 	"login_stat_note": None,
+	# Home page. Off means the Desk opens on Frappe's own home, untouched.
+	"use_nexus_home": 0,
+	"home_show_greeting": 1,
+	"home_show_shortcuts": 1,
+	"home_layout": "Grid",
 }
 
 
