@@ -7,7 +7,7 @@ verbatim into every public page's <head>.
 
 import unittest
 
-from nexus_theme.utils.web_css import VAR_MAP, css_url
+from nexus_theme.utils.web_css import VAR_MAP, brand_color, css_url
 from nexus_theme.utils.web_css import theme_css_rules as _theme_style_block
 
 
@@ -74,6 +74,30 @@ class TestThemeStyleBlock(unittest.TestCase):
 		for field, css_var in VAR_MAP.items():
 			self.assertIn(field, js, f"{field} missing from theme_manager.js")
 			self.assertIn(css_var, js, f"{css_var} missing from theme_manager.js")
+
+
+class TestBrandColor(unittest.TestCase):
+	"""The login panel wears the colour the Desk is known by."""
+
+	def test_a_solid_or_gradient_sidebar_is_the_brand(self):
+		for style in ("Solid", "Gradient", "gradient"):
+			self.assertEqual(brand_color(theme(sidebar_style=style, sidebar_bg="#1b1030")), "#1b1030")
+
+	def test_an_auto_sidebar_colour_is_the_accent(self):
+		self.assertEqual(brand_color(theme(sidebar_style="Solid", sidebar_bg="")), "#0969da")
+
+	def test_plain_and_tinted_have_no_brand_block(self):
+		for style in ("Plain", "Tinted", "", None):
+			self.assertIsNone(brand_color(theme(sidebar_style=style, sidebar_bg="#1b1030")))
+
+	def test_an_unsafe_value_never_becomes_the_brand(self):
+		self.assertIsNone(brand_color(theme(sidebar_style="Solid", sidebar_bg="red;}body{x")))
+
+	def test_the_style_block_carries_it_only_when_there_is_one(self):
+		self.assertIn(
+			"--theme-brand:#1b1030", _theme_style_block(theme(sidebar_style="Gradient", sidebar_bg="#1b1030"))
+		)
+		self.assertNotIn("--theme-brand", _theme_style_block(theme(sidebar_style="Tinted")))
 
 
 class TestCssUrl(unittest.TestCase):

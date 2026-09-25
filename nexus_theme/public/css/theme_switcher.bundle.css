@@ -1332,16 +1332,23 @@
   padding: 30px 32px;
   border-radius: 14px;
   color: #ffffff !important;
-  background-color: color-mix(in srgb, var(--nxlp-accent) 30%, #0a0a12) !important;
+  /* Mirrors .nxlogin-panel: brand colour for the body, the button colour as
+     the main glow, the accent as a faint second one. */
+  background-color: color-mix(in srgb, var(--nxlp-brand, var(--nxlp-accent)) 30%, #0a0a12) !important;
   background-image: radial-gradient(
-      115% 85% at 88% 8%,
-      color-mix(in srgb, var(--nxlp-accent) 55%, transparent),
+      110% 80% at 88% 8%,
+      color-mix(in srgb, var(--nxlp-btn-bg) 42%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      90% 70% at 8% 100%,
+      color-mix(in srgb, var(--nxlp-accent) 16%, transparent),
       transparent 62%
     ),
     linear-gradient(
       152deg,
-      color-mix(in srgb, var(--nxlp-accent) 46%, #0b0b14) 0%,
-      color-mix(in srgb, var(--nxlp-accent) 10%, #07070d) 100%
+      color-mix(in srgb, var(--nxlp-brand, var(--nxlp-accent)) 62%, #0b0b14) 0%,
+      color-mix(in srgb, var(--nxlp-brand, var(--nxlp-accent)) 18%, #07070d) 100%
     ) !important;
 }
 

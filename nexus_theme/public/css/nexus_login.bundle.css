@@ -18,6 +18,9 @@
 	--nx-muted: var(--theme-text-muted, #6b7280);
 	--nx-accent: var(--theme-accent, #7c3aed);
 	--nx-accent-hover: var(--theme-accent-hover, #6d28d9);
+	/* The colour the theme is known by (its Solid or Gradient sidebar), so the
+	   panel and the Desk read as one product; the accent when there is none. */
+	--nx-brand: var(--theme-brand, var(--nx-accent));
 	--nx-btn-bg: var(--theme-button-bg, var(--nx-accent));
 	--nx-btn-text: var(--theme-button-text, #ffffff);
 	--nx-btn-hover: var(--theme-button-hover-bg, var(--nx-accent-hover));
@@ -445,10 +448,16 @@ body.nxlogin-body {
 	padding: 64px;
 	border-radius: 26px;
 	color: #ffffff;
-	background-color: color-mix(in srgb, var(--nx-accent) 30%, #0a0a12);
+	/* The brand colour is the body of the panel. The main glow is the button
+	   colour, because the Sign In button sits right beside it; the accent
+	   is a faint second glow. In most themes all three are one colour, and
+	   the panel looks as it always did; in a two-colour theme the panel
+	   carries both, the way the Desk does. */
+	background-color: color-mix(in srgb, var(--nx-brand) 30%, #0a0a12);
 	background-image:
-		radial-gradient(115% 85% at 88% 8%, color-mix(in srgb, var(--nx-accent) 55%, transparent), transparent 62%),
-		linear-gradient(152deg, color-mix(in srgb, var(--nx-accent) 46%, #0b0b14) 0%, color-mix(in srgb, var(--nx-accent) 10%, #07070d) 100%);
+		radial-gradient(110% 80% at 88% 8%, color-mix(in srgb, var(--nx-btn-bg) 42%, transparent), transparent 60%),
+		radial-gradient(90% 70% at 8% 100%, color-mix(in srgb, var(--nx-accent) 16%, transparent), transparent 62%),
+		linear-gradient(152deg, color-mix(in srgb, var(--nx-brand) 62%, #0b0b14) 0%, color-mix(in srgb, var(--nx-brand) 18%, #07070d) 100%);
 }
 
 .nxlogin-panel-image {
