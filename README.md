@@ -6,7 +6,7 @@
 
 **Make your workspace yours.** Colours, sounds, a themed sign-in screen and a clear view of who can do what, all inside your ERPNext / Frappe Desk. Pick one of 17 ready-made themes or build your own, choose the sounds the Desk plays, give the login page your own look, and let administrators see and change permissions in plain language.
 
-![ERPNext 15](https://img.shields.io/badge/ERPNext-15-blue) ![Frappe 15](https://img.shields.io/badge/Frappe-15-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey) ![Version 1.2.0](https://img.shields.io/badge/version-1.2.0-green)
+![ERPNext 15](https://img.shields.io/badge/ERPNext-15-blue) ![Frappe 15](https://img.shields.io/badge/Frappe-15-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey) ![Version 2.0.0](https://img.shields.io/badge/version-2.0.0-green)
 
 **One branch per framework version.** You are looking at
 [`version-15`](https://github.com/abbas0444/nexus_theme/tree/version-15), the build for
@@ -14,6 +14,18 @@ Frappe / ERPNext **15**. Running Frappe / ERPNext **16**? Use
 [`version-16`](https://github.com/abbas0444/nexus_theme/tree/version-16).
 
 </div>
+
+---
+
+## What's New in 2.0
+
+Two things people asked for most, and a card on the Desk that tells every user about them once:
+
+- **Command Palette.** Press **Ctrl+K** (⌘K on a Mac) anywhere on the Desk and type. Open any record type, report, page or workspace, jump back to something you had open, search documents, switch your theme or density, mute sounds, open the studios — all without the mouse. See [section 3.1](#31-the-command-palette-ctrlk).
+- **Density modes.** **Compact**, **Comfortable** or **Spacious**: how much vertical room rows, fields and buttons get. Yours alone, set in Theme Studio or from the palette; administrators choose the site's starting point in Theme Settings. See [section 4.10](#410-density-compact-comfortable-or-spacious).
+- **A "What's new" card**, shown once per person after an upgrade to a release that has something to say, with a button that takes them to each new feature. It never comes back for patch releases.
+
+Upgrading from 1.x: `bench update` (or pull the branch), then `bench --site yoursite.com migrate` and `bench restart`. Nothing changes for anyone until they try the new things; Comfortable is exactly the spacing you have today. Full details in the [Release Notes](https://github.com/abbas0444/nexus_theme/wiki/Release-Notes).
 
 ---
 
@@ -67,6 +79,8 @@ Nexus Theme is one Frappe app with three tools inside it. Install it once and ev
 |---|---|---|
 | **Theme Studio** | Everyone who uses the Desk | Pick a theme, adjust colours and fonts with a live preview, generate a whole theme from one brand colour, pair a light and a dark theme, share themes with the team, export and import themes as files. |
 | **Sound Studio** | Everyone who uses the Desk | Choose the sound the Desk plays on login, save, submit, cancel, delete, errors, email, alerts and notifications. Use a bundled preset or upload your own, set the volume, or mute everything. |
+| **Command Palette** | Everyone who uses the Desk | Ctrl+K / ⌘K. Type a few letters to go anywhere on the Desk, search documents, switch your theme or density, or open the studios. |
+| **Density modes** | Everyone who uses the Desk | Compact, Comfortable or Spacious spacing for rows, fields and buttons, chosen per person in Theme Studio. |
 | **Permission Inspector** | System Managers | Pick a person or a role and see, record type by record type, what they may View, Edit, Create, Delete, Submit and Cancel, which role gives them that, and change it safely from the same screen. |
 | **Theme Settings** | System Managers | Site-wide controls: a default theme for everyone, an allowed list, whether people may build or share themes, the company logo and favicon, and a master switch for sounds. |
 | **Login Page** | System Managers switch it on; everyone sees it | A two-column sign-in screen painted in the site's theme colours, with your logo, your headline and bullet points on a coloured panel. Off by default; Frappe's own login page stays until you turn it on. |
@@ -126,7 +140,7 @@ Uninstalling (`bench --site yoursite.com uninstall-app nexus_theme`) removes the
 | **Avatar menu** (top-right) | Theme Studio, Sound Settings |
 | **Apps screen** (the grid icon or `/apps`) | A **Nexus Theme** tile that opens the workspace |
 | **Nexus Theme workspace** (`/app/nexus-theme`) | Shortcuts to Theme Studio, Sound Studio, Themes, Theme Settings and Permission Inspector, plus cards for every record type the app owns |
-| **Search bar** (Ctrl+K / Cmd+K) | Type `Theme Studio`, `Sound Studio`, `Permission Inspector` or `Theme Settings` |
+| **Command palette** (Ctrl+K / ⌘K, or Ctrl+Shift+P) | Type `theme`, `sound`, `permission` or `settings` and press Enter — see 3.1 |
 | **Frappe's own Switch Theme dialog** (avatar menu, Toggle Theme) | Every Nexus theme is listed there too, next to Frappe Light and Timeless Night |
 | Direct links | `/app/theme-studio`, `/app/sound-studio`, `/app/nexus-permission-inspector`, `/app/theme-settings` |
 | **Login page** (`/login`) | Frappe's own sign-in screen, or the Nexus login page once an administrator switches it on in Theme Settings |
@@ -138,6 +152,23 @@ Uninstalling (`bench --site yoursite.com uninstall-app nexus_theme`) removes the
 The apps screen carries a **Nexus Theme** tile, and the avatar menu in the corner opens either studio from wherever you are:
 
 ![The apps screen and the avatar menu](docs/images/desk-avatar-menu.png)
+
+### 3.1 The command palette (Ctrl+K)
+
+Press **Ctrl+K** (**⌘K** on a Mac) on any Desk page, or **Ctrl+Shift+P**. A box opens with a search field and, before you type anything, the documents you had open most recently. Start typing and the list narrows as you go; the letters that matched are highlighted. **↑ ↓** move, **Enter** runs, **Esc** closes.
+
+What it can reach, in the order the groups appear:
+
+| Group | What is in it |
+|---|---|
+| **Recent** | The last documents you opened, from this session and from Frappe's own recent list |
+| **Actions** | Open Theme Studio, Sound Studio, the Permission Inspector or Theme Settings (the last two for System Managers); *Switch theme →* every theme you may use, with your current one marked; *Use Frappe's own theme*; *Density →* Compact, Comfortable or Spacious; *Mute* or *Unmute sounds*; Reload; Log out; and anything another app registers |
+| **Go to** | Every record type you may read (and *New …* for the ones you may create), every report, page and workspace |
+| **Search** | Once you have typed two letters or more, matching documents from Frappe's global search — the same results, and the same permissions, as the search bar |
+
+Matching is forgiving: `od` finds *Order Delivery* and *Sales Order*, `pi` finds *Purchase Invoice*, and the words you type may come in any order. Nothing is stored; each opening starts empty.
+
+**One thing to know.** On Frappe 16 the Desk used Ctrl+K for its own search bar; the palette takes that shortcut over. **Ctrl+G** still opens Frappe's global search, and the search bar itself is where it always was. On Frappe 15 Ctrl+K was free.
 
 ---
 
@@ -270,6 +301,20 @@ While Automatic is on, applying a theme from the gallery replaces the half it be
 ### 4.9 Going back to plain Frappe
 
 Click **Reset to Default** at the bottom of Theme Studio, or choose Frappe Light, Timeless Night or Automatic in Frappe's own Switch Theme dialog. Both record that you want Frappe's built-in look, so an administrator's site default will not come back on your next reload. Pick any Nexus theme again to opt back in.
+
+### 4.10 Density: Compact, Comfortable or Spacious
+
+Just under the preview in Theme Studio is a **Density** switch with three positions. It changes how much vertical room the Desk gives everything — list rows, grid rows, form fields, buttons, inputs, sidebar items, dropdown entries — and nothing else: no colours, no font sizes, no widths.
+
+| Mode | For whom |
+|---|---|
+| **Compact** | People who live in lists and grids and want more rows on the screen. About a fifth less height everywhere. |
+| **Comfortable** | Frappe's own spacing, exactly as it is today. The default. |
+| **Spacious** | More air in forms, easier to read on a large screen or with a touch screen. About a fifth more. |
+
+Click one and the whole Desk changes at once and stays that way on every device you sign in from. It is independent of the theme: you can be on Frappe's own look and still be Compact. From the command palette, type `density` and pick a mode.
+
+Density is per person. An administrator sets the site's starting point with **Default Density** in Theme Settings; anyone who has not chosen for themselves follows it, and changing it later changes their Desk too. Someone who picked a density keeps it whatever the site default does.
 
 ---
 
@@ -434,6 +479,7 @@ Open **Nexus Theme → Theme Settings** or `/app/theme-settings`. Every option i
 |---|---|
 | **Site Default Theme** | Applied to everyone who has not chosen a theme. Leave blank to keep Frappe's stock look. People who chose Frappe's own look on purpose are left alone. |
 | **Apply to Login & Website** | Also applies the site default theme to the login page and the public website, not only the Desk. |
+| **Default Density** | Compact, Comfortable or Spacious for everyone who has not chosen a density of their own in Theme Studio. Comfortable is Frappe's own spacing. |
 | **Allow Custom Themes** | Lets people build and save their own themes in Theme Studio. |
 | **Allow Public Sharing** | Lets people share a custom theme with everyone on the site. |
 | **Restrict Theme Choice** + **Allowed Themes** | Shows only the listed themes in Theme Studio. Anyone already using another theme keeps it; they are not reset. |
@@ -550,6 +596,7 @@ One row per person, named after their account. It is what makes your theme follo
 | **Mode** | *Single* uses one theme all the time. *Automatic* follows the computer's light/dark setting. |
 | **Dark Theme** | The theme used after dark when Mode is *Automatic* |
 | **Overrides** | Any colours they changed by hand on top of the theme, stored as JSON |
+| **Density** | Compact, Comfortable or Spacious. Empty means "follow the site's Default Density". A row may hold only a density and no theme. |
 
 **When to create a new one:** never, in normal use. The row appears by itself the first time someone presses **Apply** in Theme Studio, and updates every time they change something.
 
@@ -593,6 +640,10 @@ An administrator might open one to **silence one person** (untick **Enabled**) o
 ---
 
 ## 10. Everyday Recipes
+
+**I want to open Sales Invoice without touching the mouse.** Ctrl+K, type `sal inv`, Enter. For a new one, type `new sal inv`.
+
+**I want more rows on my screen.** Theme Studio → Density → **Compact**. Or Ctrl+K, type `compact`, Enter.
 
 **I want dark mode at night and light in the day.** Theme Studio → Auto Light/Dark → pick one of each → Mode: Automatic → Save.
 
@@ -668,7 +719,7 @@ All methods live in `nexus_theme.api` and are whitelisted, so they work from `fr
 ```python
 # Themes
 get_available_themes()                       # defaults, owned, public
-get_active_theme()                           # theme, mode, dark theme, overrides, dark_overrides, source
+get_active_theme()                           # theme, mode, dark theme, overrides, dark_overrides, density, source
 set_active_theme(theme_name, overrides=None) # apply a theme (+ overrides); returns the half it went to
 set_theme_mode("Automatic", dark_theme="dracula")
 clear_active_theme()                         # back to Frappe's own look
@@ -679,6 +730,14 @@ import_theme(payload, share_public=0)
 get_recommended_palettes()                   # the 8 curated palettes
 get_login_preview()                          # brand + words for the login preview
 generate_palette(seed="#8c6f3f", is_dark=0)  # 3 accessible variants from one colour
+
+# Density
+get_density()                                # {density: "compact", source: "user"|"site_default"|"default"}
+set_density("compact")                       # key or label; empty means "follow the site default"
+
+# What's new
+nexus_theme.whats_new.get_notes()            # the notes for the running release series
+nexus_theme.whats_new.mark_seen()            # remember that this person has seen them
 
 # Sounds
 get_user_sounds()                            # enabled + allowed flags, event -> {url, volume}
@@ -714,7 +773,22 @@ ThemeManager.handOffToFrappe();                                  // back to Frap
 
 SoundManager.applyMapping({ save: { url: "/files/pop.wav", volume: 0.7 } });
 SoundManager.setEnabled(false);
+
+NexusDensity.modes();           // [{ key, label, description }, …]
+NexusDensity.get();             // "comfortable"
+NexusDensity.set("compact");    // applies and saves; returns a Promise
+
+window.openCommandPalette();    // open the palette
+NexusCommandPalette.register({  // add a command of your own; returns an unregister function
+	label: "Close the month",
+	hint: "Accounts",
+	keywords: ["period", "closing"],
+	run: () => frappe.set_route("period-closing-voucher", "new"),
+});
+window.openNexusWhatsNew();     // show the "What's new" card again
 ```
+
+The palette fires `register` commands under **Actions**. Density changes raise a `nexus-density-change` event on `document` with `{ detail: { density } }`.
 
 ### 12.4 Tests
 
@@ -749,6 +823,8 @@ bench build --app nexus_theme      # rebuild the JS/CSS bundles after editing pu
 - **Deleting a theme in use is allowed** for your own themes; users of it fall back to the site default. A theme that is the site default or on the allowed list must be taken out of Theme Settings first.
 - **Permission changes are site-wide.** The Permission Inspector edits roles, and a role is shared by everyone who holds it. The confirmation dialog states this before every save.
 - **The Nexus login page is a switch, not a default.** Installing the app changes nothing about `/login`. An administrator turns the page on in Theme Settings, and can turn it off again the same way; if it ever cannot render, Frappe's own page is served.
+- **Ctrl+K belongs to the command palette now.** On Frappe 16 it used to focus the search bar; Ctrl+G still opens global search and the bar is still there to click.
+- **Comfortable density is exactly the old spacing.** Installing 2.0 changes nothing on screen until someone picks Compact or Spacious, or an administrator sets a different Default Density.
 - **"Set User Permissions" is not a flag in Frappe v16.** It was removed in an earlier version. The inspector shows the flags v16 actually has, including Mask and custom permission types.
 
 ---
