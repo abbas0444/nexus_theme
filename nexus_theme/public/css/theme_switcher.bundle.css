@@ -14,6 +14,71 @@
 }
 
 /* ==================================================================
+   Density control
+   ------------------------------------------------------------------
+   Compact | Comfortable | Spacious, drawn between the preview and the
+   gallery. Every colour is a literal of the studio's own palette, and
+   the selectors sit under `.theme-studio-isolated` at (0,3,0) with
+   !important: the isolation rules further down paint every <button>
+   in the dialog grey at (0,1,1) / (0,2,1), also with !important, and
+   the active segment has to win over them.
+   ================================================================== */
+.theme-studio-isolated .nx-density-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.theme-studio-isolated .nx-density-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: #6b7280 !important;
+}
+
+.theme-studio-isolated .nx-density-seg {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  background-color: #f7f8fa !important;
+}
+
+.theme-studio-isolated .nx-density-seg .nx-density-option {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  border: 1px solid transparent !important;
+  border-radius: 6px !important;
+  background-color: transparent !important;
+  color: #4b5563 !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease !important;
+}
+
+.theme-studio-isolated .nx-density-seg .nx-density-option:hover {
+  background-color: #eef0f3 !important;
+  color: #1f2937 !important;
+}
+
+.theme-studio-isolated .nx-density-seg .nx-density-option:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2) !important;
+}
+
+.theme-studio-isolated .nx-density-seg .nx-density-option.is-active,
+.theme-studio-isolated .nx-density-seg .nx-density-option.is-active:hover {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  border-color: #d1d5db !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* ==================================================================
    Live Preview pane
    ------------------------------------------------------------------
    The mockup uses `--mock-*` custom properties set inline on the
