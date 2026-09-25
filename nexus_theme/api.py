@@ -1399,7 +1399,11 @@ def get_home_data():
 	key = f"nexus_theme:home:{user}:{frappe.local.lang or ''}"
 	data = None
 	try:
-		data = _home_cache().get_value(key)
+		# expires=True: the value is stored with an expiry, so it lives in
+		# Redis only. Without it Frappe 15 remembers a miss in the request's
+		# local cache, and a second read in the same request never sees the
+		# value just written.
+		data = _home_cache().get_value(key, expires=True)
 	except Exception:
 		data = None
 	if not isinstance(data, dict):
