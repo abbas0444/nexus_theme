@@ -6,7 +6,7 @@
 
 **Make your workspace yours.** Colours, sounds, a themed sign-in screen and a clear view of who can do what, all inside your ERPNext / Frappe Desk. Pick one of 17 ready-made themes or build your own, choose the sounds the Desk plays, give the login page your own look, and let administrators see and change permissions in plain language.
 
-![ERPNext 15](https://img.shields.io/badge/ERPNext-15-blue) ![Frappe 15](https://img.shields.io/badge/Frappe-15-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey) ![Version 2.1.0](https://img.shields.io/badge/version-2.1.0-green)
+![ERPNext 15](https://img.shields.io/badge/ERPNext-15-blue) ![Frappe 15](https://img.shields.io/badge/Frappe-15-orange) ![License MIT](https://img.shields.io/badge/license-MIT-lightgrey) ![Version 2.1.1](https://img.shields.io/badge/version-2.1.1-green)
 
 **One branch per framework version.** You are looking at
 [`version-15`](https://github.com/abbas0444/nexus_theme/tree/version-15), the build for
@@ -606,7 +606,7 @@ Tick **Use the Nexus Login Page** and `/login` becomes a two-column screen: your
 the Panel Headline in with its own name; a fresh install shows a plain "Welcome back"
 until you type something else.*
 
-**It follows the theme.** The page is painted from the **Site Default Theme**: background, text, inputs, the accent, the button and the corner radius all come from that theme, and the panel's gradient is mixed from its accent colour. Set a light theme and the page is light; set a dark one and it is dark. Someone who has already applied a theme of their own on the Desk sees the login page in *their* theme, because the browser remembers it; the page repaints before it is shown, so there is no flash of the wrong colours. With no site default theme set, the page uses a neutral light palette.
+**It follows the theme.** The page is painted from the **Site Default Theme**: background, text, inputs, the accent, the button and the corner radius all come from that theme, and the panel is painted in the colour the theme is known by: its sidebar colour when the theme has a Solid or Gradient sidebar, otherwise its accent, with a glow of the button colour in the corner. So a theme looks like one product from the sign-in screen to the Desk. Set a light theme and the page is light; set a dark one and it is dark. Someone who has already applied a theme of their own on the Desk sees the login page in *their* theme, because the browser remembers it; the page repaints before it is shown, so there is no flash of the wrong colours. With no site default theme set, the page uses a neutral light palette.
 
 **It keeps everything Frappe's login does.** Password sign-in, the error banner, forgot password, sign-up, login with an email link, social logins, LDAP and two-factor all work exactly as before, because the page loads Frappe's own login script and keeps every element that script uses. Only the layout and the styling are the app's.
 
