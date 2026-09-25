@@ -85,6 +85,11 @@ app_include_js = [
 	# page side section), stores the choice per user, adds Ctrl+Shift+B and
 	# hover-to-peek. After the palette, whose register() it calls.
 	"sidebar_rail.bundle.js",
+	# window.openNexusHome() and, while the Nexus home page is switched on
+	# in Theme Settings, an "Open Home" palette command. After the palette,
+	# which it registers with. The page's own script and styles live in
+	# nexus_theme/page/nexus_home and load only when it is opened.
+	"home_page.bundle.js",
 ]
 
 # Login page and public website. The stylesheet is inert unless
