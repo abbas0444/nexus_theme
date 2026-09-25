@@ -2,9 +2,11 @@ import json
 
 import frappe
 from frappe import _
+from frappe.utils import cint
 
 from nexus_theme.utils import sound_url
 from nexus_theme.utils.density import MODES, label_for, normalize_density, resolve_density
+from nexus_theme.utils.rail import parse_collapsed
 
 
 def _invalidate_bootinfo(user: str | None = None) -> None:
@@ -230,11 +232,13 @@ def get_active_theme():
 	a row may hold a density and no theme at all (set_density before any
 	theme was picked, or the theme was deleted since), and that row reads
 	as "never chose" for the theme while still answering for the density.
+	`sidebar_collapsed` (0 or 1, the mini rail) rides along the same way.
 	"""
 	user = frappe.session.user
 	pref_name = frappe.db.exists("User Theme Preference", {"user": user})
 	pref = frappe.get_doc("User Theme Preference", pref_name) if pref_name else None
 	density = _resolve_density(pref)[0]
+	sidebar_collapsed = _sidebar_collapsed(pref)
 	if not pref or (not pref.use_frappe_theme and not pref.active_theme):
 		# No preference of their own — fall back to the site default if an
 		# admin set one. Still no row is created: this runs on every boot,
@@ -252,6 +256,7 @@ def get_active_theme():
 					"mode": "Single",
 					"source": "site_default",
 					"density": density,
+					"sidebar_collapsed": sidebar_collapsed,
 				}
 		return {
 			"theme": None,
@@ -260,6 +265,7 @@ def get_active_theme():
 			"dark_overrides": {},
 			"mode": "Single",
 			"density": density,
+			"sidebar_collapsed": sidebar_collapsed,
 		}
 
 	if pref.use_frappe_theme:
@@ -274,6 +280,7 @@ def get_active_theme():
 			"mode": "Single",
 			"source": "frappe",
 			"density": density,
+			"sidebar_collapsed": sidebar_collapsed,
 		}
 
 	theme = frappe.db.get_value("Theme Definition", pref.active_theme, THEME_FIELDS, as_dict=True)
@@ -299,6 +306,7 @@ def get_active_theme():
 		"mode": mode,
 		"source": "user",
 		"density": density,
+		"sidebar_collapsed": sidebar_collapsed,
 	}
 
 
@@ -595,17 +603,18 @@ def _detach_theme_from_preferences(theme_name: str) -> None:
 	back to "never chose" (the site default, or Frappe's own theme); whoever
 	paired it as the dark half of an automatic pair drops to a single theme.
 
-	A row that also carries a density is not dropped, only emptied of the
-	theme: the density is the person's own choice and has nothing to do
-	with the theme that is going. A row with nothing else on it goes.
+	A row that also carries a density or a collapsed sidebar is not
+	dropped, only emptied of the theme: those are the person's own choices
+	and have nothing to do with the theme that is going. A row with nothing
+	else on it goes.
 	"""
 	rows = frappe.get_all(
 		"User Theme Preference",
 		filters={"active_theme": theme_name},
-		fields=["name", "user", "density"],
+		fields=["name", "user", "density", "sidebar_collapsed"],
 	)
 	using = [r.user for r in rows]
-	keep = [r.name for r in rows if normalize_density(r.density)]
+	keep = [r.name for r in rows if normalize_density(r.density) or r.sidebar_collapsed]
 	drop = [r.name for r in rows if r.name not in keep]
 	if drop:
 		frappe.db.delete("User Theme Preference", {"name": ["in", drop]})
@@ -761,7 +770,7 @@ def set_density(density: str | None = None):
 		resolved, source = _resolve_density(None)
 		return {"ok": True, "density": resolved, "source": source}
 
-	if not key and not pref.use_frappe_theme and not pref.active_theme:
+	if not key and not pref.use_frappe_theme and not pref.active_theme and not _sidebar_collapsed(pref):
 		# The density was the only thing on the row; without it the row is
 		# empty, which validate() rightly refuses. Emptiness is "never chose".
 		frappe.delete_doc("User Theme Preference", pref.name, ignore_permissions=False)
@@ -774,6 +783,78 @@ def set_density(density: str | None = None):
 	_invalidate_bootinfo(user)
 	resolved, source = _resolve_density(pref)
 	return {"ok": True, "density": resolved, "source": source}
+
+
+# ---------------------------------------------------------------------------
+# Mini rail
+# ---------------------------------------------------------------------------
+# Whether the Desk's left sidebar is folded down to an icon-only rail (Frappe
+# 16) or the page's side section is hidden (Frappe 15). One yes/no per
+# person, on the same row as the theme and the density but independent of
+# both — see utils/rail.py and public/js/sidebar_rail.js.
+
+
+def _sidebar_collapsed(pref=None) -> int:
+	"""0 or 1 for a preference row already loaded; 0 without one. Read off
+	the document, so a boot on a site whose migrate has not added the
+	column yet answers "expanded" instead of failing."""
+	return 1 if pref and cint(pref.get("sidebar_collapsed")) else 0
+
+
+@frappe.whitelist()
+def get_sidebar_collapsed():
+	"""{collapsed: 0 | 1} for the session user. No row reads as expanded,
+	which is what the sidebar is until someone folds it."""
+	user = frappe.session.user
+	pref_name = frappe.db.exists("User Theme Preference", {"user": user})
+	pref = frappe.get_doc("User Theme Preference", pref_name) if pref_name else None
+	return {"collapsed": _sidebar_collapsed(pref)}
+
+
+@frappe.whitelist()
+def set_sidebar_collapsed(collapsed=None):
+	"""Store whether this user keeps the sidebar collapsed.
+
+	Takes 1/0, true/false or "collapsed"/"expanded". No theme is needed and
+	none is touched, exactly like set_density: the row is created holding
+	only this when the person has no row yet, and a row that opted out to
+	Frappe's own theme keeps that opt-out. Expanding on a row that holds
+	nothing else removes the row, which reads the same as never having
+	chosen — expanded is the sidebar's own default.
+	"""
+	value = parse_collapsed(collapsed)
+	if value is None:
+		frappe.throw(_("{0} is not a sidebar state. Use 1 to collapse or 0 to expand.").format(collapsed))
+	want = 1 if value else 0
+
+	user = frappe.session.user
+	pref_name = frappe.db.exists("User Theme Preference", {"user": user})
+	if pref_name:
+		pref = frappe.get_doc("User Theme Preference", pref_name)
+	elif want:
+		pref = frappe.new_doc("User Theme Preference")
+		pref.user = user
+	else:
+		# Nothing stored already means "expanded"; a row saying so would be
+		# a preference the person never expressed.
+		return {"ok": True, "collapsed": 0}
+
+	if not pref.is_new() and _sidebar_collapsed(pref) == want:
+		# Frappe's own toggle and the shortcut both land here; a repeat of
+		# the stored answer is not worth a write or a bootinfo flush.
+		return {"ok": True, "collapsed": want}
+
+	if not want and not pref.use_frappe_theme and not pref.active_theme and not pref.density:
+		# The rail was the only thing on the row; without it the row is
+		# empty, which validate() rightly refuses. Emptiness is "never chose".
+		frappe.delete_doc("User Theme Preference", pref.name, ignore_permissions=False)
+		_invalidate_bootinfo(user)
+		return {"ok": True, "collapsed": 0}
+
+	pref.sidebar_collapsed = want
+	pref.save(ignore_permissions=False)
+	_invalidate_bootinfo(user)
+	return {"ok": True, "collapsed": want}
 
 
 def extend_boot_session(bootinfo):
@@ -789,6 +870,13 @@ def extend_boot_session(bootinfo):
 		bootinfo["nexus_density"] = get_density()
 	except Exception:
 		frappe.log_error(title="theme: boot_session density failed")
+	try:
+		# Also present inside active_theme, and kept apart for the same
+		# reason as the density: sidebar_rail.js reads it before first paint
+		# and must not depend on the theme lookup having worked.
+		bootinfo["nexus_sidebar_collapsed"] = get_sidebar_collapsed()["collapsed"]
+	except Exception:
+		frappe.log_error(title="theme: boot_session sidebar_collapsed failed")
 	try:
 		bootinfo["user_sounds"] = get_user_sounds()
 	except Exception:

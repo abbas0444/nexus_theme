@@ -3,6 +3,7 @@ import json
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import cint
 
 from nexus_theme.preferences import (
 	assert_own_row,
@@ -41,6 +42,10 @@ class UserThemePreference(Document):
 		else:
 			self.density = None
 
+		# The mini rail, likewise the person's and not the theme's. A Check,
+		# so anything truthy from /api/resource is put back to 0 or 1.
+		self.sidebar_collapsed = 1 if cint(self.get("sidebar_collapsed")) else 0
+
 		if self.use_frappe_theme:
 			# An explicit opt-out: the user picked Frappe's own theme over any
 			# of ours, the site default included. Nothing of ours may stay on
@@ -53,13 +58,14 @@ class UserThemePreference(Document):
 
 		# `active_theme` is not marked required on the DocType because the
 		# opt-out row above legitimately has none — and so does a row that
-		# carries only a density: someone who picked Compact before ever
-		# picking a theme, or whose theme was deleted from under them. That
-		# row means "no theme opinion" and reads exactly like having no row,
-		# site default included, so nothing theme-shaped may linger on it.
-		# A row with neither is an empty row, and is refused as before.
+		# carries only a density or a collapsed sidebar: someone who picked
+		# Compact, or folded the sidebar to a rail, before ever picking a
+		# theme, or whose theme was deleted from under them. That row means
+		# "no theme opinion" and reads exactly like having no row, site
+		# default included, so nothing theme-shaped may linger on it. A row
+		# with none of these is an empty row, and is refused as before.
 		if not self.active_theme:
-			if not self.density:
+			if not self.density and not self.sidebar_collapsed:
 				frappe.throw(_("Pick a theme, or tick Use Frappe's Built-in Theme."))
 			self.dark_theme = None
 			self.theme_mode = "Single"
