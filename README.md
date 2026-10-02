@@ -46,6 +46,12 @@ Upgrading from 1.x: `bench update` (or pull the branch), then `bench --site your
 
 ---
 
+## Stay Updated
+
+Want to hear about new features as they ship? Click **Watch → Custom → Releases** at the top of this page and GitHub will email you every new release. What changed in each one is in the [Release Notes](https://github.com/abbas0444/nexus_theme/wiki/Release-Notes).
+
+---
+
 ## A Look at It
 
 Every screenshot below is the app running on a real ERPNext 16 site.
