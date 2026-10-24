@@ -786,6 +786,15 @@ html[data-app-theme] .grid-row .data-row .static-area {
   border-color: var(--theme-border) !important;
 }
 
+/* Reports / DataTable focused cell — frappe-datatable draws the focus
+   ring with --dt-primary-color, but Frappe overrides it with a flat
+   --gray-200 and our cell rule above then pins it to --theme-border,
+   leaving the selected cell indistinguishable from its neighbours.
+   Re-pin it to the accent so the focused cell is visible on any theme. */
+html[data-app-theme] .dt-cell--focus .dt-cell__content {
+  border-color: var(--theme-accent) !important;
+}
+
 /* Row separators */
 html[data-app-theme] table tr,
 html[data-app-theme] .table tr,
